@@ -51,16 +51,22 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	responseTimes, _ := s.store.GetLatestResponseTimes(ctx)
+	if responseTimes == nil {
+		responseTimes = make(map[int64]int64)
+	}
+
 	pd := s.newPageData(r, "Dashboard", "dashboard")
 	pd.Data = map[string]interface{}{
-		"Monitors":     monitorList,
-		"Incidents":    incidentList,
-		"Total":        len(monitorList),
-		"Up":           up,
-		"Down":         down,
-		"Degraded":     degraded,
-		"Paused":       paused,
+		"Monitors":      monitorList,
+		"Incidents":     incidentList,
+		"Total":         len(monitorList),
+		"Up":            up,
+		"Down":          down,
+		"Degraded":      degraded,
+		"Paused":        paused,
 		"OpenIncidents": len(incidentList),
+		"ResponseTimes": responseTimes,
 	}
 	s.render(w, "dashboard.html", pd)
 }

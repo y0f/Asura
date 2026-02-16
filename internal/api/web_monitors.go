@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/asura-monitor/asura/internal/storage"
 )
@@ -28,20 +29,41 @@ func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	mon, err := s.store.GetMonitor(r.Context(), id)
+	ctx := r.Context()
+	mon, err := s.store.GetMonitor(ctx, id)
 	if err != nil {
 		http.Redirect(w, r, "/monitors", http.StatusSeeOther)
 		return
 	}
 
-	checks, _ := s.store.ListCheckResults(r.Context(), id, storage.Pagination{Page: 1, PerPage: 25})
-	changes, _ := s.store.ListContentChanges(r.Context(), id, storage.Pagination{Page: 1, PerPage: 10})
+	now := time.Now().UTC()
+	checks, _ := s.store.ListCheckResults(ctx, id, storage.Pagination{Page: 1, PerPage: 50})
+	changes, _ := s.store.ListContentChanges(ctx, id, storage.Pagination{Page: 1, PerPage: 10})
+
+	uptime24h, _ := s.store.GetUptimePercent(ctx, id, now.Add(-24*time.Hour), now)
+	uptime7d, _ := s.store.GetUptimePercent(ctx, id, now.Add(-7*24*time.Hour), now)
+	uptime30d, _ := s.store.GetUptimePercent(ctx, id, now.Add(-30*24*time.Hour), now)
+	p50, p95, p99, _ := s.store.GetResponseTimePercentiles(ctx, id, now.Add(-24*time.Hour), now)
+	totalChecks, upChecks, downChecks, _, _ := s.store.GetCheckCounts(ctx, id, now.Add(-24*time.Hour), now)
+	latestCheck, _ := s.store.GetLatestCheckResult(ctx, id)
+	openIncident, _ := s.store.GetOpenIncident(ctx, id)
 
 	pd := s.newPageData(r, mon.Name, "monitors")
 	pd.Data = map[string]interface{}{
-		"Monitor": mon,
-		"Checks":  checks,
-		"Changes": changes,
+		"Monitor":      mon,
+		"Checks":       checks,
+		"Changes":      changes,
+		"Uptime24h":    uptime24h,
+		"Uptime7d":     uptime7d,
+		"Uptime30d":    uptime30d,
+		"P50":          p50,
+		"P95":          p95,
+		"P99":          p99,
+		"TotalChecks":  totalChecks,
+		"UpChecks":     upChecks,
+		"DownChecks":   downChecks,
+		"LatestCheck":  latestCheck,
+		"OpenIncident": openIncident,
 	}
 	s.render(w, "monitor_detail.html", pd)
 }

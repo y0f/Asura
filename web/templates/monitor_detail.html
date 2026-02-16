@@ -1,83 +1,206 @@
 {{define "title"}}{{.Data.Monitor.Name}}{{end}}
 {{define "content"}}
 {{$mon := .Data.Monitor}}
-<div>
-    <div class="flex items-center justify-between mb-6">
+<div id="monitor-detail" hx-get="" hx-trigger="every 15s" hx-select="#monitor-detail" hx-swap="outerHTML">
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-4">
         <div>
-            <div class="flex items-center gap-3 mb-1">
-                <div class="w-3 h-3 rounded-full {{statusDot $mon.Status}}"></div>
-                <h1 class="text-2xl font-semibold text-white">{{$mon.Name}}</h1>
-                <span class="text-xs px-2.5 py-1 rounded-full border {{statusBg $mon.Status}}">{{$mon.Status}}</span>
+            <div class="flex items-center gap-2 mb-1">
+                <a href="/monitors" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">&larr; Monitors</a>
             </div>
-            <div class="text-sm text-gray-500 ml-6">{{$mon.Type}} &middot; {{$mon.Target}} &middot; every {{$mon.Interval}}s</div>
+            <div class="flex items-center gap-2.5">
+                <div class="w-2.5 h-2.5 rounded-full {{statusDot $mon.Status}}"></div>
+                <h1 class="text-xl font-semibold text-white">{{$mon.Name}}</h1>
+                <span class="text-xs px-2 py-0.5 rounded-full border {{statusBg $mon.Status}}">{{$mon.Status}}</span>
+                {{if not $mon.Enabled}}
+                <span class="text-xs px-2 py-0.5 rounded-full border bg-gray-500/10 text-gray-400 border-gray-500/20">paused</span>
+                {{end}}
+            </div>
+            <div class="text-xs text-gray-500 mt-1 ml-5">{{typeLabel $mon.Type}} &middot; {{$mon.Target}} &middot; every {{$mon.Interval}}s &middot; timeout {{$mon.Timeout}}s</div>
         </div>
         {{if eq $.Role "admin"}}
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
             {{if $mon.Enabled}}
             <form method="POST" action="/monitors/{{$mon.ID}}/pause">
-                <button type="submit" class="px-3 py-1.5 text-xs text-gray-400 border border-border rounded-lg hover:bg-surface-200 transition-colors">Pause</button>
+                <button type="submit" class="px-2.5 py-1 text-xs text-gray-400 border border-border rounded-lg hover:bg-surface-200 transition-colors">Pause</button>
             </form>
             {{else}}
             <form method="POST" action="/monitors/{{$mon.ID}}/resume">
-                <button type="submit" class="px-3 py-1.5 text-xs text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/10 transition-colors">Resume</button>
+                <button type="submit" class="px-2.5 py-1 text-xs text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/10 transition-colors">Resume</button>
             </form>
             {{end}}
-            <a href="/monitors/{{$mon.ID}}/edit" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Edit</a>
+            <a href="/monitors/{{$mon.ID}}/edit" class="px-2.5 py-1 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Edit</a>
             <form method="POST" action="/monitors/{{$mon.ID}}/delete" onsubmit="return confirm('Delete this monitor?')">
-                <button type="submit" class="px-3 py-1.5 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">Delete</button>
+                <button type="submit" class="px-2.5 py-1 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">Delete</button>
             </form>
         </div>
         {{end}}
     </div>
 
-    {{if and $.Data.Checks $.Data.Checks.Data}}
-    <div class="bg-surface-100 border border-border rounded-xl mb-6">
-        <div class="px-5 py-4 border-b border-border">
+    <!-- Active Incident Warning -->
+    {{if .Data.OpenIncident}}
+    <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+        <div class="text-sm text-red-400">
+            Active incident: {{.Data.OpenIncident.Cause}}
+            <a href="/incidents/{{.Data.OpenIncident.ID}}" class="underline hover:text-red-300 ml-1">View &rarr;</a>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Uptime (24h)</div>
+            <div class="text-lg font-bold {{uptimeColor .Data.Uptime24h}}">{{uptimeFmt .Data.Uptime24h}}</div>
+        </div>
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Uptime (7d)</div>
+            <div class="text-lg font-bold {{uptimeColor .Data.Uptime7d}}">{{uptimeFmt .Data.Uptime7d}}</div>
+        </div>
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Uptime (30d)</div>
+            <div class="text-lg font-bold {{uptimeColor .Data.Uptime30d}}">{{uptimeFmt .Data.Uptime30d}}</div>
+        </div>
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Checks (24h)</div>
+            <div class="text-lg font-bold text-white">{{.Data.TotalChecks}}</div>
+            {{if gt .Data.TotalChecks 0}}
+            <div class="flex items-center gap-1.5 mt-1">
+                <span class="text-xs text-emerald-400">{{.Data.UpChecks}} up</span>
+                {{if gt .Data.DownChecks 0}}<span class="text-xs text-red-400">{{.Data.DownChecks}} down</span>{{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <!-- Response Time Stats (only for types with meaningful response times) -->
+    {{if or (eq $mon.Type "http") (eq $mon.Type "tcp") (eq $mon.Type "dns") (eq $mon.Type "icmp") (eq $mon.Type "websocket")}}
+    <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Response p50</div>
+            <div class="text-lg font-bold text-white tabular-nums">{{formatFloat .Data.P50}}</div>
+        </div>
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Response p95</div>
+            <div class="text-lg font-bold text-white tabular-nums">{{formatFloat .Data.P95}}</div>
+        </div>
+        <div class="bg-surface-100 border border-border rounded-xl p-3.5">
+            <div class="text-xs text-gray-500 mb-1">Response p99</div>
+            <div class="text-lg font-bold text-white tabular-nums">{{formatFloat .Data.P99}}</div>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- Type-Specific Info -->
+    {{if and .Data.LatestCheck (eq $mon.Type "tls")}}
+    {{if .Data.LatestCheck.CertExpiry}}
+    <div class="bg-surface-100 border border-border rounded-xl p-3.5 mb-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-xs text-gray-500 mb-1">TLS Certificate Expiry</div>
+                <div class="text-sm font-medium {{certColor .Data.LatestCheck.CertExpiry}}">
+                    {{certDays .Data.LatestCheck.CertExpiry}} days remaining
+                </div>
+            </div>
+            <div class="text-xs text-gray-500">
+                {{.Data.LatestCheck.CertExpiry.Format "Jan 2, 2006 15:04 UTC"}}
+            </div>
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+
+    {{if and .Data.LatestCheck (eq $mon.Type "dns")}}
+    {{$records := parseDNS .Data.LatestCheck.DNSRecords}}
+    {{if $records}}
+    <div class="bg-surface-100 border border-border rounded-xl p-3.5 mb-4">
+        <div class="text-xs text-gray-500 mb-2">DNS Records</div>
+        <div class="space-y-1">
+            {{range $records}}
+            <div class="text-sm text-gray-300 font-mono">{{.}}</div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+
+    <!-- Configuration -->
+    <div class="bg-surface-100 border border-border rounded-xl p-3.5 mb-4">
+        <div class="text-xs text-gray-500 mb-2">Configuration</div>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            <div><span class="text-gray-500">Interval:</span> <span class="text-gray-300">{{$mon.Interval}}s</span></div>
+            <div><span class="text-gray-500">Timeout:</span> <span class="text-gray-300">{{$mon.Timeout}}s</span></div>
+            <div><span class="text-gray-500">Failure threshold:</span> <span class="text-gray-300">{{$mon.FailureThreshold}}</span></div>
+            <div><span class="text-gray-500">Success threshold:</span> <span class="text-gray-300">{{$mon.SuccessThreshold}}</span></div>
+            <div><span class="text-gray-500">Enabled:</span> <span class="{{if $mon.Enabled}}text-emerald-400{{else}}text-gray-500{{end}}">{{if $mon.Enabled}}yes{{else}}no{{end}}</span></div>
+            {{if $mon.TrackChanges}}<div><span class="text-gray-500">Track changes:</span> <span class="text-indigo-400">yes</span></div>{{end}}
+            {{if $mon.Tags}}<div><span class="text-gray-500">Tags:</span> <span class="text-gray-300">{{range $i, $t := $mon.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}</span></div>{{end}}
+        </div>
+    </div>
+
+    <!-- Recent Checks -->
+    <div class="bg-surface-100 border border-border rounded-xl mb-4">
+        <div class="px-4 py-3 border-b border-border">
             <h2 class="text-sm font-medium text-gray-300">Recent Checks</h2>
         </div>
+        {{if and $.Data.Checks $.Data.Checks.Data}}
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
                     <tr class="border-b border-border text-left">
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Response Time</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status Code</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Message</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Time</th>
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Response</th>
+                        {{if or (eq $mon.Type "http") (eq $mon.Type "websocket")}}
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Code</th>
+                        {{end}}
+                        {{if eq $mon.Type "tls"}}
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Cert Expiry</th>
+                        {{end}}
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Message</th>
+                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase">Time</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
                     {{range $.Data.Checks.Data}}
-                    <tr class="hover:bg-surface-200 transition-colors">
-                        <td class="px-5 py-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full {{statusDot .Status}}"></div>
-                                <span class="text-sm {{statusColor .Status}}">{{.Status}}</span>
+                    <tr class="hover:bg-surface-200/50 transition-colors">
+                        <td class="px-4 py-2">
+                            <div class="flex items-center gap-1.5">
+                                <div class="w-1.5 h-1.5 rounded-full {{statusDot .Status}}"></div>
+                                <span class="text-xs {{statusColor .Status}}">{{.Status}}</span>
                             </div>
                         </td>
-                        <td class="px-5 py-3 text-sm text-gray-300">{{formatMs .ResponseTime}}</td>
-                        <td class="px-5 py-3 text-sm text-gray-400">{{if .StatusCode}}{{.StatusCode}}{{else}}-{{end}}</td>
-                        <td class="px-5 py-3 text-sm text-gray-400 truncate max-w-xs">{{if .Message}}{{.Message}}{{else}}-{{end}}</td>
-                        <td class="px-5 py-3 text-sm text-gray-500">{{timeAgo .CreatedAt}}</td>
+                        <td class="px-4 py-2 text-xs text-gray-300 tabular-nums">{{formatMs .ResponseTime}}</td>
+                        {{if or (eq $mon.Type "http") (eq $mon.Type "websocket")}}
+                        <td class="px-4 py-2 text-xs tabular-nums {{if .StatusCode}}{{httpStatusColor .StatusCode}}{{else}}text-gray-600{{end}}">{{if .StatusCode}}{{.StatusCode}}{{else}}-{{end}}</td>
+                        {{end}}
+                        {{if eq $mon.Type "tls"}}
+                        <td class="px-4 py-2 text-xs {{certColor .CertExpiry}}">{{if .CertExpiry}}{{certDays .CertExpiry}}d{{else}}-{{end}}</td>
+                        {{end}}
+                        <td class="px-4 py-2 text-xs text-gray-500 truncate max-w-xs">{{if .Message}}{{.Message}}{{else}}-{{end}}</td>
+                        <td class="px-4 py-2 text-xs text-gray-600">{{timeAgo .CreatedAt}}</td>
                     </tr>
                     {{end}}
                 </tbody>
             </table>
         </div>
+        {{else}}
+        <div class="px-4 py-8 text-center text-gray-600 text-sm">No check results yet</div>
+        {{end}}
     </div>
-    {{end}}
 
+    <!-- Content Changes -->
     {{if and $.Data.Changes $.Data.Changes.Data}}
     <div class="bg-surface-100 border border-border rounded-xl">
-        <div class="px-5 py-4 border-b border-border">
+        <div class="px-4 py-3 border-b border-border">
             <h2 class="text-sm font-medium text-gray-300">Content Changes</h2>
         </div>
         <div class="divide-y divide-border">
             {{range $.Data.Changes.Data}}
-            <div class="px-5 py-4">
-                <div class="text-xs text-gray-500 mb-2">{{timeAgo .CreatedAt}}</div>
+            <div class="px-4 py-3">
+                <div class="text-xs text-gray-500 mb-1.5">{{timeAgo .CreatedAt}}</div>
                 {{if .Diff}}
-                <pre class="text-xs text-gray-300 bg-surface rounded-lg p-3 overflow-x-auto font-mono">{{.Diff}}</pre>
+                <pre class="text-xs text-gray-300 bg-surface rounded-lg p-2.5 overflow-x-auto font-mono">{{.Diff}}</pre>
                 {{end}}
             </div>
             {{end}}

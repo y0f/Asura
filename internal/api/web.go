@@ -152,6 +152,99 @@ var templateFuncs = template.FuncMap{
 		}
 		return string(s[0]-32) + s[1:]
 	},
+	"uptimeFmt": func(pct float64) string {
+		if pct >= 99.995 {
+			return "100%"
+		}
+		return fmt.Sprintf("%.2f%%", pct)
+	},
+	"uptimeColor": func(pct float64) string {
+		if pct >= 99.9 {
+			return "text-emerald-400"
+		}
+		if pct >= 99 {
+			return "text-yellow-400"
+		}
+		return "text-red-400"
+	},
+	"httpStatusColor": func(code int) string {
+		switch {
+		case code >= 200 && code < 300:
+			return "text-emerald-400"
+		case code >= 300 && code < 400:
+			return "text-blue-400"
+		case code >= 400 && code < 500:
+			return "text-yellow-400"
+		case code >= 500:
+			return "text-red-400"
+		default:
+			return "text-gray-500"
+		}
+	},
+	"certDays": func(t *time.Time) int {
+		if t == nil {
+			return -1
+		}
+		return int(time.Until(*t).Hours() / 24)
+	},
+	"certColor": func(t *time.Time) string {
+		if t == nil {
+			return "text-gray-500"
+		}
+		days := int(time.Until(*t).Hours() / 24)
+		if days < 7 {
+			return "text-red-400"
+		}
+		if days < 30 {
+			return "text-yellow-400"
+		}
+		return "text-emerald-400"
+	},
+	"typeLabel": func(t string) string {
+		switch t {
+		case "http":
+			return "HTTP"
+		case "tcp":
+			return "TCP"
+		case "dns":
+			return "DNS"
+		case "icmp":
+			return "ICMP"
+		case "tls":
+			return "TLS"
+		case "websocket":
+			return "WebSocket"
+		case "command":
+			return "Command"
+		case "heartbeat":
+			return "Heartbeat"
+		default:
+			return t
+		}
+	},
+	"formatFloat": func(f float64) string {
+		if f == 0 {
+			return "-"
+		}
+		if f < 1000 {
+			return fmt.Sprintf("%.0fms", f)
+		}
+		return fmt.Sprintf("%.1fs", f/1000)
+	},
+	"parseDNS": func(s string) []string {
+		if s == "" {
+			return nil
+		}
+		var records []string
+		json.Unmarshal([]byte(s), &records)
+		return records
+	},
+	"pctOf": func(part, total int64) float64 {
+		if total == 0 {
+			return 0
+		}
+		return float64(part) / float64(total) * 100
+	},
 }
 
 func (s *Server) loadTemplates() {
@@ -192,6 +285,8 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Security-Policy",
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")
 	if err := t.ExecuteTemplate(w, layoutName, data); err != nil {
 		s.logger.Error("template render", "template", tmpl, "error", err)
 	}

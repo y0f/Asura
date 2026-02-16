@@ -26,23 +26,30 @@
         .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
         .htmx-request .htmx-indicator { opacity: 1; }
         .htmx-request.htmx-indicator { opacity: 1; }
+        .embed-mode aside { display: none !important; }
+        .embed-mode main { margin-left: 0 !important; }
     </style>
+    <script>
+        if (window !== window.top) {
+            document.documentElement.classList.add('embed-mode');
+        }
+    </script>
 </head>
 <body class="bg-surface text-gray-100 min-h-screen" hx-boost="true">
     <div class="flex min-h-screen">
         {{template "sidebar" .}}
-        <main class="flex-1 ml-64">
-            <div class="p-8">
+        <main class="flex-1 ml-56">
+            <div class="p-5">
                 {{if .Flash}}
                 <div x-data="{show: true}" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-                     class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm flex items-center justify-between">
+                     class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm flex items-center justify-between">
                     <span>{{.Flash}}</span>
                     <button @click="show = false" class="text-emerald-400 hover:text-emerald-300">&times;</button>
                 </div>
                 {{end}}
                 {{if .Error}}
                 <div x-data="{show: true}" x-show="show"
-                     class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center justify-between">
+                     class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center justify-between">
                     <span>{{.Error}}</span>
                     <button @click="show = false" class="text-red-400 hover:text-red-300">&times;</button>
                 </div>
@@ -51,52 +58,50 @@
             </div>
         </main>
     </div>
-
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 </body>
 </html>
 {{end}}
 
 {{define "sidebar"}}
-<aside class="fixed left-0 top-0 h-full w-64 bg-surface-100 border-r border-border flex flex-col">
-    <div class="p-6 border-b border-border">
-        <a href="/" class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white text-sm">A</div>
-            <span class="text-lg font-semibold text-white">Asura</span>
+<aside class="fixed left-0 top-0 h-full w-56 bg-surface-100 border-r border-border flex flex-col z-40">
+    <div class="p-4 border-b border-border">
+        <a href="/" class="flex items-center gap-2.5">
+            <div class="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white text-xs">A</div>
+            <span class="text-base font-semibold text-white">Asura</span>
         </a>
     </div>
 
-    <nav class="flex-1 p-4 space-y-1">
-        <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {{if eq .Active "dashboard"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    <nav class="flex-1 p-3 space-y-0.5">
+        <a href="/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm {{if eq .Active "dashboard"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             Dashboard
         </a>
-        <a href="/monitors" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {{if eq .Active "monitors"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <a href="/monitors" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm {{if eq .Active "monitors"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             Monitors
         </a>
-        <a href="/incidents" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {{if eq .Active "incidents"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+        <a href="/incidents" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm {{if eq .Active "incidents"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
             Incidents
         </a>
-        <a href="/notifications" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {{if eq .Active "notifications"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <a href="/notifications" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm {{if eq .Active "notifications"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
             Notifications
         </a>
-        <a href="/maintenance" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm {{if eq .Active "maintenance"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <a href="/maintenance" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm {{if eq .Active "maintenance"}}bg-indigo-500/10 text-indigo-400{{else}}text-gray-400 hover:text-gray-200 hover:bg-surface-200{{end}} transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Maintenance
         </a>
     </nav>
 
-    <div class="p-4 border-t border-border">
+    <div class="p-3 border-t border-border">
         <form action="/logout" method="POST">
-            <button type="submit" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-surface-200 transition-colors w-full">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <button type="submit" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-surface-200 transition-colors w-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 Logout
             </button>
         </form>
-        <div class="mt-2 px-3 text-xs text-gray-600">{{.Version}}</div>
+        <div class="mt-1 px-3 text-xs text-gray-600">{{.Version}}</div>
     </div>
 </aside>
 {{end}}
