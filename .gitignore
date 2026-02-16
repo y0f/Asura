@@ -1,5 +1,4 @@
 /asura
-/asura.exe
 *.db
 *.db-wal
 *.db-shm
@@ -24,4 +23,3 @@ __debug_bin*
 
 # OS
 .DS_Store
-Thumbs.db
