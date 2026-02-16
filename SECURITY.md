@@ -6,7 +6,7 @@ If you discover a security vulnerability, please report it responsibly.
 
 **Do not open a public issue.**
 
-Email: security@asura-monitor.com
+Email: asura@red.tf
 
 Include:
 - Description of the vulnerability
