@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">Asura</h1>
-  <p align="center">Self-hosted uptime monitoring. Single binary. Zero dependencies.</p>
+  <p align="center">A self-contained Go monitoring service with no external runtime dependencies.</p>
   <p align="center">
     <a href="https://github.com/y0f/Asura/actions/workflows/ci.yml"><img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <a href="https://goreportcard.com/report/github.com/y0f/Asura"><img src="https://goreportcard.com/badge/github.com/y0f/Asura" alt="Go Report Card"></a>
@@ -35,7 +35,6 @@ git clone https://github.com/y0f/Asura.git && cd asura && sudo bash install.sh
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
 | **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
-| **Status badges** | Embeddable SVG badges for public monitors |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **SQLite + WAL** | Concurrent reads, single writer, zero config |
