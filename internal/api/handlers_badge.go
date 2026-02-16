@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"time"
 )
@@ -115,6 +116,10 @@ func statusColor(status string) string {
 }
 
 func writeBadgeSVG(w http.ResponseWriter, label, value, color string) {
+	// Escape user-controlled values to prevent SVG/XSS injection
+	label = html.EscapeString(label)
+	value = html.EscapeString(value)
+
 	labelWidth := len(label)*7 + 10
 	valueWidth := len(value)*7 + 10
 	totalWidth := labelWidth + valueWidth

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/asura-monitor/asura/internal/storage"
@@ -31,7 +32,7 @@ func (s *SlackSender) Send(ctx context.Context, channel *storage.NotificationCha
 		return fmt.Errorf("slack webhook_url is required")
 	}
 
-	text := FormatMessage(payload)
+	text := escapeSlackMrkdwn(FormatMessage(payload))
 
 	msg := map[string]interface{}{
 		"text": text,
@@ -70,4 +71,13 @@ func (s *SlackSender) Send(ctx context.Context, channel *storage.NotificationCha
 	}
 
 	return nil
+}
+
+// escapeSlackMrkdwn escapes Slack mrkdwn special characters and link patterns
+// to prevent @everyone/@channel pings and formatting exploits.
+func escapeSlackMrkdwn(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	return s
 }

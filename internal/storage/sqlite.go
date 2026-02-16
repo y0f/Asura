@@ -77,11 +77,20 @@ func runMigrations(db *sql.DB) error {
 
 	for _, m := range migrations {
 		if m.version > currentVersion {
-			if _, err := db.Exec(m.sql); err != nil {
+			tx, err := db.Begin()
+			if err != nil {
+				return fmt.Errorf("migration v%d begin: %w", m.version, err)
+			}
+			if _, err := tx.Exec(m.sql); err != nil {
+				tx.Rollback()
 				return fmt.Errorf("migration v%d: %w", m.version, err)
 			}
-			if _, err := db.Exec("UPDATE schema_version SET version=?", m.version); err != nil {
-				return err
+			if _, err := tx.Exec("UPDATE schema_version SET version=?", m.version); err != nil {
+				tx.Rollback()
+				return fmt.Errorf("migration v%d version update: %w", m.version, err)
+			}
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("migration v%d commit: %w", m.version, err)
 			}
 		}
 	}
@@ -190,6 +199,9 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, p Pagination) (*Paginate
 		}
 		monitors = append(monitors, m)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if monitors == nil {
 		monitors = []*Monitor{}
 	}
@@ -252,6 +264,9 @@ func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, er
 			return nil, err
 		}
 		monitors = append(monitors, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return monitors, nil
 }
@@ -341,6 +356,9 @@ func (s *SQLiteStore) ListCheckResults(ctx context.Context, monitorID int64, p P
 		r.CreatedAt = parseTime(createdAt)
 		r.CertExpiry = parseTimePtr(certExp)
 		results = append(results, &r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if results == nil {
 		results = []*CheckResult{}
@@ -460,6 +478,9 @@ func (s *SQLiteStore) ListIncidents(ctx context.Context, monitorID int64, status
 		inc.ResolvedAt = parseTimePtr(resAt)
 		incidents = append(incidents, &inc)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if incidents == nil {
 		incidents = []*Incident{}
 	}
@@ -541,6 +562,9 @@ func (s *SQLiteStore) ListIncidentEvents(ctx context.Context, incidentID int64) 
 		e.CreatedAt = parseTime(createdAt)
 		events = append(events, &e)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if events == nil {
 		events = []*IncidentEvent{}
 	}
@@ -602,6 +626,9 @@ func (s *SQLiteStore) ListNotificationChannels(ctx context.Context) ([]*Notifica
 		ch.UpdatedAt = parseTime(updatedAt)
 		json.Unmarshal([]byte(eventsStr), &ch.Events)
 		channels = append(channels, &ch)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if channels == nil {
 		channels = []*NotificationChannel{}
@@ -682,6 +709,9 @@ func (s *SQLiteStore) ListMaintenanceWindows(ctx context.Context) ([]*Maintenanc
 		mw.UpdatedAt = parseTime(updatedAt)
 		json.Unmarshal([]byte(monitorIDsStr), &mw.MonitorIDs)
 		windows = append(windows, &mw)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	if windows == nil {
 		windows = []*MaintenanceWindow{}
@@ -810,6 +840,9 @@ func (s *SQLiteStore) ListContentChanges(ctx context.Context, monitorID int64, p
 		c.CreatedAt = parseTime(createdAt)
 		changes = append(changes, &c)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	if changes == nil {
 		changes = []*ContentChange{}
 	}
@@ -858,6 +891,9 @@ func (s *SQLiteStore) GetResponseTimePercentiles(ctx context.Context, monitorID 
 			return 0, 0, 0, err
 		}
 		times = append(times, rt)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, 0, 0, err
 	}
 
 	if len(times) == 0 {
@@ -930,6 +966,9 @@ func (s *SQLiteStore) ListTags(ctx context.Context) ([]string, error) {
 			tagSet[t] = struct{}{}
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	result := make([]string, 0, len(tagSet))
 	for t := range tagSet {
@@ -963,7 +1002,9 @@ func (s *SQLiteStore) PurgeOldData(ctx context.Context, before time.Time) (int64
 	n, _ := res.RowsAffected()
 	totalDeleted += n
 
-	res, err = s.writeDB.ExecContext(ctx, "DELETE FROM incident_events WHERE created_at < ?", ts)
+	res, err = s.writeDB.ExecContext(ctx,
+		`DELETE FROM incident_events WHERE incident_id IN
+		 (SELECT id FROM incidents WHERE status='resolved' AND resolved_at < ?)`, ts)
 	if err != nil {
 		return totalDeleted, err
 	}
@@ -1063,6 +1104,9 @@ func (s *SQLiteStore) ListExpiredHeartbeats(ctx context.Context) ([]*Heartbeat, 
 		}
 		h.LastPingAt = parseTimePtr(lastPing)
 		heartbeats = append(heartbeats, &h)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return heartbeats, nil
 }

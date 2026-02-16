@@ -58,7 +58,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	// No auth required
 	mux.HandleFunc("GET /api/v1/health", s.handleHealth)
-	mux.HandleFunc("GET /metrics", s.handleMetrics)
+	mux.Handle("GET /metrics", readAuth(http.HandlerFunc(s.handleMetrics)))
 	mux.HandleFunc("POST /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
 	mux.HandleFunc("GET /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
 	mux.HandleFunc("GET /api/v1/badge/{id}/status", s.handleBadgeStatus)

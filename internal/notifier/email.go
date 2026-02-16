@@ -39,12 +39,12 @@ func (s *EmailSender) Send(ctx context.Context, channel *storage.NotificationCha
 		port = 587
 	}
 
-	subject := FormatMessage(payload)
+	subject := sanitizeHeader(FormatMessage(payload))
 	bodyText := subject + "\n\n" + string(marshalPayload(payload))
 
 	msg := strings.Builder{}
-	msg.WriteString(fmt.Sprintf("From: %s\r\n", settings.From))
-	msg.WriteString(fmt.Sprintf("To: %s\r\n", strings.Join(settings.To, ",")))
+	msg.WriteString(fmt.Sprintf("From: %s\r\n", sanitizeHeader(settings.From)))
+	msg.WriteString(fmt.Sprintf("To: %s\r\n", sanitizeHeader(strings.Join(settings.To, ","))))
 	msg.WriteString(fmt.Sprintf("Subject: %s\r\n", subject))
 	msg.WriteString("Content-Type: text/plain; charset=UTF-8\r\n")
 	msg.WriteString("\r\n")
@@ -59,4 +59,10 @@ func (s *EmailSender) Send(ctx context.Context, channel *storage.NotificationCha
 	}
 
 	return smtp.SendMail(addr, auth, settings.From, settings.To, []byte(msg.String()))
+}
+
+// sanitizeHeader strips CR and LF to prevent email header injection.
+func sanitizeHeader(s string) string {
+	r := strings.NewReplacer("\r", "", "\n", "")
+	return r.Replace(s)
 }

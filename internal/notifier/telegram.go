@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"time"
@@ -31,7 +32,7 @@ func (s *TelegramSender) Send(ctx context.Context, channel *storage.Notification
 		return fmt.Errorf("telegram bot_token and chat_id are required")
 	}
 
-	text := FormatMessage(payload)
+	text := html.EscapeString(FormatMessage(payload))
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", settings.BotToken)
 
 	body, _ := json.Marshal(map[string]interface{}{

@@ -56,7 +56,7 @@ func (w *HeartbeatWatcher) check(ctx context.Context) {
 			continue // already marked down, incident already exists
 		}
 
-		w.logger.Info("heartbeat expired", "monitor_id", hb.MonitorID, "token", hb.Token)
+		w.logger.Info("heartbeat expired", "monitor_id", hb.MonitorID)
 
 		// Mark heartbeat as down
 		w.store.UpdateHeartbeatStatus(ctx, hb.MonitorID, "down")

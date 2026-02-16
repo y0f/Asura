@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -216,17 +215,9 @@ func (rl *rateLimiter) middleware() func(http.Handler) http.Handler {
 }
 
 func extractIP(r *http.Request) string {
-	// Check X-Forwarded-For first (first IP only)
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.SplitN(xff, ",", 2)
-		ip := strings.TrimSpace(parts[0])
-		if ip != "" {
-			return ip
-		}
-	}
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return strings.TrimSpace(xri)
-	}
+	// Use RemoteAddr directly to prevent rate-limit bypass via spoofed headers.
+	// If running behind a trusted reverse proxy, configure the proxy to set
+	// RemoteAddr or use a middleware that validates X-Forwarded-For chains.
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

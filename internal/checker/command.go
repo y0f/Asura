@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -28,22 +29,31 @@ func (c *CommandChecker) Check(ctx context.Context, monitor *storage.Monitor) (*
 		return &Result{Status: "down", Message: "no command specified"}, nil
 	}
 
-	// Security: validate command against allowlist
-	if len(c.Allowlist) > 0 {
-		allowed := false
-		for _, prefix := range c.Allowlist {
-			if settings.Command == prefix || strings.HasPrefix(settings.Command, prefix+"/") || strings.HasPrefix(settings.Command, prefix+"\\") {
-				allowed = true
-				break
-			}
-		}
-		if !allowed {
-			return &Result{
-				Status:  "down",
-				Message: fmt.Sprintf("command not in allowlist: %s", settings.Command),
-			}, nil
+	// Security: validate command against allowlist (deny all if empty)
+	if len(c.Allowlist) == 0 {
+		return &Result{
+			Status:  "down",
+			Message: "command execution disabled: no allowlist configured",
+		}, nil
+	}
+
+	// Resolve to canonical path to prevent traversal attacks
+	cleanCmd := filepath.Clean(settings.Command)
+	allowed := false
+	for _, prefix := range c.Allowlist {
+		cleanPrefix := filepath.Clean(prefix)
+		if cleanCmd == cleanPrefix {
+			allowed = true
+			break
 		}
 	}
+	if !allowed {
+		return &Result{
+			Status:  "down",
+			Message: fmt.Sprintf("command not in allowlist: %s", settings.Command),
+		}, nil
+	}
+	settings.Command = cleanCmd
 
 	start := time.Now()
 	cmd := exec.CommandContext(ctx, settings.Command, settings.Args...)
