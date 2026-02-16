@@ -1,0 +1,87 @@
+# Asura Configuration
+# Copy to config.yaml and adjust values.
+# Environment variables can be used: ${VAR_NAME}
+
+server:
+  # Address to listen on
+  listen: ":8080"
+
+  # TLS certificate paths (optional, omit for plain HTTP)
+  # tls_cert: /path/to/cert.pem
+  # tls_key: /path/to/key.pem
+
+  # Request timeouts
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+  # Maximum request body size in bytes (default: 1MB)
+  max_body_size: 1048576
+
+  # CORS allowed origins (empty = no CORS headers)
+  cors_origins:
+    - "http://localhost:3000"
+    # - "https://your-app.example.com"
+
+  # Per-IP rate limiting
+  rate_limit_per_sec: 10
+  rate_limit_burst: 20
+
+database:
+  # SQLite database file path
+  path: "asura.db"
+
+  # Number of read-only connections (default: number of CPUs)
+  max_read_conns: 4
+
+  # How many days to keep check results, incidents, etc.
+  retention_days: 90
+
+  # How often to run the retention cleanup
+  retention_period: 1h
+
+auth:
+  # API keys for authentication.
+  # Generate a hash with: asura --hash-key "your-secret-key"
+  api_keys:
+    - name: "admin"
+      hash: "${ASURA_ADMIN_KEY_HASH}"
+      role: "admin"          # Full read/write access
+
+    - name: "dashboard"
+      hash: "${ASURA_READ_KEY_HASH}"
+      role: "readonly"       # Read-only access
+
+monitor:
+  # Number of concurrent check workers
+  workers: 10
+
+  # Default timeout for checks (overridden per-monitor)
+  default_timeout: 10s
+
+  # Default check interval (overridden per-monitor)
+  default_interval: 60s
+
+  # Number of consecutive failures before opening an incident
+  failure_threshold: 3
+
+  # Number of consecutive successes before auto-resolving
+  success_threshold: 1
+
+  # Timeout for command-type checks
+  command_timeout: 30s
+
+  # How often to check for expired heartbeats
+  heartbeat_check_interval: 30s
+
+  # Allowlist of command paths (empty = all commands allowed, NOT recommended)
+  # command_allowlist:
+  #   - /usr/local/bin/check_health
+  #   - /opt/scripts/verify
+
+logging:
+  # Log level: debug, info, warn, error
+  level: "info"
+
+  # Log format: text or json
+  format: "text"

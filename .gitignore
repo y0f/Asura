@@ -1,0 +1,25 @@
+/asura
+*.db
+*.db-wal
+*.db-shm
+config.yaml
+.env
+*.pem
+*.key
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Go artifacts
+coverage.out
+*.cover
+*.prof
+__debug_bin*
+
+# OS
+.DS_Store
