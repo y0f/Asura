@@ -1,0 +1,260 @@
+package monitor
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"log/slog"
+	"time"
+
+	"github.com/asura-monitor/asura/internal/assertion"
+	"github.com/asura-monitor/asura/internal/checker"
+	"github.com/asura-monitor/asura/internal/diff"
+	"github.com/asura-monitor/asura/internal/incident"
+	"github.com/asura-monitor/asura/internal/storage"
+)
+
+// Pipeline orchestrates the full monitoring flow:
+// Scheduler -> Workers -> Result Processor -> Incident Manager -> Notifications
+type Pipeline struct {
+	store       storage.Store
+	registry    *checker.Registry
+	incMgr      *incident.Manager
+	logger      *slog.Logger
+	scheduler   *Scheduler
+	jobs        chan Job
+	results     chan WorkerResult
+	notifyChan  chan NotificationEvent
+	workers     int
+}
+
+// NotificationEvent is emitted when something noteworthy happens.
+type NotificationEvent struct {
+	EventType string
+	Incident  *storage.Incident
+	Monitor   *storage.Monitor
+	Change    *storage.ContentChange
+}
+
+// NewPipeline creates the pipeline with all channels.
+func NewPipeline(store storage.Store, registry *checker.Registry, incMgr *incident.Manager, workers int, logger *slog.Logger) *Pipeline {
+	jobs := make(chan Job, workers*2)
+	results := make(chan WorkerResult, workers*2)
+	notifyChan := make(chan NotificationEvent, 100)
+
+	return &Pipeline{
+		store:      store,
+		registry:   registry,
+		incMgr:     incMgr,
+		logger:     logger,
+		scheduler:  NewScheduler(store, jobs, logger),
+		jobs:       jobs,
+		results:    results,
+		notifyChan: notifyChan,
+		workers:    workers,
+	}
+}
+
+// NotifyChan returns the channel for notification events.
+func (p *Pipeline) NotifyChan() <-chan NotificationEvent {
+	return p.notifyChan
+}
+
+// ReloadMonitors triggers a scheduler reload.
+func (p *Pipeline) ReloadMonitors() {
+	p.scheduler.TriggerReload()
+}
+
+// Run starts all pipeline goroutines.
+func (p *Pipeline) Run(ctx context.Context) {
+	// Start scheduler
+	go p.scheduler.Run(ctx)
+
+	// Start worker pool
+	pool := NewPool(p.workers, p.registry, p.jobs, p.results, p.logger)
+	go pool.Run(ctx)
+
+	// Start result processor
+	p.processResults(ctx)
+}
+
+func (p *Pipeline) processResults(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case wr, ok := <-p.results:
+			if !ok {
+				return
+			}
+			p.handleResult(ctx, wr)
+		}
+	}
+}
+
+func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
+	mon := wr.Monitor
+
+	if wr.Err != nil {
+		p.logger.Error("check error", "monitor_id", mon.ID, "error", wr.Err)
+		wr.Result = &checker.Result{
+			Status:  "down",
+			Message: wr.Err.Error(),
+		}
+	}
+
+	result := wr.Result
+
+	// Run assertions
+	finalStatus := result.Status
+	if len(mon.Assertions) > 0 && string(mon.Assertions) != "[]" {
+		assertionResult := assertion.Evaluate(mon.Assertions, result.StatusCode, result.Body,
+			result.Headers, result.ResponseTime, result.CertExpiry, result.DNSRecords)
+		if !assertionResult.Pass {
+			if assertionResult.Degraded {
+				finalStatus = "degraded"
+			} else {
+				finalStatus = "down"
+			}
+			if result.Message == "" {
+				result.Message = assertionResult.Message
+			} else {
+				result.Message += "; " + assertionResult.Message
+			}
+		}
+	}
+
+	headersJSON, _ := json.Marshal(result.Headers)
+	dnsJSON, _ := json.Marshal(result.DNSRecords)
+
+	var certExpiry *time.Time
+	if result.CertExpiry != nil {
+		t := time.Unix(*result.CertExpiry, 0)
+		certExpiry = &t
+	}
+
+	cr := &storage.CheckResult{
+		MonitorID:    mon.ID,
+		Status:       finalStatus,
+		ResponseTime: result.ResponseTime,
+		StatusCode:   result.StatusCode,
+		Message:      result.Message,
+		Headers:      string(headersJSON),
+		Body:         result.Body,
+		BodyHash:     result.BodyHash,
+		CertExpiry:   certExpiry,
+		DNSRecords:   string(dnsJSON),
+	}
+
+	if err := p.store.InsertCheckResult(ctx, cr); err != nil {
+		p.logger.Error("insert check result", "error", err)
+		return
+	}
+
+	// Update monitor status
+	now := time.Now()
+	status, err := p.store.GetMonitorStatus(ctx, mon.ID)
+	if err != nil {
+		status = &storage.MonitorStatus{MonitorID: mon.ID}
+	}
+
+	status.Status = finalStatus
+	status.LastCheckAt = &now
+
+	if finalStatus == "up" {
+		status.ConsecSuccesses++
+		status.ConsecFails = 0
+	} else {
+		status.ConsecFails++
+		status.ConsecSuccesses = 0
+	}
+
+	// Content change detection
+	if mon.TrackChanges && result.BodyHash != "" {
+		oldHash := status.LastBodyHash
+		if oldHash != "" && oldHash != result.BodyHash {
+			p.handleContentChange(ctx, mon, oldHash, result.BodyHash, result.Body, status)
+		}
+		status.LastBodyHash = result.BodyHash
+	} else if result.BodyHash != "" {
+		status.LastBodyHash = result.BodyHash
+	}
+
+	if err := p.store.UpsertMonitorStatus(ctx, status); err != nil {
+		p.logger.Error("upsert monitor status", "error", err)
+	}
+
+	// Process incidents
+	p.processIncidents(ctx, mon, finalStatus, status, cr.Message)
+}
+
+func (p *Pipeline) processIncidents(ctx context.Context, mon *storage.Monitor, finalStatus string, status *storage.MonitorStatus, message string) {
+	inMaintenance, _ := p.store.IsMonitorInMaintenance(ctx, mon.ID, time.Now())
+
+	if finalStatus != "up" && status.ConsecFails >= mon.FailureThreshold {
+		inc, created, err := p.incMgr.ProcessFailure(ctx, mon.ID, mon.Name, message)
+		if err != nil {
+			p.logger.Error("process failure", "error", err)
+			return
+		}
+		if created && !inMaintenance {
+			p.emitNotification("incident.created", inc, mon, nil)
+		}
+	} else if finalStatus == "up" && status.ConsecSuccesses >= mon.SuccessThreshold {
+		inc, resolved, err := p.incMgr.ProcessRecovery(ctx, mon.ID)
+		if err != nil {
+			p.logger.Error("process recovery", "error", err)
+			return
+		}
+		if resolved && !inMaintenance {
+			p.emitNotification("incident.resolved", inc, mon, nil)
+		}
+	}
+}
+
+func (p *Pipeline) handleContentChange(ctx context.Context, mon *storage.Monitor, oldHash, newHash, newBody string, status *storage.MonitorStatus) {
+	// Retrieve old body from last check result to compute diff
+	oldBody := ""
+	latest, err := p.store.GetLatestCheckResult(ctx, mon.ID)
+	if err == nil && latest != nil {
+		oldBody = latest.Body
+	}
+
+	diffText := diff.Compute(oldBody, newBody)
+
+	change := &storage.ContentChange{
+		MonitorID: mon.ID,
+		OldHash:   oldHash,
+		NewHash:   newHash,
+		Diff:      diffText,
+		OldBody:   oldBody,
+		NewBody:   newBody,
+	}
+
+	if err := p.store.InsertContentChange(ctx, change); err != nil {
+		p.logger.Error("insert content change", "error", err)
+		return
+	}
+
+	p.emitNotification("content.changed", nil, mon, change)
+}
+
+func (p *Pipeline) emitNotification(eventType string, inc *storage.Incident, mon *storage.Monitor, change *storage.ContentChange) {
+	select {
+	case p.notifyChan <- NotificationEvent{
+		EventType: eventType,
+		Incident:  inc,
+		Monitor:   mon,
+		Change:    change,
+	}:
+	default:
+		p.logger.Warn("notification channel full, dropping event", "event", eventType)
+	}
+}
+
+// HashBody computes SHA-256 hash of content.
+func HashBody(body string) string {
+	h := sha256.Sum256([]byte(body))
+	return hex.EncodeToString(h[:])
+}

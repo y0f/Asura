@@ -1,0 +1,75 @@
+package storage
+
+import (
+	"context"
+	"time"
+)
+
+// Store defines the complete storage interface.
+type Store interface {
+	// Monitors
+	CreateMonitor(ctx context.Context, m *Monitor) error
+	GetMonitor(ctx context.Context, id int64) (*Monitor, error)
+	ListMonitors(ctx context.Context, p Pagination) (*PaginatedResult, error)
+	UpdateMonitor(ctx context.Context, m *Monitor) error
+	DeleteMonitor(ctx context.Context, id int64) error
+	SetMonitorEnabled(ctx context.Context, id int64, enabled bool) error
+	GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, error)
+
+	// Monitor status (runtime state)
+	GetMonitorStatus(ctx context.Context, monitorID int64) (*MonitorStatus, error)
+	UpsertMonitorStatus(ctx context.Context, s *MonitorStatus) error
+
+	// Check results
+	InsertCheckResult(ctx context.Context, r *CheckResult) error
+	ListCheckResults(ctx context.Context, monitorID int64, p Pagination) (*PaginatedResult, error)
+	GetLatestCheckResult(ctx context.Context, monitorID int64) (*CheckResult, error)
+
+	// Incidents
+	CreateIncident(ctx context.Context, inc *Incident) error
+	GetIncident(ctx context.Context, id int64) (*Incident, error)
+	ListIncidents(ctx context.Context, monitorID int64, status string, p Pagination) (*PaginatedResult, error)
+	UpdateIncident(ctx context.Context, inc *Incident) error
+	GetOpenIncident(ctx context.Context, monitorID int64) (*Incident, error)
+
+	// Incident events
+	InsertIncidentEvent(ctx context.Context, e *IncidentEvent) error
+	ListIncidentEvents(ctx context.Context, incidentID int64) ([]*IncidentEvent, error)
+
+	// Notification channels
+	CreateNotificationChannel(ctx context.Context, ch *NotificationChannel) error
+	GetNotificationChannel(ctx context.Context, id int64) (*NotificationChannel, error)
+	ListNotificationChannels(ctx context.Context) ([]*NotificationChannel, error)
+	UpdateNotificationChannel(ctx context.Context, ch *NotificationChannel) error
+	DeleteNotificationChannel(ctx context.Context, id int64) error
+
+	// Maintenance windows
+	CreateMaintenanceWindow(ctx context.Context, mw *MaintenanceWindow) error
+	GetMaintenanceWindow(ctx context.Context, id int64) (*MaintenanceWindow, error)
+	ListMaintenanceWindows(ctx context.Context) ([]*MaintenanceWindow, error)
+	UpdateMaintenanceWindow(ctx context.Context, mw *MaintenanceWindow) error
+	DeleteMaintenanceWindow(ctx context.Context, id int64) error
+	IsMonitorInMaintenance(ctx context.Context, monitorID int64, at time.Time) (bool, error)
+
+	// Content changes
+	InsertContentChange(ctx context.Context, c *ContentChange) error
+	ListContentChanges(ctx context.Context, monitorID int64, p Pagination) (*PaginatedResult, error)
+
+	// Analytics
+	GetUptimePercent(ctx context.Context, monitorID int64, from, to time.Time) (float64, error)
+	GetResponseTimePercentiles(ctx context.Context, monitorID int64, from, to time.Time) (p50, p95, p99 float64, err error)
+	GetCheckCounts(ctx context.Context, monitorID int64, from, to time.Time) (total, up, down, degraded int64, err error)
+	CountMonitorsByStatus(ctx context.Context) (up, down, degraded, paused int64, err error)
+
+	// Tags
+	ListTags(ctx context.Context) ([]string, error)
+
+	// Audit
+	InsertAudit(ctx context.Context, entry *AuditEntry) error
+
+	// Data retention
+	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
+
+	// Lifecycle
+	Close() error
+}
