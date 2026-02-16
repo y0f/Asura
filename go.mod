@@ -3,7 +3,7 @@ module github.com/asura-monitor/asura
 go 1.24.0
 
 require (
-	github.com/coder/websocket v1.8.12
+	github.com/coder/websocket v1.8.14
 	golang.org/x/net v0.50.0
 	golang.org/x/time v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
