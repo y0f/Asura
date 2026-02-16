@@ -3,7 +3,7 @@
 <div x-data="{showForm: false, editId: 0, formData: {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}}">
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold text-white">Notification Channels</h1>
-        {{if eq .Role "admin"}}
+        {{if index .Perms "notifications.write"}}
         <button @click="showForm = true; editId = 0; formData = {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}"
                 class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
             + New Channel
@@ -25,7 +25,7 @@
             <div class="text-xs text-gray-500 mb-4">
                 Events: {{range $i, $e := .Events}}{{if $i}}, {{end}}{{$e}}{{end}}
             </div>
-            {{if eq $.Role "admin"}}
+            {{if index $.Perms "notifications.write"}}
             <div class="flex items-center gap-2">
                 <form method="POST" action="/notifications/{{.ID}}/test" class="inline">
                     <button type="submit" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Test</button>

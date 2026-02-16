@@ -231,7 +231,7 @@ func bodyLimit(maxBytes int64) func(http.Handler) http.Handler {
 	}
 }
 
-func auth(cfg *config.Config, requiredRole string) func(http.Handler) http.Handler {
+func auth(cfg *config.Config, perm string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := r.Header.Get("X-API-Key")
@@ -246,8 +246,8 @@ func auth(cfg *config.Config, requiredRole string) func(http.Handler) http.Handl
 				return
 			}
 
-			if requiredRole == "admin" && apiKey.Role != "admin" {
-				writeError(w, http.StatusForbidden, "admin access required")
+			if !apiKey.HasPermission(perm) {
+				writeError(w, http.StatusForbidden, "missing permission: "+perm)
 				return
 			}
 

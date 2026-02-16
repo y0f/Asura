@@ -58,8 +58,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) registerRoutes(mux *http.ServeMux) {
-	readAuth := auth(s.cfg, "readonly")
-	adminAuth := auth(s.cfg, "admin")
+	monRead := auth(s.cfg, "monitors.read")
+	monWrite := auth(s.cfg, "monitors.write")
+	incRead := auth(s.cfg, "incidents.read")
+	incWrite := auth(s.cfg, "incidents.write")
+	notifRead := auth(s.cfg, "notifications.read")
+	notifWrite := auth(s.cfg, "notifications.write")
+	maintRead := auth(s.cfg, "maintenance.read")
+	maintWrite := auth(s.cfg, "maintenance.write")
+	metricsRead := auth(s.cfg, "metrics.read")
 
 	// Static files
 	staticFS, _ := fs.Sub(web.FS, "static")
@@ -71,8 +78,8 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /logout", s.handleWebLogout)
 
 	webAuth := s.webAuth
-	webAdmin := func(h http.HandlerFunc) http.Handler {
-		return webAuth(s.webAdminOnly(http.HandlerFunc(h)))
+	webPerm := func(perm string, h http.HandlerFunc) http.Handler {
+		return webAuth(s.webRequirePerm(perm, http.HandlerFunc(h)))
 	}
 
 	mux.Handle("GET /{$}", webAuth(http.HandlerFunc(s.handleWebDashboard)))
@@ -80,66 +87,65 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /monitors/new", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
 	mux.Handle("GET /monitors/{id}", webAuth(http.HandlerFunc(s.handleWebMonitorDetail)))
 	mux.Handle("GET /monitors/{id}/edit", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
-	mux.Handle("POST /monitors", webAdmin(s.handleWebMonitorCreate))
-	mux.Handle("POST /monitors/{id}", webAdmin(s.handleWebMonitorUpdate))
-	mux.Handle("POST /monitors/{id}/delete", webAdmin(s.handleWebMonitorDelete))
-	mux.Handle("POST /monitors/{id}/pause", webAdmin(s.handleWebMonitorPause))
-	mux.Handle("POST /monitors/{id}/resume", webAdmin(s.handleWebMonitorResume))
+	mux.Handle("POST /monitors", webPerm("monitors.write", s.handleWebMonitorCreate))
+	mux.Handle("POST /monitors/{id}", webPerm("monitors.write", s.handleWebMonitorUpdate))
+	mux.Handle("POST /monitors/{id}/delete", webPerm("monitors.write", s.handleWebMonitorDelete))
+	mux.Handle("POST /monitors/{id}/pause", webPerm("monitors.write", s.handleWebMonitorPause))
+	mux.Handle("POST /monitors/{id}/resume", webPerm("monitors.write", s.handleWebMonitorResume))
 
 	mux.Handle("GET /incidents", webAuth(http.HandlerFunc(s.handleWebIncidents)))
 	mux.Handle("GET /incidents/{id}", webAuth(http.HandlerFunc(s.handleWebIncidentDetail)))
-	mux.Handle("POST /incidents/{id}/ack", webAdmin(s.handleWebIncidentAck))
-	mux.Handle("POST /incidents/{id}/resolve", webAdmin(s.handleWebIncidentResolve))
+	mux.Handle("POST /incidents/{id}/ack", webPerm("incidents.write", s.handleWebIncidentAck))
+	mux.Handle("POST /incidents/{id}/resolve", webPerm("incidents.write", s.handleWebIncidentResolve))
 
 	mux.Handle("GET /notifications", webAuth(http.HandlerFunc(s.handleWebNotifications)))
-	mux.Handle("POST /notifications", webAdmin(s.handleWebNotificationCreate))
-	mux.Handle("POST /notifications/{id}", webAdmin(s.handleWebNotificationUpdate))
-	mux.Handle("POST /notifications/{id}/delete", webAdmin(s.handleWebNotificationDelete))
-	mux.Handle("POST /notifications/{id}/test", webAdmin(s.handleWebNotificationTest))
+	mux.Handle("POST /notifications", webPerm("notifications.write", s.handleWebNotificationCreate))
+	mux.Handle("POST /notifications/{id}", webPerm("notifications.write", s.handleWebNotificationUpdate))
+	mux.Handle("POST /notifications/{id}/delete", webPerm("notifications.write", s.handleWebNotificationDelete))
+	mux.Handle("POST /notifications/{id}/test", webPerm("notifications.write", s.handleWebNotificationTest))
 
 	mux.Handle("GET /maintenance", webAuth(http.HandlerFunc(s.handleWebMaintenance)))
-	mux.Handle("POST /maintenance", webAdmin(s.handleWebMaintenanceCreate))
-	mux.Handle("POST /maintenance/{id}", webAdmin(s.handleWebMaintenanceUpdate))
-	mux.Handle("POST /maintenance/{id}/delete", webAdmin(s.handleWebMaintenanceDelete))
+	mux.Handle("POST /maintenance", webPerm("maintenance.write", s.handleWebMaintenanceCreate))
+	mux.Handle("POST /maintenance/{id}", webPerm("maintenance.write", s.handleWebMaintenanceUpdate))
+	mux.Handle("POST /maintenance/{id}/delete", webPerm("maintenance.write", s.handleWebMaintenanceDelete))
 
-	// API
 	mux.HandleFunc("GET /api/v1/health", s.handleHealth)
-	mux.Handle("GET /metrics", readAuth(http.HandlerFunc(s.handleMetrics)))
+	mux.Handle("GET /metrics", metricsRead(http.HandlerFunc(s.handleMetrics)))
 	mux.HandleFunc("POST /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
 	mux.HandleFunc("GET /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
 	mux.HandleFunc("GET /api/v1/badge/{id}/status", s.handleBadgeStatus)
 	mux.HandleFunc("GET /api/v1/badge/{id}/uptime", s.handleBadgeUptime)
 	mux.HandleFunc("GET /api/v1/badge/{id}/response", s.handleBadgeResponseTime)
 
-	mux.Handle("GET /api/v1/monitors", readAuth(http.HandlerFunc(s.handleListMonitors)))
-	mux.Handle("GET /api/v1/monitors/{id}", readAuth(http.HandlerFunc(s.handleGetMonitor)))
-	mux.Handle("GET /api/v1/monitors/{id}/checks", readAuth(http.HandlerFunc(s.handleListChecks)))
-	mux.Handle("GET /api/v1/monitors/{id}/metrics", readAuth(http.HandlerFunc(s.handleMonitorMetrics)))
-	mux.Handle("GET /api/v1/monitors/{id}/changes", readAuth(http.HandlerFunc(s.handleListChanges)))
+	mux.Handle("GET /api/v1/monitors", monRead(http.HandlerFunc(s.handleListMonitors)))
+	mux.Handle("GET /api/v1/monitors/{id}", monRead(http.HandlerFunc(s.handleGetMonitor)))
+	mux.Handle("GET /api/v1/monitors/{id}/checks", monRead(http.HandlerFunc(s.handleListChecks)))
+	mux.Handle("GET /api/v1/monitors/{id}/metrics", monRead(http.HandlerFunc(s.handleMonitorMetrics)))
+	mux.Handle("GET /api/v1/monitors/{id}/changes", monRead(http.HandlerFunc(s.handleListChanges)))
 
-	mux.Handle("GET /api/v1/incidents", readAuth(http.HandlerFunc(s.handleListIncidents)))
-	mux.Handle("GET /api/v1/incidents/{id}", readAuth(http.HandlerFunc(s.handleGetIncident)))
+	mux.Handle("GET /api/v1/incidents", incRead(http.HandlerFunc(s.handleListIncidents)))
+	mux.Handle("GET /api/v1/incidents/{id}", incRead(http.HandlerFunc(s.handleGetIncident)))
 
-	mux.Handle("GET /api/v1/notifications", readAuth(http.HandlerFunc(s.handleListNotifications)))
-	mux.Handle("GET /api/v1/maintenance", readAuth(http.HandlerFunc(s.handleListMaintenance)))
-	mux.Handle("GET /api/v1/overview", readAuth(http.HandlerFunc(s.handleOverview)))
-	mux.Handle("GET /api/v1/tags", readAuth(http.HandlerFunc(s.handleListTags)))
+	mux.Handle("GET /api/v1/notifications", notifRead(http.HandlerFunc(s.handleListNotifications)))
+	mux.Handle("GET /api/v1/maintenance", maintRead(http.HandlerFunc(s.handleListMaintenance)))
+	mux.Handle("GET /api/v1/overview", monRead(http.HandlerFunc(s.handleOverview)))
+	mux.Handle("GET /api/v1/tags", monRead(http.HandlerFunc(s.handleListTags)))
 
-	mux.Handle("POST /api/v1/monitors", adminAuth(http.HandlerFunc(s.handleCreateMonitor)))
-	mux.Handle("PUT /api/v1/monitors/{id}", adminAuth(http.HandlerFunc(s.handleUpdateMonitor)))
-	mux.Handle("DELETE /api/v1/monitors/{id}", adminAuth(http.HandlerFunc(s.handleDeleteMonitor)))
-	mux.Handle("POST /api/v1/monitors/{id}/pause", adminAuth(http.HandlerFunc(s.handlePauseMonitor)))
-	mux.Handle("POST /api/v1/monitors/{id}/resume", adminAuth(http.HandlerFunc(s.handleResumeMonitor)))
+	mux.Handle("POST /api/v1/monitors", monWrite(http.HandlerFunc(s.handleCreateMonitor)))
+	mux.Handle("PUT /api/v1/monitors/{id}", monWrite(http.HandlerFunc(s.handleUpdateMonitor)))
+	mux.Handle("DELETE /api/v1/monitors/{id}", monWrite(http.HandlerFunc(s.handleDeleteMonitor)))
+	mux.Handle("POST /api/v1/monitors/{id}/pause", monWrite(http.HandlerFunc(s.handlePauseMonitor)))
+	mux.Handle("POST /api/v1/monitors/{id}/resume", monWrite(http.HandlerFunc(s.handleResumeMonitor)))
 
-	mux.Handle("POST /api/v1/incidents/{id}/ack", adminAuth(http.HandlerFunc(s.handleAckIncident)))
-	mux.Handle("POST /api/v1/incidents/{id}/resolve", adminAuth(http.HandlerFunc(s.handleResolveIncident)))
+	mux.Handle("POST /api/v1/incidents/{id}/ack", incWrite(http.HandlerFunc(s.handleAckIncident)))
+	mux.Handle("POST /api/v1/incidents/{id}/resolve", incWrite(http.HandlerFunc(s.handleResolveIncident)))
 
-	mux.Handle("POST /api/v1/notifications", adminAuth(http.HandlerFunc(s.handleCreateNotification)))
-	mux.Handle("PUT /api/v1/notifications/{id}", adminAuth(http.HandlerFunc(s.handleUpdateNotification)))
-	mux.Handle("DELETE /api/v1/notifications/{id}", adminAuth(http.HandlerFunc(s.handleDeleteNotification)))
-	mux.Handle("POST /api/v1/notifications/{id}/test", adminAuth(http.HandlerFunc(s.handleTestNotification)))
+	mux.Handle("POST /api/v1/notifications", notifWrite(http.HandlerFunc(s.handleCreateNotification)))
+	mux.Handle("PUT /api/v1/notifications/{id}", notifWrite(http.HandlerFunc(s.handleUpdateNotification)))
+	mux.Handle("DELETE /api/v1/notifications/{id}", notifWrite(http.HandlerFunc(s.handleDeleteNotification)))
+	mux.Handle("POST /api/v1/notifications/{id}/test", notifWrite(http.HandlerFunc(s.handleTestNotification)))
 
-	mux.Handle("POST /api/v1/maintenance", adminAuth(http.HandlerFunc(s.handleCreateMaintenance)))
-	mux.Handle("PUT /api/v1/maintenance/{id}", adminAuth(http.HandlerFunc(s.handleUpdateMaintenance)))
-	mux.Handle("DELETE /api/v1/maintenance/{id}", adminAuth(http.HandlerFunc(s.handleDeleteMaintenance)))
+	mux.Handle("POST /api/v1/maintenance", maintWrite(http.HandlerFunc(s.handleCreateMaintenance)))
+	mux.Handle("PUT /api/v1/maintenance/{id}", maintWrite(http.HandlerFunc(s.handleUpdateMaintenance)))
+	mux.Handle("DELETE /api/v1/maintenance/{id}", maintWrite(http.HandlerFunc(s.handleDeleteMaintenance)))
 }

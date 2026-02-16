@@ -44,10 +44,46 @@ type AuthConfig struct {
 }
 
 type APIKeyConfig struct {
-	Name     string `yaml:"name"`
-	Hash     string `yaml:"hash"`
-	Role     string `yaml:"role"` // "admin" or "readonly"
-	rawKey   string // only set during HashPlaintext
+	Name        string   `yaml:"name"`
+	Hash        string   `yaml:"hash"`
+	Role        string   `yaml:"role,omitempty"`
+	SuperAdmin  bool     `yaml:"super_admin,omitempty"`
+	Permissions []string `yaml:"permissions,omitempty"`
+	rawKey      string
+}
+
+var AllPermissions = []string{
+	"monitors.read", "monitors.write",
+	"incidents.read", "incidents.write",
+	"notifications.read", "notifications.write",
+	"maintenance.read", "maintenance.write",
+	"metrics.read",
+}
+
+func (k *APIKeyConfig) HasPermission(perm string) bool {
+	if k.SuperAdmin {
+		return true
+	}
+	for _, p := range k.Permissions {
+		if p == perm {
+			return true
+		}
+	}
+	return false
+}
+
+func (k *APIKeyConfig) PermissionMap() map[string]bool {
+	m := make(map[string]bool)
+	if k.SuperAdmin {
+		for _, p := range AllPermissions {
+			m[p] = true
+		}
+		return m
+	}
+	for _, p := range k.Permissions {
+		m[p] = true
+	}
+	return m
 }
 
 type MonitorConfig struct {
@@ -161,15 +197,36 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("monitor.success_threshold must be positive")
 	}
 
-	for i, key := range c.Auth.APIKeys {
+	validPerms := make(map[string]bool)
+	for _, p := range AllPermissions {
+		validPerms[p] = true
+	}
+
+	for i := range c.Auth.APIKeys {
+		key := &c.Auth.APIKeys[i]
 		if key.Name == "" {
 			return fmt.Errorf("auth.api_keys[%d].name is required", i)
 		}
 		if key.Hash == "" {
 			return fmt.Errorf("auth.api_keys[%d].hash is required", i)
 		}
-		if key.Role != "admin" && key.Role != "readonly" {
-			return fmt.Errorf("auth.api_keys[%d].role must be 'admin' or 'readonly'", i)
+		if key.Role == "admin" {
+			key.SuperAdmin = true
+			key.Role = ""
+		} else if key.Role == "readonly" {
+			key.Permissions = []string{
+				"monitors.read", "incidents.read",
+				"notifications.read", "maintenance.read", "metrics.read",
+			}
+			key.Role = ""
+		}
+		if !key.SuperAdmin && len(key.Permissions) == 0 {
+			return fmt.Errorf("auth.api_keys[%d] must have super_admin or permissions", i)
+		}
+		for _, p := range key.Permissions {
+			if !validPerms[p] {
+				return fmt.Errorf("auth.api_keys[%d] invalid permission: %s", i, p)
+			}
 		}
 	}
 

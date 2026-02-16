@@ -35,8 +35,10 @@ func testServer(t *testing.T) (*Server, string) {
 
 	cfg := config.Defaults()
 	cfg.Auth.APIKeys = []config.APIKeyConfig{
-		{Name: "admin", Hash: config.HashAPIKey(adminKey), Role: "admin"},
-		{Name: "reader", Hash: config.HashAPIKey(readKey), Role: "readonly"},
+		{Name: "admin", Hash: config.HashAPIKey(adminKey), SuperAdmin: true},
+		{Name: "reader", Hash: config.HashAPIKey(readKey), Permissions: []string{
+			"monitors.read", "incidents.read", "notifications.read", "maintenance.read", "metrics.read",
+		}},
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))

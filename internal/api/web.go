@@ -14,7 +14,7 @@ import (
 type pageData struct {
 	Title   string
 	Active  string
-	Role    string
+	Perms   map[string]bool
 	Version string
 	Flash   string
 	Error   string
@@ -22,9 +22,9 @@ type pageData struct {
 }
 
 func (s *Server) newPageData(r *http.Request, title, active string) pageData {
-	role := ""
+	perms := make(map[string]bool)
 	if k := getAPIKey(r.Context()); k != nil {
-		role = k.Role
+		perms = k.PermissionMap()
 	}
 	flash := ""
 	if c, err := r.Cookie("flash"); err == nil {
@@ -33,7 +33,7 @@ func (s *Server) newPageData(r *http.Request, title, active string) pageData {
 	return pageData{
 		Title:   title,
 		Active:  active,
-		Role:    role,
+		Perms:   perms,
 		Version: s.version,
 		Flash:   flash,
 	}

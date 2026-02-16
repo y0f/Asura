@@ -73,10 +73,10 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) webAdminOnly(next http.Handler) http.Handler {
+func (s *Server) webRequirePerm(perm string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		k := getAPIKey(r.Context())
-		if k == nil || k.Role != "admin" {
+		if k == nil || !k.HasPermission(perm) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}

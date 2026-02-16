@@ -18,7 +18,7 @@
             </div>
             <div class="text-xs text-gray-500 mt-1 ml-5">{{typeLabel $mon.Type}} &middot; {{$mon.Target}} &middot; every {{$mon.Interval}}s &middot; timeout {{$mon.Timeout}}s</div>
         </div>
-        {{if eq $.Role "admin"}}
+        {{if index $.Perms "monitors.write"}}
         <div class="flex items-center gap-1.5 flex-shrink-0">
             {{if $mon.Enabled}}
             <form method="POST" action="/monitors/{{$mon.ID}}/pause">

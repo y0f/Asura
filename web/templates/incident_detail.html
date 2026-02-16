@@ -10,7 +10,7 @@
             </div>
             <div class="text-sm text-gray-500">{{$inc.MonitorName}} &middot; Started {{timeAgo $inc.StartedAt}} &middot; Duration {{incidentDuration $inc.StartedAt $inc.ResolvedAt}}</div>
         </div>
-        {{if eq $.Role "admin"}}
+        {{if index $.Perms "incidents.write"}}
         <div class="flex items-center gap-2">
             {{if eq $inc.Status "open"}}
             <form method="POST" action="/incidents/{{$inc.ID}}/ack">

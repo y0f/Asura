@@ -3,7 +3,7 @@
 <div x-data="{showForm: false}">
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-semibold text-white">Maintenance Windows</h1>
-        {{if eq .Role "admin"}}
+        {{if index .Perms "maintenance.write"}}
         <button @click="showForm = true"
                 class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
             + New Window
@@ -31,7 +31,7 @@
                     <td class="px-5 py-4 text-sm text-gray-400">{{.EndTime.Format "Jan 2, 15:04"}}</td>
                     <td class="px-5 py-4 text-sm text-gray-400">{{if .Recurring}}{{.Recurring}}{{else}}-{{end}}</td>
                     <td class="px-5 py-4 text-right">
-                        {{if eq $.Role "admin"}}
+                        {{if index $.Perms "maintenance.write"}}
                         <form method="POST" action="/maintenance/{{.ID}}/delete" onsubmit="return confirm('Delete this window?')" class="inline">
                             <button type="submit" class="text-xs text-red-400 hover:text-red-300 transition-colors">Delete</button>
                         </form>
