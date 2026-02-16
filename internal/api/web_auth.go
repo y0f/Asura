@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 const sessionCookie = "asura_session"
@@ -29,6 +31,7 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   86400 * 7,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -77,6 +80,43 @@ func (s *Server) webAdminOnly(next http.Handler) http.Handler {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
+		if r.Method == http.MethodPost && !checkOrigin(r) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func checkOrigin(r *http.Request) bool {
+	hosts := make(map[string]bool)
+	hosts[stripPort(r.Host)] = true
+	if fwd := r.Header.Get("X-Forwarded-Host"); fwd != "" {
+		hosts[stripPort(fwd)] = true
+	}
+
+	origin := r.Header.Get("Origin")
+	if origin != "" && origin != "null" {
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		return hosts[stripPort(u.Host)]
+	}
+	ref := r.Header.Get("Referer")
+	if ref != "" {
+		u, err := url.Parse(ref)
+		if err != nil {
+			return false
+		}
+		return hosts[stripPort(u.Host)]
+	}
+	return true
+}
+
+func stripPort(host string) string {
+	if i := strings.LastIndex(host, ":"); i != -1 {
+		return strings.ToLower(host[:i])
+	}
+	return strings.ToLower(host)
 }

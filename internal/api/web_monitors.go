@@ -38,7 +38,13 @@ func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) 
 
 	now := time.Now().UTC()
 	checks, _ := s.store.ListCheckResults(ctx, id, storage.Pagination{Page: 1, PerPage: 50})
+	if checks == nil {
+		checks = &storage.PaginatedResult{}
+	}
 	changes, _ := s.store.ListContentChanges(ctx, id, storage.Pagination{Page: 1, PerPage: 10})
+	if changes == nil {
+		changes = &storage.PaginatedResult{}
+	}
 
 	uptime24h, _ := s.store.GetUptimePercent(ctx, id, now.Add(-24*time.Hour), now)
 	uptime7d, _ := s.store.GetUptimePercent(ctx, id, now.Add(-7*24*time.Hour), now)
