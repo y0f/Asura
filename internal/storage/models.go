@@ -20,6 +20,7 @@ type Monitor struct {
 	TrackChanges     bool             `json:"track_changes"`
 	FailureThreshold int              `json:"failure_threshold"`
 	SuccessThreshold int              `json:"success_threshold"`
+	Public           bool             `json:"public"`
 	CreatedAt        time.Time        `json:"created_at"`
 	UpdatedAt        time.Time        `json:"updated_at"`
 
@@ -169,6 +170,16 @@ type PaginatedResult struct {
 	Page       int         `json:"page"`
 	PerPage    int         `json:"per_page"`
 	TotalPages int         `json:"total_pages"`
+}
+
+// Heartbeat tracks a heartbeat monitor's ping state.
+type Heartbeat struct {
+	ID         int64      `json:"id"`
+	MonitorID  int64      `json:"monitor_id"`
+	Token      string     `json:"token"`
+	Grace      int        `json:"grace"` // grace period in seconds
+	LastPingAt *time.Time `json:"last_ping_at,omitempty"`
+	Status     string     `json:"status"` // up, down, pending
 }
 
 // AuditEntry logs a mutation in the system.

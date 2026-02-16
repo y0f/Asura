@@ -11,6 +11,7 @@ import (
 var validMonitorTypes = map[string]bool{
 	"http": true, "tcp": true, "dns": true,
 	"icmp": true, "tls": true, "websocket": true, "command": true,
+	"heartbeat": true,
 }
 
 var validNotificationTypes = map[string]bool{
@@ -33,7 +34,11 @@ func validateMonitor(m *storage.Monitor) error {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
 	if !validMonitorTypes[m.Type] {
-		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command")
+		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat")
+	}
+	if m.Type == "heartbeat" {
+		// Heartbeat monitors use a generated ping URL, target is set server-side
+		return nil
 	}
 	if strings.TrimSpace(m.Target) == "" {
 		return fmt.Errorf("target is required")

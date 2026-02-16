@@ -1,7 +1,10 @@
 package api
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -35,6 +38,18 @@ func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to get monitor")
 		return
 	}
+
+	if m.Type == "heartbeat" {
+		hb, err := s.store.GetHeartbeatByMonitorID(r.Context(), m.ID)
+		if err == nil && hb != nil {
+			writeJSON(w, http.StatusOK, map[string]interface{}{
+				"monitor":   m,
+				"heartbeat": hb,
+			})
+			return
+		}
+	}
+
 	writeJSON(w, http.StatusOK, m)
 }
 
@@ -63,6 +78,13 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 	}
 	m.Enabled = true
 
+	// Heartbeat monitors don't need a target — set a placeholder
+	if m.Type == "heartbeat" {
+		if m.Target == "" {
+			m.Target = "heartbeat"
+		}
+	}
+
 	if err := validateMonitor(&m); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -74,6 +96,39 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create heartbeat record for heartbeat-type monitors
+	var heartbeat *storage.Heartbeat
+	if m.Type == "heartbeat" {
+		token, err := generateToken()
+		if err != nil {
+			s.logger.Error("generate heartbeat token", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to generate heartbeat token")
+			return
+		}
+		grace := 0
+		if m.Settings != nil {
+			var settings map[string]interface{}
+			if err := readJSONRaw(m.Settings, &settings); err == nil {
+				if g, ok := settings["grace"]; ok {
+					if gf, ok := g.(float64); ok {
+						grace = int(gf)
+					}
+				}
+			}
+		}
+		heartbeat = &storage.Heartbeat{
+			MonitorID: m.ID,
+			Token:     token,
+			Grace:     grace,
+			Status:    "pending",
+		}
+		if err := s.store.CreateHeartbeat(r.Context(), heartbeat); err != nil {
+			s.logger.Error("create heartbeat", "error", err)
+			writeError(w, http.StatusInternalServerError, "failed to create heartbeat")
+			return
+		}
+	}
+
 	s.audit(r, "create", "monitor", m.ID, "")
 
 	// Notify pipeline about new monitor
@@ -81,6 +136,13 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		s.pipeline.ReloadMonitors()
 	}
 
+	if heartbeat != nil {
+		writeJSON(w, http.StatusCreated, map[string]interface{}{
+			"monitor":   m,
+			"heartbeat": heartbeat,
+		})
+		return
+	}
 	writeJSON(w, http.StatusCreated, m)
 }
 
@@ -238,6 +300,18 @@ func (s *Server) handleListChanges(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func generateToken() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func readJSONRaw(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
 }
 
 func (s *Server) audit(r *http.Request, action, entity string, entityID int64, detail string) {

@@ -253,6 +253,31 @@ func (p *Pipeline) emitNotification(eventType string, inc *storage.Incident, mon
 	}
 }
 
+// ProcessHeartbeatRecovery handles recovery when a heartbeat ping is received for a down monitor.
+func (p *Pipeline) ProcessHeartbeatRecovery(ctx context.Context, mon *storage.Monitor) {
+	now := time.Now()
+	status := &storage.MonitorStatus{
+		MonitorID:       mon.ID,
+		Status:          "up",
+		LastCheckAt:     &now,
+		ConsecSuccesses: mon.SuccessThreshold,
+		ConsecFails:     0,
+	}
+	if err := p.store.UpsertMonitorStatus(ctx, status); err != nil {
+		p.logger.Error("heartbeat recovery: upsert status", "error", err)
+	}
+
+	inMaintenance, _ := p.store.IsMonitorInMaintenance(ctx, mon.ID, now)
+	inc, resolved, err := p.incMgr.ProcessRecovery(ctx, mon.ID)
+	if err != nil {
+		p.logger.Error("heartbeat recovery: process recovery", "error", err)
+		return
+	}
+	if resolved && !inMaintenance {
+		p.emitNotification("incident.resolved", inc, mon, nil)
+	}
+}
+
 // HashBody computes SHA-256 hash of content.
 func HashBody(body string) string {
 	h := sha256.Sum256([]byte(body))

@@ -21,12 +21,14 @@ git clone https://github.com/y0f/Asura.git && cd asura && sudo bash install.sh
 
 | | |
 |---|---|
-| **7 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command |
+| **8 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Heartbeat |
 | **Assertion engine** | 8 types -- status code, response time, JSON path, body regex, headers, cert expiry, DNS records |
 | **Change detection** | Line-level diffs on response bodies |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
 | **Maintenance** | Recurring windows to suppress alerts |
+| **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
+| **SVG status badges** | Embeddable uptime, status, and response time badges for public monitors |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **SQLite + WAL** | Concurrent reads, single writer, zero config |
@@ -147,7 +149,7 @@ GET    /api/v1/monitors/{id}/changes   Content changes
 | Field              | Type     | Required | Description                                        |
 |--------------------|----------|----------|----------------------------------------------------|
 | `name`             | string   | yes      | Display name                                       |
-| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` |
+| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `heartbeat` |
 | `target`           | string   | yes      | URL, host:port, domain, or command                 |
 | `interval`         | int      |          | Seconds between checks (default: 60)               |
 | `timeout`          | int      |          | Timeout in seconds (default: 10)                   |
@@ -157,6 +159,51 @@ GET    /api/v1/monitors/{id}/changes   Content changes
 | `track_changes`    | bool     |          | Enable content change detection                    |
 | `failure_threshold`| int      |          | Failures before incident (default: 3)              |
 | `success_threshold`| int      |          | Successes before recovery (default: 1)             |
+| `public`           | bool     |          | Expose to badge endpoints (default: false)         |
+
+### Heartbeat Monitoring
+
+Create a heartbeat monitor to track cron jobs, workers, or pipelines. If they stop pinging, Asura fires an incident.
+
+```bash
+# Create heartbeat monitor
+curl -X POST http://localhost:8080/api/v1/monitors \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Nightly Backup","type":"heartbeat","interval":3600,"settings":{"grace":300}}'
+```
+
+Response includes the ping token:
+
+```json
+{
+  "monitor": { "id": 1, "name": "Nightly Backup", "type": "heartbeat", ... },
+  "heartbeat": { "token": "a1b2c3d4e5f6...", "grace": 300, "status": "pending" }
+}
+```
+
+Ping from your script (no auth needed):
+
+```bash
+curl -X POST http://your-server:8080/api/v1/heartbeat/a1b2c3d4e5f6...
+```
+
+If no ping arrives within `interval + grace` seconds, the monitor goes down and an incident is created.
+
+### Status Badges *(no auth, public monitors only)*
+
+```
+GET  /api/v1/badge/{id}/status     Status badge (up/down/degraded)
+GET  /api/v1/badge/{id}/uptime     30-day uptime percentage
+GET  /api/v1/badge/{id}/response   24h median response time
+```
+
+Set `"public": true` on a monitor to enable badges. Embed in a README:
+
+```markdown
+![Status](https://your-server/api/v1/badge/1/status)
+![Uptime](https://your-server/api/v1/badge/1/uptime)
+```
 
 ### Incidents
 

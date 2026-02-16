@@ -98,6 +98,11 @@ func (s *Scheduler) dispatch(ctx context.Context, now time.Time) {
 	defer s.mu.Unlock()
 
 	for _, m := range monitors {
+		// Heartbeat monitors don't get dispatched as check jobs
+		if m.Type == "heartbeat" {
+			continue
+		}
+
 		next, exists := s.nextRun[m.ID]
 		if !exists {
 			s.nextRun[m.ID] = now

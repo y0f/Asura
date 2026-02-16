@@ -217,6 +217,115 @@ func TestAnalytics(t *testing.T) {
 	}
 }
 
+func TestHeartbeatCRUD(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	m := &Monitor{Name: "Cron Job", Type: "heartbeat", Target: "heartbeat", Interval: 300, Timeout: 10, Enabled: true, Tags: []string{}, FailureThreshold: 1, SuccessThreshold: 1}
+	err := store.CreateMonitor(ctx, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hb := &Heartbeat{
+		MonitorID: m.ID,
+		Token:     "abc123def456",
+		Grace:     60,
+		Status:    "pending",
+	}
+	err = store.CreateHeartbeat(ctx, hb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hb.ID == 0 {
+		t.Fatal("expected non-zero heartbeat ID")
+	}
+
+	// Get by token
+	got, err := store.GetHeartbeatByToken(ctx, "abc123def456")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.MonitorID != m.ID {
+		t.Fatalf("expected monitor_id %d, got %d", m.ID, got.MonitorID)
+	}
+	if got.Grace != 60 {
+		t.Fatalf("expected grace 60, got %d", got.Grace)
+	}
+
+	// Get by monitor ID
+	got2, err := store.GetHeartbeatByMonitorID(ctx, m.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got2.Token != "abc123def456" {
+		t.Fatalf("expected token abc123def456, got %s", got2.Token)
+	}
+
+	// Update ping
+	err = store.UpdateHeartbeatPing(ctx, "abc123def456")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetHeartbeatByToken(ctx, "abc123def456")
+	if got.Status != "up" {
+		t.Fatalf("expected status up after ping, got %s", got.Status)
+	}
+	if got.LastPingAt == nil {
+		t.Fatal("expected last_ping_at to be set")
+	}
+
+	// Update status
+	err = store.UpdateHeartbeatStatus(ctx, m.ID, "down")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetHeartbeatByToken(ctx, "abc123def456")
+	if got.Status != "down" {
+		t.Fatalf("expected status down, got %s", got.Status)
+	}
+
+	// Delete
+	err = store.DeleteHeartbeat(ctx, m.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = store.GetHeartbeatByToken(ctx, "abc123def456")
+	if err == nil {
+		t.Fatal("expected error after delete")
+	}
+}
+
+func TestMonitorPublicFlag(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	m := &Monitor{Name: "Public", Type: "http", Target: "https://example.com", Interval: 60, Timeout: 10, Enabled: true, Tags: []string{}, FailureThreshold: 3, SuccessThreshold: 1, Public: true}
+	err := store.CreateMonitor(ctx, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := store.GetMonitor(ctx, m.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Public {
+		t.Fatal("expected public=true")
+	}
+
+	// Update to private
+	m.Public = false
+	err = store.UpdateMonitor(ctx, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetMonitor(ctx, m.ID)
+	if got.Public {
+		t.Fatal("expected public=false after update")
+	}
+}
+
 func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

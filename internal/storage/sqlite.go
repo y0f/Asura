@@ -58,6 +58,8 @@ func runMigrations(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	var currentVersion int
 	var count int
 	err = db.QueryRow("SELECT COUNT(*) FROM schema_version").Scan(&count)
 	if err != nil {
@@ -65,8 +67,26 @@ func runMigrations(db *sql.DB) error {
 	}
 	if count == 0 {
 		_, err = db.Exec("INSERT INTO schema_version (version) VALUES (?)", schemaVersion)
+		return err
 	}
-	return err
+
+	err = db.QueryRow("SELECT version FROM schema_version LIMIT 1").Scan(&currentVersion)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range migrations {
+		if m.version > currentVersion {
+			if _, err := db.Exec(m.sql); err != nil {
+				return fmt.Errorf("migration v%d: %w", m.version, err)
+			}
+			if _, err := db.Exec("UPDATE schema_version SET version=?", m.version); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *SQLiteStore) Close() error {
@@ -106,11 +126,11 @@ func (s *SQLiteStore) CreateMonitor(ctx context.Context, m *Monitor) error {
 	}
 	now := formatTime(time.Now())
 	res, err := s.writeDB.ExecContext(ctx,
-		`INSERT INTO monitors (name, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO monitors (name, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, public, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, now, now,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), now, now,
 	)
 	if err != nil {
 		return err
@@ -132,7 +152,7 @@ func (s *SQLiteStore) GetMonitor(ctx context.Context, id int64) (*Monitor, error
 	row := s.readDB.QueryRowContext(ctx,
 		`SELECT m.id, m.name, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.created_at, m.updated_at,
+		        m.public, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -151,7 +171,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, p Pagination) (*Paginate
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.created_at, m.updated_at,
+		        m.public, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -188,11 +208,11 @@ func (s *SQLiteStore) UpdateMonitor(ctx context.Context, m *Monitor) error {
 	now := formatTime(time.Now())
 	_, err := s.writeDB.ExecContext(ctx,
 		`UPDATE monitors SET name=?, type=?, target=?, interval_secs=?, timeout_secs=?, enabled=?,
-		 tags=?, settings=?, assertions=?, track_changes=?, failure_threshold=?, success_threshold=?, updated_at=?
+		 tags=?, settings=?, assertions=?, track_changes=?, failure_threshold=?, success_threshold=?, public=?, updated_at=?
 		 WHERE id=?`,
 		m.Name, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, now, m.ID,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), now, m.ID,
 	)
 	return err
 }
@@ -214,7 +234,7 @@ func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, er
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.created_at, m.updated_at,
+		        m.public, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -974,6 +994,90 @@ func (s *SQLiteStore) PurgeOldData(ctx context.Context, before time.Time) (int64
 	return totalDeleted, nil
 }
 
+// --- Heartbeats ---
+
+func (s *SQLiteStore) CreateHeartbeat(ctx context.Context, h *Heartbeat) error {
+	res, err := s.writeDB.ExecContext(ctx,
+		`INSERT INTO heartbeats (monitor_id, token, grace, status) VALUES (?, ?, ?, ?)`,
+		h.MonitorID, h.Token, h.Grace, h.Status)
+	if err != nil {
+		return err
+	}
+	id, _ := res.LastInsertId()
+	h.ID = id
+	return nil
+}
+
+func (s *SQLiteStore) GetHeartbeatByToken(ctx context.Context, token string) (*Heartbeat, error) {
+	var h Heartbeat
+	var lastPing sql.NullString
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, monitor_id, token, grace, last_ping_at, status FROM heartbeats WHERE token=?`, token).
+		Scan(&h.ID, &h.MonitorID, &h.Token, &h.Grace, &lastPing, &h.Status)
+	if err != nil {
+		return nil, err
+	}
+	h.LastPingAt = parseTimePtr(lastPing)
+	return &h, nil
+}
+
+func (s *SQLiteStore) GetHeartbeatByMonitorID(ctx context.Context, monitorID int64) (*Heartbeat, error) {
+	var h Heartbeat
+	var lastPing sql.NullString
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, monitor_id, token, grace, last_ping_at, status FROM heartbeats WHERE monitor_id=?`, monitorID).
+		Scan(&h.ID, &h.MonitorID, &h.Token, &h.Grace, &lastPing, &h.Status)
+	if err != nil {
+		return nil, err
+	}
+	h.LastPingAt = parseTimePtr(lastPing)
+	return &h, nil
+}
+
+func (s *SQLiteStore) UpdateHeartbeatPing(ctx context.Context, token string) error {
+	now := formatTime(time.Now())
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE heartbeats SET last_ping_at=?, status='up' WHERE token=?`, now, token)
+	return err
+}
+
+func (s *SQLiteStore) ListExpiredHeartbeats(ctx context.Context) ([]*Heartbeat, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT h.id, h.monitor_id, h.token, h.grace, h.last_ping_at, h.status
+		 FROM heartbeats h
+		 JOIN monitors m ON m.id = h.monitor_id
+		 WHERE m.enabled = 1
+		   AND h.last_ping_at IS NOT NULL
+		   AND datetime(h.last_ping_at, '+' || (m.interval_secs + h.grace) || ' seconds') < datetime('now')`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var heartbeats []*Heartbeat
+	for rows.Next() {
+		var h Heartbeat
+		var lastPing sql.NullString
+		if err := rows.Scan(&h.ID, &h.MonitorID, &h.Token, &h.Grace, &lastPing, &h.Status); err != nil {
+			return nil, err
+		}
+		h.LastPingAt = parseTimePtr(lastPing)
+		heartbeats = append(heartbeats, &h)
+	}
+	return heartbeats, nil
+}
+
+func (s *SQLiteStore) UpdateHeartbeatStatus(ctx context.Context, monitorID int64, status string) error {
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE heartbeats SET status=? WHERE monitor_id=?`, status, monitorID)
+	return err
+}
+
+func (s *SQLiteStore) DeleteHeartbeat(ctx context.Context, monitorID int64) error {
+	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM heartbeats WHERE monitor_id=?", monitorID)
+	return err
+}
+
 // --- Helpers ---
 
 func boolToInt(b bool) int {
@@ -1001,7 +1105,7 @@ func scanMonitor(row scanner) (*Monitor, error) {
 	var lastCheck sql.NullString
 	err := row.Scan(&m.ID, &m.Name, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 		&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-		&createdAt, &updatedAt,
+		&m.Public, &createdAt, &updatedAt,
 		&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses)
 	if err != nil {
 		return nil, err

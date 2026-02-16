@@ -51,14 +51,15 @@ type APIKeyConfig struct {
 }
 
 type MonitorConfig struct {
-	Workers            int           `yaml:"workers"`
-	DefaultTimeout     time.Duration `yaml:"default_timeout"`
-	DefaultInterval    time.Duration `yaml:"default_interval"`
-	FailureThreshold   int           `yaml:"failure_threshold"`
-	SuccessThreshold   int           `yaml:"success_threshold"`
-	MaxConcurrentDNS   int           `yaml:"max_concurrent_dns"`
-	CommandTimeout     time.Duration `yaml:"command_timeout"`
-	CommandAllowlist   []string      `yaml:"command_allowlist"`
+	Workers                int           `yaml:"workers"`
+	DefaultTimeout         time.Duration `yaml:"default_timeout"`
+	DefaultInterval        time.Duration `yaml:"default_interval"`
+	FailureThreshold       int           `yaml:"failure_threshold"`
+	SuccessThreshold       int           `yaml:"success_threshold"`
+	MaxConcurrentDNS       int           `yaml:"max_concurrent_dns"`
+	CommandTimeout         time.Duration `yaml:"command_timeout"`
+	CommandAllowlist       []string      `yaml:"command_allowlist"`
+	HeartbeatCheckInterval time.Duration `yaml:"heartbeat_check_interval"`
 }
 
 type LoggingConfig struct {
@@ -85,12 +86,13 @@ func Defaults() *Config {
 		},
 		Auth: AuthConfig{},
 		Monitor: MonitorConfig{
-			Workers:          10,
-			DefaultTimeout:   10 * time.Second,
-			DefaultInterval:  60 * time.Second,
-			FailureThreshold: 3,
-			SuccessThreshold: 1,
-			CommandTimeout:   30 * time.Second,
+			Workers:                10,
+			DefaultTimeout:         10 * time.Second,
+			DefaultInterval:        60 * time.Second,
+			FailureThreshold:       3,
+			SuccessThreshold:       1,
+			CommandTimeout:         30 * time.Second,
+			HeartbeatCheckInterval: 30 * time.Second,
 		},
 		Logging: LoggingConfig{
 			Level:  "info",

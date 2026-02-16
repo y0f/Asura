@@ -59,6 +59,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	// No auth required
 	mux.HandleFunc("GET /api/v1/health", s.handleHealth)
 	mux.HandleFunc("GET /metrics", s.handleMetrics)
+	mux.HandleFunc("POST /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
+	mux.HandleFunc("GET /api/v1/heartbeat/{token}", s.handleHeartbeatPing)
+	mux.HandleFunc("GET /api/v1/badge/{id}/status", s.handleBadgeStatus)
+	mux.HandleFunc("GET /api/v1/badge/{id}/uptime", s.handleBadgeUptime)
+	mux.HandleFunc("GET /api/v1/badge/{id}/response", s.handleBadgeResponseTime)
 
 	// Read endpoints
 	mux.Handle("GET /api/v1/monitors", readAuth(http.HandlerFunc(s.handleListMonitors)))

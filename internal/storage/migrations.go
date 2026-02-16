@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 1
+const schemaVersion = 2
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS monitors (
 	track_changes   INTEGER NOT NULL DEFAULT 0,
 	failure_threshold INTEGER NOT NULL DEFAULT 3,
 	success_threshold INTEGER NOT NULL DEFAULT 1,
+	public          INTEGER NOT NULL DEFAULT 0,
 	created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
 	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
@@ -119,5 +120,34 @@ CREATE TABLE IF NOT EXISTS audit_log (
 	detail       TEXT    NOT NULL DEFAULT '',
 	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+
+CREATE TABLE IF NOT EXISTS heartbeats (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id  INTEGER NOT NULL UNIQUE REFERENCES monitors(id) ON DELETE CASCADE,
+	token       TEXT    NOT NULL UNIQUE,
+	grace       INTEGER NOT NULL DEFAULT 0,
+	last_ping_at TEXT,
+	status      TEXT    NOT NULL DEFAULT 'pending'
+);
 `
+
+// migrations holds incremental schema changes after the initial schema.
+var migrations = []struct {
+	version int
+	sql     string
+}{
+	{
+		version: 2,
+		sql: `
+ALTER TABLE monitors ADD COLUMN public INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS heartbeats (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id  INTEGER NOT NULL UNIQUE REFERENCES monitors(id) ON DELETE CASCADE,
+	token       TEXT    NOT NULL UNIQUE,
+	grace       INTEGER NOT NULL DEFAULT 0,
+	last_ping_at TEXT,
+	status      TEXT    NOT NULL DEFAULT 'pending'
+);`,
+	},
+}
 

@@ -84,6 +84,9 @@ func main() {
 
 	go pipeline.Run(ctx)
 
+	heartbeatWatcher := monitor.NewHeartbeatWatcher(store, incMgr, pipeline, cfg.Monitor.HeartbeatCheckInterval, logger)
+	go heartbeatWatcher.Run(ctx)
+
 	retentionWorker := storage.NewRetentionWorker(store, cfg.Database.RetentionDays, cfg.Database.RetentionPeriod, logger)
 	go retentionWorker.Run(ctx)
 

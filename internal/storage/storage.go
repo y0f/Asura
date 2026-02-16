@@ -55,6 +55,15 @@ type Store interface {
 	InsertContentChange(ctx context.Context, c *ContentChange) error
 	ListContentChanges(ctx context.Context, monitorID int64, p Pagination) (*PaginatedResult, error)
 
+	// Heartbeats
+	CreateHeartbeat(ctx context.Context, h *Heartbeat) error
+	GetHeartbeatByToken(ctx context.Context, token string) (*Heartbeat, error)
+	GetHeartbeatByMonitorID(ctx context.Context, monitorID int64) (*Heartbeat, error)
+	UpdateHeartbeatPing(ctx context.Context, token string) error
+	ListExpiredHeartbeats(ctx context.Context) ([]*Heartbeat, error)
+	UpdateHeartbeatStatus(ctx context.Context, monitorID int64, status string) error
+	DeleteHeartbeat(ctx context.Context, monitorID int64) error
+
 	// Analytics
 	GetUptimePercent(ctx context.Context, monitorID int64, from, to time.Time) (float64, error)
 	GetResponseTimePercentiles(ctx context.Context, monitorID int64, from, to time.Time) (p50, p95, p99 float64, err error)
