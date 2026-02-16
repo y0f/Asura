@@ -1,0 +1,48 @@
+{{define "title"}}Incidents{{end}}
+{{define "content"}}
+<div>
+    <h1 class="text-2xl font-semibold text-white mb-6">Incidents</h1>
+
+    <div class="flex gap-2 mb-4">
+        <a href="/incidents" class="px-3 py-1.5 text-xs rounded-lg border {{if not .Data.Filter}}bg-indigo-500/10 text-indigo-400 border-indigo-500/20{{else}}text-gray-400 border-border hover:bg-surface-200{{end}} transition-colors">All</a>
+        <a href="/incidents?status=open" class="px-3 py-1.5 text-xs rounded-lg border {{if eq .Data.Filter "open"}}bg-red-500/10 text-red-400 border-red-500/20{{else}}text-gray-400 border-border hover:bg-surface-200{{end}} transition-colors">Open</a>
+        <a href="/incidents?status=acknowledged" class="px-3 py-1.5 text-xs rounded-lg border {{if eq .Data.Filter "acknowledged"}}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{{else}}text-gray-400 border-border hover:bg-surface-200{{end}} transition-colors">Acknowledged</a>
+        <a href="/incidents?status=resolved" class="px-3 py-1.5 text-xs rounded-lg border {{if eq .Data.Filter "resolved"}}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{{else}}text-gray-400 border-border hover:bg-surface-200{{end}} transition-colors">Resolved</a>
+    </div>
+
+    <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
+        {{if and .Data.Result .Data.Result.Data}}
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-border text-left">
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Monitor</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Cause</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Duration</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Started</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                {{range .Data.Result.Data}}
+                <tr class="hover:bg-surface-200 transition-colors">
+                    <td class="px-5 py-4 text-sm text-white">{{.MonitorName}}</td>
+                    <td class="px-5 py-4">
+                        <span class="text-xs px-2 py-0.5 rounded-full border {{statusBg .Status}}">{{.Status}}</span>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-gray-400 truncate max-w-xs">{{.Cause}}</td>
+                    <td class="px-5 py-4 text-sm text-gray-400">{{incidentDuration .StartedAt .ResolvedAt}}</td>
+                    <td class="px-5 py-4 text-sm text-gray-500">{{timeAgo .StartedAt}}</td>
+                    <td class="px-5 py-4 text-right">
+                        <a href="/incidents/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <div class="px-5 py-16 text-center text-gray-500 text-sm">No incidents found</div>
+        {{end}}
+    </div>
+</div>
+{{end}}

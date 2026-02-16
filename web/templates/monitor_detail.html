@@ -1,0 +1,88 @@
+{{define "title"}}{{.Data.Monitor.Name}}{{end}}
+{{define "content"}}
+{{$mon := .Data.Monitor}}
+<div>
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <div class="w-3 h-3 rounded-full {{statusDot $mon.Status}}"></div>
+                <h1 class="text-2xl font-semibold text-white">{{$mon.Name}}</h1>
+                <span class="text-xs px-2.5 py-1 rounded-full border {{statusBg $mon.Status}}">{{$mon.Status}}</span>
+            </div>
+            <div class="text-sm text-gray-500 ml-6">{{$mon.Type}} &middot; {{$mon.Target}} &middot; every {{$mon.Interval}}s</div>
+        </div>
+        {{if eq $.Role "admin"}}
+        <div class="flex items-center gap-2">
+            {{if $mon.Enabled}}
+            <form method="POST" action="/monitors/{{$mon.ID}}/pause">
+                <button type="submit" class="px-3 py-1.5 text-xs text-gray-400 border border-border rounded-lg hover:bg-surface-200 transition-colors">Pause</button>
+            </form>
+            {{else}}
+            <form method="POST" action="/monitors/{{$mon.ID}}/resume">
+                <button type="submit" class="px-3 py-1.5 text-xs text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/10 transition-colors">Resume</button>
+            </form>
+            {{end}}
+            <a href="/monitors/{{$mon.ID}}/edit" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Edit</a>
+            <form method="POST" action="/monitors/{{$mon.ID}}/delete" onsubmit="return confirm('Delete this monitor?')">
+                <button type="submit" class="px-3 py-1.5 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">Delete</button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+
+    {{if and $.Data.Checks $.Data.Checks.Data}}
+    <div class="bg-surface-100 border border-border rounded-xl mb-6">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-gray-300">Recent Checks</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-border text-left">
+                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Response Time</th>
+                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status Code</th>
+                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Message</th>
+                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    {{range $.Data.Checks.Data}}
+                    <tr class="hover:bg-surface-200 transition-colors">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full {{statusDot .Status}}"></div>
+                                <span class="text-sm {{statusColor .Status}}">{{.Status}}</span>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 text-sm text-gray-300">{{formatMs .ResponseTime}}</td>
+                        <td class="px-5 py-3 text-sm text-gray-400">{{if .StatusCode}}{{.StatusCode}}{{else}}-{{end}}</td>
+                        <td class="px-5 py-3 text-sm text-gray-400 truncate max-w-xs">{{if .Message}}{{.Message}}{{else}}-{{end}}</td>
+                        <td class="px-5 py-3 text-sm text-gray-500">{{timeAgo .CreatedAt}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{end}}
+
+    {{if and $.Data.Changes $.Data.Changes.Data}}
+    <div class="bg-surface-100 border border-border rounded-xl">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-gray-300">Content Changes</h2>
+        </div>
+        <div class="divide-y divide-border">
+            {{range $.Data.Changes.Data}}
+            <div class="px-5 py-4">
+                <div class="text-xs text-gray-500 mb-2">{{timeAgo .CreatedAt}}</div>
+                {{if .Diff}}
+                <pre class="text-xs text-gray-300 bg-surface rounded-lg p-3 overflow-x-auto font-mono">{{.Diff}}</pre>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+</div>
+{{end}}

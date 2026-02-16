@@ -1,0 +1,59 @@
+{{define "title"}}Monitors{{end}}
+{{define "content"}}
+<div>
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-white">Monitors</h1>
+        {{if eq .Role "admin"}}
+        <a href="/monitors/new" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
+            + New Monitor
+        </a>
+        {{end}}
+    </div>
+
+    <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
+        {{if and .Data .Data.Data}}
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-border text-left">
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Monitor</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Last Check</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                {{range .Data.Data}}
+                <tr class="hover:bg-surface-200 transition-colors">
+                    <td class="px-5 py-4">
+                        <a href="/monitors/{{.ID}}" class="text-sm text-white hover:text-indigo-400">{{.Name}}</a>
+                        <div class="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{{.Target}}</div>
+                    </td>
+                    <td class="px-5 py-4">
+                        <span class="text-xs text-gray-400 bg-surface-200 px-2 py-1 rounded">{{.Type}}</span>
+                    </td>
+                    <td class="px-5 py-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full {{statusDot .Status}}"></div>
+                            <span class="text-sm {{statusColor .Status}}">{{.Status}}</span>
+                        </div>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-gray-400">
+                        {{if .LastCheckAt}}{{timeAgo .LastCheckAt}}{{else}}-{{end}}
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <a href="/monitors/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <div class="px-5 py-16 text-center">
+            <div class="text-gray-500 mb-2">No monitors configured</div>
+            <a href="/monitors/new" class="text-sm text-indigo-400 hover:text-indigo-300">Create your first monitor</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

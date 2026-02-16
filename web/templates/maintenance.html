@@ -1,0 +1,95 @@
+{{define "title"}}Maintenance{{end}}
+{{define "content"}}
+<div x-data="{showForm: false}">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-white">Maintenance Windows</h1>
+        {{if eq .Role "admin"}}
+        <button @click="showForm = true"
+                class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
+            + New Window
+        </button>
+        {{end}}
+    </div>
+
+    {{if .Data}}
+    <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-border text-left">
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Start</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">End</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase">Recurring</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                {{range .Data}}
+                <tr class="hover:bg-surface-200 transition-colors">
+                    <td class="px-5 py-4 text-sm text-white">{{.Name}}</td>
+                    <td class="px-5 py-4 text-sm text-gray-400">{{.StartTime.Format "Jan 2, 15:04"}}</td>
+                    <td class="px-5 py-4 text-sm text-gray-400">{{.EndTime.Format "Jan 2, 15:04"}}</td>
+                    <td class="px-5 py-4 text-sm text-gray-400">{{if .Recurring}}{{.Recurring}}{{else}}-{{end}}</td>
+                    <td class="px-5 py-4 text-right">
+                        {{if eq $.Role "admin"}}
+                        <form method="POST" action="/maintenance/{{.ID}}/delete" onsubmit="return confirm('Delete this window?')" class="inline">
+                            <button type="submit" class="text-xs text-red-400 hover:text-red-300 transition-colors">Delete</button>
+                        </form>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="bg-surface-100 border border-border rounded-xl px-5 py-16 text-center">
+        <div class="text-gray-500 text-sm">No maintenance windows</div>
+    </div>
+    {{end}}
+
+    <div x-show="showForm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showForm = false">
+        <div class="bg-surface-100 border border-border rounded-xl p-6 w-full max-w-lg" @click.stop>
+            <h3 class="text-lg font-semibold text-white mb-4">New Maintenance Window</h3>
+            <form method="POST" action="/maintenance" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Name</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1.5">Start</label>
+                        <input type="datetime-local" name="start_time" required
+                               class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1.5">End</label>
+                        <input type="datetime-local" name="end_time" required
+                               class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Recurring</label>
+                    <select name="recurring"
+                            class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                        <option value="">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Monitor IDs (comma-separated, empty = all)</label>
+                    <input type="text" name="monitor_ids" placeholder="1, 2, 3"
+                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">Create</button>
+                    <button type="button" @click="showForm = false" class="text-sm text-gray-400 hover:text-gray-200">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

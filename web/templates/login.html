@@ -1,0 +1,49 @@
+{{define "login"}}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Asura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        surface: { DEFAULT: '#0a0a0a', 50: '#111111', 100: '#1a1a1a', 200: '#262626' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+            <div class="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center font-bold text-white text-xl mx-auto mb-4">A</div>
+            <h1 class="text-2xl font-semibold text-white">Asura</h1>
+            <p class="text-gray-500 mt-1 text-sm">Enter your API key to continue</p>
+        </div>
+
+        {{if .Error}}
+        <div class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+            {{.Error}}
+        </div>
+        {{end}}
+
+        <form method="POST" action="/login" class="space-y-4">
+            <div>
+                <input type="password" name="api_key" placeholder="API Key" required autofocus
+                       class="w-full px-4 py-3 bg-surface-100 border border-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-colors">
+            </div>
+            <button type="submit"
+                    class="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors">
+                Sign In
+            </button>
+        </form>
+    </div>
+</body>
+</html>
+{{end}}

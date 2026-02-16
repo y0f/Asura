@@ -1,0 +1,60 @@
+{{define "title"}}Incident #{{.Data.Incident.ID}}{{end}}
+{{define "content"}}
+{{$inc := .Data.Incident}}
+<div>
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <h1 class="text-2xl font-semibold text-white">Incident #{{$inc.ID}}</h1>
+                <span class="text-xs px-2.5 py-1 rounded-full border {{statusBg $inc.Status}}">{{$inc.Status}}</span>
+            </div>
+            <div class="text-sm text-gray-500">{{$inc.MonitorName}} &middot; Started {{timeAgo $inc.StartedAt}} &middot; Duration {{incidentDuration $inc.StartedAt $inc.ResolvedAt}}</div>
+        </div>
+        {{if eq $.Role "admin"}}
+        <div class="flex items-center gap-2">
+            {{if eq $inc.Status "open"}}
+            <form method="POST" action="/incidents/{{$inc.ID}}/ack">
+                <button type="submit" class="px-4 py-2 text-sm text-yellow-400 border border-yellow-500/20 rounded-lg hover:bg-yellow-500/10 transition-colors">Acknowledge</button>
+            </form>
+            {{end}}
+            {{if ne $inc.Status "resolved"}}
+            <form method="POST" action="/incidents/{{$inc.ID}}/resolve">
+                <button type="submit" class="px-4 py-2 text-sm text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/10 transition-colors">Resolve</button>
+            </form>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+
+    <div class="bg-surface-100 border border-border rounded-xl p-6 mb-6">
+        <div class="text-sm text-gray-400 mb-1">Cause</div>
+        <div class="text-white">{{$inc.Cause}}</div>
+    </div>
+
+    <div class="bg-surface-100 border border-border rounded-xl">
+        <div class="px-5 py-4 border-b border-border">
+            <h2 class="text-sm font-medium text-gray-300">Timeline</h2>
+        </div>
+        {{if .Data.Events}}
+        <div class="p-5">
+            <div class="space-y-4">
+                {{range .Data.Events}}
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-2.5 h-2.5 rounded-full mt-1.5 {{statusDot .Type}}"></div>
+                        <div class="w-px flex-1 bg-border mt-1"></div>
+                    </div>
+                    <div class="pb-4">
+                        <div class="text-sm text-white">{{.Message}}</div>
+                        <div class="text-xs text-gray-500 mt-0.5">{{timeAgo .CreatedAt}}</div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{else}}
+        <div class="px-5 py-8 text-center text-gray-500 text-sm">No events</div>
+        {{end}}
+    </div>
+</div>
+{{end}}

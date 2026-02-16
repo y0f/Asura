@@ -1,0 +1,208 @@
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"io/fs"
+	"net/http"
+	"time"
+
+	"github.com/asura-monitor/asura/web"
+)
+
+type pageData struct {
+	Title   string
+	Active  string
+	Role    string
+	Version string
+	Flash   string
+	Error   string
+	Data    interface{}
+}
+
+func (s *Server) newPageData(r *http.Request, title, active string) pageData {
+	role := ""
+	if k := getAPIKey(r.Context()); k != nil {
+		role = k.Role
+	}
+	flash := ""
+	if c, err := r.Cookie("flash"); err == nil {
+		flash = c.Value
+	}
+	return pageData{
+		Title:   title,
+		Active:  active,
+		Role:    role,
+		Version: s.version,
+		Flash:   flash,
+	}
+}
+
+var templateFuncs = template.FuncMap{
+	"statusColor": func(status string) string {
+		switch status {
+		case "up":
+			return "text-emerald-400"
+		case "down":
+			return "text-red-400"
+		case "degraded":
+			return "text-yellow-400"
+		default:
+			return "text-gray-500"
+		}
+	},
+	"statusBg": func(status string) string {
+		switch status {
+		case "up":
+			return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+		case "down":
+			return "bg-red-500/10 text-red-400 border-red-500/20"
+		case "degraded":
+			return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+		case "open":
+			return "bg-red-500/10 text-red-400 border-red-500/20"
+		case "acknowledged":
+			return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+		case "resolved":
+			return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+		default:
+			return "bg-gray-500/10 text-gray-400 border-gray-500/20"
+		}
+	},
+	"statusDot": func(status string) string {
+		switch status {
+		case "up":
+			return "bg-emerald-400"
+		case "down":
+			return "bg-red-400"
+		case "degraded":
+			return "bg-yellow-400"
+		default:
+			return "bg-gray-500"
+		}
+	},
+	"timeAgo": func(t interface{}) string {
+		var tm time.Time
+		switch v := t.(type) {
+		case time.Time:
+			tm = v
+		case *time.Time:
+			if v == nil {
+				return "never"
+			}
+			tm = *v
+		default:
+			return ""
+		}
+		d := time.Since(tm)
+		switch {
+		case d < time.Minute:
+			return "just now"
+		case d < time.Hour:
+			m := int(d.Minutes())
+			if m == 1 {
+				return "1m ago"
+			}
+			return template.HTMLEscapeString(fmt.Sprintf("%dm ago", m))
+		case d < 24*time.Hour:
+			h := int(d.Hours())
+			if h == 1 {
+				return "1h ago"
+			}
+			return template.HTMLEscapeString(fmt.Sprintf("%dh ago", h))
+		default:
+			days := int(d.Hours() / 24)
+			if days == 1 {
+				return "1d ago"
+			}
+			return template.HTMLEscapeString(fmt.Sprintf("%dd ago", days))
+		}
+	},
+	"formatMs": func(ms int64) string {
+		if ms < 1000 {
+			return fmt.Sprintf("%dms", ms)
+		}
+		return fmt.Sprintf("%.1fs", float64(ms)/1000)
+	},
+	"jsonMarshal": func(v interface{}) template.JS {
+		b, _ := json.Marshal(v)
+		return template.JS(b)
+	},
+	"incidentDuration": func(started time.Time, resolved *time.Time) string {
+		end := time.Now()
+		if resolved != nil {
+			end = *resolved
+		}
+		d := end.Sub(started)
+		if d < time.Minute {
+			return "< 1m"
+		}
+		if d < time.Hour {
+			return fmt.Sprintf("%dm", int(d.Minutes()))
+		}
+		if d < 24*time.Hour {
+			return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
+		}
+		return fmt.Sprintf("%dd %dh", int(d.Hours()/24), int(d.Hours())%24)
+	},
+	"upper": func(s string) string {
+		if len(s) == 0 {
+			return s
+		}
+		return string(s[0]-32) + s[1:]
+	},
+}
+
+func (s *Server) loadTemplates() {
+	templateFS, _ := fs.Sub(web.FS, "templates")
+	layoutTmpl := template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "layout.html"))
+
+	s.templates = make(map[string]*template.Template)
+
+	pages := []string{
+		"dashboard.html",
+		"monitors.html",
+		"monitor_detail.html",
+		"monitor_form.html",
+		"incidents.html",
+		"incident_detail.html",
+		"notifications.html",
+		"maintenance.html",
+	}
+
+	for _, page := range pages {
+		t := template.Must(template.Must(layoutTmpl.Clone()).ParseFS(templateFS, page))
+		s.templates[page] = t
+	}
+
+	s.templates["login.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "login.html"))
+}
+
+func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
+	t, ok := s.templates[tmpl]
+	if !ok {
+		http.Error(w, "template not found", http.StatusInternalServerError)
+		return
+	}
+
+	layoutName := "layout"
+	if tmpl == "login.html" {
+		layoutName = "login"
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := t.ExecuteTemplate(w, layoutName, data); err != nil {
+		s.logger.Error("template render", "template", tmpl, "error", err)
+	}
+}
+
+func (s *Server) setFlash(w http.ResponseWriter, msg string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "flash",
+		Value:    msg,
+		Path:     "/",
+		MaxAge:   5,
+		HttpOnly: true,
+	})
+}

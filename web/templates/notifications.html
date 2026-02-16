@@ -1,0 +1,91 @@
+{{define "title"}}Notifications{{end}}
+{{define "content"}}
+<div x-data="{showForm: false, editId: 0, formData: {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}}">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-white">Notification Channels</h1>
+        {{if eq .Role "admin"}}
+        <button @click="showForm = true; editId = 0; formData = {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}"
+                class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
+            + New Channel
+        </button>
+        {{end}}
+    </div>
+
+    {{if .Data}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{range .Data}}
+        <div class="bg-surface-100 border border-border rounded-xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-white font-medium text-sm">{{.Name}}</span>
+                    <span class="text-xs text-gray-400 bg-surface-200 px-2 py-0.5 rounded">{{.Type}}</span>
+                </div>
+                <div class="w-2 h-2 rounded-full {{if .Enabled}}bg-emerald-400{{else}}bg-gray-500{{end}}"></div>
+            </div>
+            <div class="text-xs text-gray-500 mb-4">
+                Events: {{range $i, $e := .Events}}{{if $i}}, {{end}}{{$e}}{{end}}
+            </div>
+            {{if eq $.Role "admin"}}
+            <div class="flex items-center gap-2">
+                <form method="POST" action="/notifications/{{.ID}}/test" class="inline">
+                    <button type="submit" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Test</button>
+                </form>
+                <form method="POST" action="/notifications/{{.ID}}/delete" onsubmit="return confirm('Delete this channel?')" class="inline">
+                    <button type="submit" class="px-3 py-1.5 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">Delete</button>
+                </form>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="bg-surface-100 border border-border rounded-xl px-5 py-16 text-center">
+        <div class="text-gray-500 mb-2 text-sm">No notification channels configured</div>
+        <button @click="showForm = true" class="text-sm text-indigo-400 hover:text-indigo-300">Create one</button>
+    </div>
+    {{end}}
+
+    <div x-show="showForm" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="showForm = false">
+        <div class="bg-surface-100 border border-border rounded-xl p-6 w-full max-w-lg" @click.stop>
+            <h3 class="text-lg font-semibold text-white mb-4">New Notification Channel</h3>
+            <form method="POST" action="/notifications" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Name</label>
+                    <input type="text" name="name" x-model="formData.name" required
+                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Type</label>
+                    <select name="type" x-model="formData.type"
+                            class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                        <option value="webhook">Webhook</option>
+                        <option value="email">Email</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="discord">Discord</option>
+                        <option value="slack">Slack</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Settings (JSON)</label>
+                    <textarea name="settings" x-model="formData.settings" rows="3"
+                              class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1.5">Events (comma-separated)</label>
+                    <input type="text" name="events" x-model="formData.events"
+                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="enabled" checked
+                           class="w-4 h-4 rounded bg-surface border-border text-indigo-500">
+                    <span class="text-sm text-gray-400">Enabled</span>
+                </label>
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">Create</button>
+                    <button type="button" @click="showForm = false" class="text-sm text-gray-400 hover:text-gray-200">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

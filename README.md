@@ -34,7 +34,8 @@ git clone https://github.com/y0f/Asura.git && cd asura && sudo bash install.sh
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
-| **SVG status badges** | Embeddable uptime, status, and response time badges for public monitors |
+| **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
+| **Status badges** | Embeddable SVG badges for public monitors |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **SQLite + WAL** | Concurrent reads, single writer, zero config |
