@@ -30,7 +30,7 @@
             </form>
             {{end}}
             <a href="/monitors/{{$mon.ID}}/edit" class="px-2.5 py-1 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-colors">Edit</a>
-            <form method="POST" action="/monitors/{{$mon.ID}}/delete" onsubmit="return confirm('Delete this monitor?')">
+            <form method="POST" action="/monitors/{{$mon.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this monitor?')) $el.submit()">
                 <button type="submit" class="px-2.5 py-1 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors">Delete</button>
             </form>
         </div>
