@@ -153,7 +153,7 @@ auth:
       role: "admin"
   session:
     lifetime: 24h
-    cookie_secure: true
+    cookie_secure: false  # Set to true after configuring TLS via reverse proxy
 
 monitor:
   workers: 10

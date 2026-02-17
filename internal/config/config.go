@@ -127,7 +127,7 @@ type LoggingConfig struct {
 func Defaults() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Listen:          ":8080",
+			Listen:          "127.0.0.1:8090",
 			ReadTimeout:     30 * time.Second,
 			WriteTimeout:    30 * time.Second,
 			IdleTimeout:     120 * time.Second,

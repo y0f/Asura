@@ -166,7 +166,12 @@ server {
     ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
 
-    # Proxy /asura to Asura (base_path handles the prefix natively)
+    # Redirect /asura to /asura/ (trailing slash required)
+    location = /asura {
+        return 301 /asura/;
+    }
+
+    # Proxy /asura/ to Asura (base_path handles the prefix natively)
     location /asura/ {
         proxy_pass http://127.0.0.1:8090;
         proxy_set_header Host $host;
@@ -213,6 +218,7 @@ Caddy handles TLS automatically:
 
 ```
 example.com {
+    redir /asura /asura/ permanent
     reverse_proxy /asura/* 127.0.0.1:8090
 }
 ```
@@ -290,7 +296,7 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `listen` | `:8080` | Address to bind. Use `127.0.0.1:PORT` in production |
+| `listen` | `127.0.0.1:8090` | Address to bind. Use `127.0.0.1:PORT` in production |
 | `base_path` | `""` | URL prefix for all routes (e.g. `/asura`) |
 | `external_url` | auto | Public URL for notification links |
 | `trusted_proxies` | `[]` | IPs/CIDRs whose `X-Real-IP`/`X-Forwarded-For` headers are trusted |

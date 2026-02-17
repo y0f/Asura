@@ -112,7 +112,7 @@ monitor:
   # How often to check for expired heartbeats
   heartbeat_check_interval: 30s
 
-  # Allowlist of command paths (empty = all commands allowed, NOT recommended)
+  # Allowlist of command paths (empty = all commands blocked, deny-by-default)
   # command_allowlist:
   #   - /usr/local/bin/check_health
   #   - /opt/scripts/verify
