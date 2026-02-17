@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/notifier"
+	"github.com/y0f/Asura/internal/notifier"
 )
 
 func (s *Server) handleWebIncidents(w http.ResponseWriter, r *http.Request) {

@@ -13,13 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/api"
-	"github.com/asura-monitor/asura/internal/checker"
-	"github.com/asura-monitor/asura/internal/config"
-	"github.com/asura-monitor/asura/internal/incident"
-	"github.com/asura-monitor/asura/internal/monitor"
-	"github.com/asura-monitor/asura/internal/notifier"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/api"
+	"github.com/y0f/Asura/internal/checker"
+	"github.com/y0f/Asura/internal/config"
+	"github.com/y0f/Asura/internal/incident"
+	"github.com/y0f/Asura/internal/monitor"
+	"github.com/y0f/Asura/internal/notifier"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 var version = "dev"

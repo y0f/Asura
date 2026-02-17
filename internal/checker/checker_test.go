@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func TestHTTPChecker(t *testing.T) {

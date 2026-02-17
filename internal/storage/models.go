@@ -192,3 +192,13 @@ type AuditEntry struct {
 	Detail     string    `json:"detail,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }
+
+// Session represents a server-side web UI session.
+type Session struct {
+	ID         int64     `json:"id"`
+	TokenHash  string    `json:"-"`
+	APIKeyName string    `json:"api_key_name"`
+	IPAddress  string    `json:"ip_address"`
+	CreatedAt  time.Time `json:"created_at"`
+	ExpiresAt  time.Time `json:"expires_at"`
+}

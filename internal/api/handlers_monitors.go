@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/asura-monitor/asura/internal/config"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/config"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {

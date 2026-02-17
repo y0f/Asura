@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {

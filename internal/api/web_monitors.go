@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleWebMonitors(w http.ResponseWriter, r *http.Request) {

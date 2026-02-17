@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/asura-monitor/asura/internal/config"
-	"github.com/asura-monitor/asura/internal/notifier"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/config"
+	"github.com/y0f/Asura/internal/notifier"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func testServer(t *testing.T) (*Server, string) {
@@ -162,8 +162,8 @@ func TestSecureHeaders(t *testing.T) {
 
 	expected := map[string]string{
 		"X-Content-Type-Options":  "nosniff",
-		"X-Frame-Options":         "SAMEORIGIN",
-		"Content-Security-Policy": "default-src 'none'",
+		"X-Frame-Options":         "DENY",
+		"Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 	}
 
 	for k, v := range expected {

@@ -8,11 +8,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/assertion"
-	"github.com/asura-monitor/asura/internal/checker"
-	"github.com/asura-monitor/asura/internal/diff"
-	"github.com/asura-monitor/asura/internal/incident"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/assertion"
+	"github.com/y0f/Asura/internal/checker"
+	"github.com/y0f/Asura/internal/diff"
+	"github.com/y0f/Asura/internal/incident"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 // Pipeline orchestrates the full monitoring flow:

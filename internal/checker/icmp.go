@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )

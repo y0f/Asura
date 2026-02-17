@@ -8,7 +8,7 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 type EmailSettings struct {

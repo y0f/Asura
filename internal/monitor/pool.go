@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/checker"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/checker"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 // Job represents a check to be executed.

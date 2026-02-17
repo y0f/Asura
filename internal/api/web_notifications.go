@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleWebNotifications(w http.ResponseWriter, r *http.Request) {

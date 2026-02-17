@@ -330,6 +330,102 @@ func TestMonitorPublicFlag(t *testing.T) {
 	}
 }
 
+func TestSessionCRUD(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	t.Run("CreateAndGet", func(t *testing.T) {
+		sess := &Session{
+			TokenHash:  "abc123hash",
+			APIKeyName: "admin",
+			IPAddress:  "192.168.1.1",
+			ExpiresAt:  time.Now().Add(24 * time.Hour),
+		}
+		if err := store.CreateSession(ctx, sess); err != nil {
+			t.Fatal(err)
+		}
+		if sess.ID == 0 {
+			t.Fatal("expected non-zero ID")
+		}
+
+		got, err := store.GetSessionByTokenHash(ctx, "abc123hash")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.APIKeyName != "admin" {
+			t.Fatalf("expected api_key_name 'admin', got %q", got.APIKeyName)
+		}
+		if got.IPAddress != "192.168.1.1" {
+			t.Fatalf("expected ip '192.168.1.1', got %q", got.IPAddress)
+		}
+	})
+
+	t.Run("GetNotFound", func(t *testing.T) {
+		_, err := store.GetSessionByTokenHash(ctx, "nonexistent")
+		if err == nil {
+			t.Fatal("expected error for nonexistent session")
+		}
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		sess := &Session{
+			TokenHash:  "deleteme",
+			APIKeyName: "admin",
+			ExpiresAt:  time.Now().Add(24 * time.Hour),
+		}
+		store.CreateSession(ctx, sess)
+
+		if err := store.DeleteSession(ctx, "deleteme"); err != nil {
+			t.Fatal(err)
+		}
+		_, err := store.GetSessionByTokenHash(ctx, "deleteme")
+		if err == nil {
+			t.Fatal("expected error after delete")
+		}
+	})
+
+	t.Run("DeleteExpired", func(t *testing.T) {
+		// Create an already-expired session
+		expired := &Session{
+			TokenHash:  "expired_token",
+			APIKeyName: "admin",
+			ExpiresAt:  time.Now().Add(-1 * time.Hour),
+		}
+		store.CreateSession(ctx, expired)
+
+		// Create a valid session
+		valid := &Session{
+			TokenHash:  "valid_token",
+			APIKeyName: "admin",
+			ExpiresAt:  time.Now().Add(24 * time.Hour),
+		}
+		store.CreateSession(ctx, valid)
+
+		deleted, err := store.DeleteExpiredSessions(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if deleted == 0 {
+			t.Fatal("expected at least 1 expired session deleted")
+		}
+
+		// Expired session should be gone
+		_, err = store.GetSessionByTokenHash(ctx, "expired_token")
+		if err == nil {
+			t.Fatal("expected expired session to be deleted")
+		}
+
+		// Valid session should still exist
+		got, err := store.GetSessionByTokenHash(ctx, "valid_token")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.TokenHash != "valid_token" {
+			t.Fatal("valid session should still exist")
+		}
+	})
+}
+
 func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

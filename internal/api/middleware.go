@@ -9,10 +9,11 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/config"
+	"github.com/y0f/Asura/internal/config"
 	"golang.org/x/time/rate"
 )
 
@@ -103,13 +104,40 @@ func (w *statusWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code)
 }
 
-func secureHeaders() func(http.Handler) http.Handler {
+func buildFrameAncestorsDirective(ancestors []string) string {
+	if len(ancestors) == 0 {
+		return "frame-ancestors 'none'"
+	}
+	parts := make([]string, len(ancestors))
+	for i, a := range ancestors {
+		if a == "self" {
+			parts[i] = "'self'"
+		} else {
+			parts[i] = a
+		}
+	}
+	return "frame-ancestors " + strings.Join(parts, " ")
+}
+
+func secureHeaders(frameAncestors []string) func(http.Handler) http.Handler {
+	var xFrameOptions string
+	switch {
+	case len(frameAncestors) == 0:
+		xFrameOptions = "DENY"
+	case len(frameAncestors) == 1 && frameAncestors[0] == "self":
+		xFrameOptions = "SAMEORIGIN"
+	}
+
+	cspFrame := buildFrameAncestorsDirective(frameAncestors)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			if xFrameOptions != "" {
+				w.Header().Set("X-Frame-Options", xFrameOptions)
+			}
 			w.Header().Set("X-XSS-Protection", "0")
-			w.Header().Set("Content-Security-Policy", "default-src 'none'")
+			w.Header().Set("Content-Security-Policy", "default-src 'none'; "+cspFrame)
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 			w.Header().Set("Cache-Control", "no-store")
 			next.ServeHTTP(w, r)
@@ -194,6 +222,10 @@ func (rl *rateLimiter) getLimiter(ip string) *rate.Limiter {
 	}
 	v.lastSeen = time.Now()
 	return v.limiter
+}
+
+func (rl *rateLimiter) allow(ip string) bool {
+	return rl.getLimiter(ip).Allow()
 }
 
 func (rl *rateLimiter) middleware() func(http.Handler) http.Handler {

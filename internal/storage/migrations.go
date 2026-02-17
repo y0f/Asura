@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 3
+const schemaVersion = 4
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -129,6 +129,17 @@ CREATE TABLE IF NOT EXISTS heartbeats (
 	last_ping_at TEXT,
 	status      TEXT    NOT NULL DEFAULT 'pending'
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	token_hash   TEXT    NOT NULL UNIQUE,
+	api_key_name TEXT    NOT NULL,
+	ip_address   TEXT    NOT NULL DEFAULT '',
+	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	expires_at   TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 `
 
 // migrations holds incremental schema changes after the initial schema.
@@ -155,5 +166,18 @@ CREATE TABLE IF NOT EXISTS heartbeats (
 CREATE INDEX IF NOT EXISTS idx_check_results_created_at ON check_results(created_at);
 CREATE INDEX IF NOT EXISTS idx_incidents_resolved_at ON incidents(status, resolved_at);
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);`,
+	},
+	{
+		version: 4,
+		sql: `
+CREATE TABLE IF NOT EXISTS sessions (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	token_hash   TEXT    NOT NULL UNIQUE,
+	api_key_name TEXT    NOT NULL,
+	ip_address   TEXT    NOT NULL DEFAULT '',
+	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	expires_at   TEXT    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);`,
 	},
 }

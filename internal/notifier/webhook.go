@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 // WebhookSettings holds webhook-specific configuration.

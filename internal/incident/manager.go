@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 // Manager handles incident lifecycle.

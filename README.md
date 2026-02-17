@@ -118,9 +118,9 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 
 | Section    | Controls                                              |
 |------------|-------------------------------------------------------|
-| `server`   | Listen address, TLS, timeouts, CORS, rate limiting    |
+| `server`   | Listen address, TLS, timeouts, CORS, rate limiting, web UI toggle, frame embedding |
 | `database` | SQLite path, read pool size, retention policy         |
-| `auth`     | API keys (SHA-256 hashed), admin / readonly roles     |
+| `auth`     | API keys (SHA-256 hashed), roles, session lifetime, login rate limiting |
 | `monitor`  | Worker count, default intervals, thresholds           |
 | `logging`  | Level (debug/info/warn/error), format (text/json)     |
 
@@ -181,9 +181,9 @@ Available permissions: `monitors.read`, `monitors.write`, `incidents.read`, `inc
 curl -H "X-API-Key: your-secret-key" http://localhost:8080/api/v1/monitors
 ```
 
-**Web UI**: Enter the raw key on the login page. A session cookie (7-day expiry, HttpOnly) is set automatically.
+**Web UI**: Enter the raw key on the login page. A server-side session is created with a secure random token stored in a cookie (24h expiry by default, HttpOnly, Secure). The raw API key is never stored in the cookie. Login attempts are rate-limited per IP.
 
-You can configure multiple keys with different names and permissions. Each key's name is recorded in the audit log for traceability.
+You can configure multiple keys with different names and permissions. Each key's name is recorded in the audit log for traceability. Login successes and failures are also audited.
 
 ---
 

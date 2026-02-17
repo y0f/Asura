@@ -31,6 +31,8 @@ type ServerConfig struct {
 	CORSOrigins     []string      `yaml:"cors_origins"`
 	RateLimitPerSec float64       `yaml:"rate_limit_per_sec"`
 	RateLimitBurst  int           `yaml:"rate_limit_burst"`
+	WebUIEnabled    *bool         `yaml:"web_ui_enabled"`
+	FrameAncestors  []string      `yaml:"frame_ancestors"`
 }
 
 type DatabaseConfig struct {
@@ -42,6 +44,18 @@ type DatabaseConfig struct {
 
 type AuthConfig struct {
 	APIKeys []APIKeyConfig `yaml:"api_keys"`
+	Session SessionConfig  `yaml:"session"`
+	Login   LoginConfig    `yaml:"login"`
+}
+
+type SessionConfig struct {
+	Lifetime     time.Duration `yaml:"lifetime"`
+	CookieSecure bool          `yaml:"cookie_secure"`
+}
+
+type LoginConfig struct {
+	RateLimitPerSec float64 `yaml:"rate_limit_per_sec"`
+	RateLimitBurst  int     `yaml:"rate_limit_burst"`
 }
 
 type APIKeyConfig struct {
@@ -120,7 +134,16 @@ func Defaults() *Config {
 			RetentionDays:   90,
 			RetentionPeriod: 1 * time.Hour,
 		},
-		Auth: AuthConfig{},
+		Auth: AuthConfig{
+			Session: SessionConfig{
+				Lifetime:     24 * time.Hour,
+				CookieSecure: true,
+			},
+			Login: LoginConfig{
+				RateLimitPerSec: 0.2,
+				RateLimitBurst:  5,
+			},
+		},
 		Monitor: MonitorConfig{
 			Workers:                10,
 			DefaultTimeout:         10 * time.Second,
@@ -271,6 +294,23 @@ func validateLogLevel(level string) error {
 func HashAPIKey(key string) string {
 	h := sha256.Sum256([]byte(key))
 	return hex.EncodeToString(h[:])
+}
+
+func (c *Config) IsWebUIEnabled() bool {
+	if c.Server.WebUIEnabled == nil {
+		return true
+	}
+	return *c.Server.WebUIEnabled
+}
+
+// LookupAPIKeyByName finds an API key config by its name.
+func (c *Config) LookupAPIKeyByName(name string) *APIKeyConfig {
+	for i := range c.Auth.APIKeys {
+		if c.Auth.APIKeys[i].Name == name {
+			return &c.Auth.APIKeys[i]
+		}
+	}
+	return nil
 }
 
 // LookupAPIKey checks if the given key matches any configured API key

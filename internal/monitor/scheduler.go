@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 // Scheduler dispatches check jobs on a per-monitor interval basis.

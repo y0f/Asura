@@ -6,32 +6,36 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/asura-monitor/asura/internal/config"
-	"github.com/asura-monitor/asura/internal/monitor"
-	"github.com/asura-monitor/asura/internal/notifier"
-	"github.com/asura-monitor/asura/internal/storage"
-	"github.com/asura-monitor/asura/web"
+	"github.com/y0f/Asura/internal/config"
+	"github.com/y0f/Asura/internal/monitor"
+	"github.com/y0f/Asura/internal/notifier"
+	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/Asura/web"
 )
 
 type Server struct {
-	cfg       *config.Config
-	store     storage.Store
-	pipeline  *monitor.Pipeline
-	notifier  *notifier.Dispatcher
-	logger    *slog.Logger
-	handler   http.Handler
-	version   string
-	templates map[string]*template.Template
+	cfg               *config.Config
+	store             storage.Store
+	pipeline          *monitor.Pipeline
+	notifier          *notifier.Dispatcher
+	logger            *slog.Logger
+	handler           http.Handler
+	version           string
+	templates         map[string]*template.Template
+	loginRL           *rateLimiter
+	cspFrameDirective string
 }
 
 func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeline, dispatcher *notifier.Dispatcher, logger *slog.Logger, version string) *Server {
 	s := &Server{
-		cfg:      cfg,
-		store:    store,
-		pipeline: pipeline,
-		notifier: dispatcher,
-		logger:   logger,
-		version:  version,
+		cfg:               cfg,
+		store:             store,
+		pipeline:          pipeline,
+		notifier:          dispatcher,
+		logger:            logger,
+		version:           version,
+		loginRL:           newRateLimiter(cfg.Auth.Login.RateLimitPerSec, cfg.Auth.Login.RateLimitBurst),
+		cspFrameDirective: buildFrameAncestorsDirective(cfg.Server.FrameAncestors),
 	}
 
 	s.loadTemplates()
@@ -44,7 +48,7 @@ func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeli
 	rl := newRateLimiter(cfg.Server.RateLimitPerSec, cfg.Server.RateLimitBurst)
 	handler = rl.middleware()(handler)
 	handler = cors(cfg.Server.CORSOrigins)(handler)
-	handler = secureHeaders()(handler)
+	handler = secureHeaders(cfg.Server.FrameAncestors)(handler)
 	handler = logging(logger)(handler)
 	handler = requestID()(handler)
 	handler = recovery(logger)(handler)
@@ -68,46 +72,48 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	maintWrite := auth(s.cfg, "maintenance.write")
 	metricsRead := auth(s.cfg, "metrics.read")
 
-	// Static files
-	staticFS, _ := fs.Sub(web.FS, "static")
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	if s.cfg.IsWebUIEnabled() {
+		// Static files
+		staticFS, _ := fs.Sub(web.FS, "static")
+		mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
-	// Web UI
-	mux.HandleFunc("GET /login", s.handleWebLogin)
-	mux.HandleFunc("POST /login", s.handleWebLoginPost)
-	mux.HandleFunc("POST /logout", s.handleWebLogout)
+		// Web UI
+		mux.HandleFunc("GET /login", s.handleWebLogin)
+		mux.HandleFunc("POST /login", s.handleWebLoginPost)
+		mux.HandleFunc("POST /logout", s.handleWebLogout)
 
-	webAuth := s.webAuth
-	webPerm := func(perm string, h http.HandlerFunc) http.Handler {
-		return webAuth(s.webRequirePerm(perm, http.HandlerFunc(h)))
+		webAuth := s.webAuth
+		webPerm := func(perm string, h http.HandlerFunc) http.Handler {
+			return webAuth(s.webRequirePerm(perm, http.HandlerFunc(h)))
+		}
+
+		mux.Handle("GET /{$}", webAuth(http.HandlerFunc(s.handleWebDashboard)))
+		mux.Handle("GET /monitors", webAuth(http.HandlerFunc(s.handleWebMonitors)))
+		mux.Handle("GET /monitors/new", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
+		mux.Handle("GET /monitors/{id}", webAuth(http.HandlerFunc(s.handleWebMonitorDetail)))
+		mux.Handle("GET /monitors/{id}/edit", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
+		mux.Handle("POST /monitors", webPerm("monitors.write", s.handleWebMonitorCreate))
+		mux.Handle("POST /monitors/{id}", webPerm("monitors.write", s.handleWebMonitorUpdate))
+		mux.Handle("POST /monitors/{id}/delete", webPerm("monitors.write", s.handleWebMonitorDelete))
+		mux.Handle("POST /monitors/{id}/pause", webPerm("monitors.write", s.handleWebMonitorPause))
+		mux.Handle("POST /monitors/{id}/resume", webPerm("monitors.write", s.handleWebMonitorResume))
+
+		mux.Handle("GET /incidents", webAuth(http.HandlerFunc(s.handleWebIncidents)))
+		mux.Handle("GET /incidents/{id}", webAuth(http.HandlerFunc(s.handleWebIncidentDetail)))
+		mux.Handle("POST /incidents/{id}/ack", webPerm("incidents.write", s.handleWebIncidentAck))
+		mux.Handle("POST /incidents/{id}/resolve", webPerm("incidents.write", s.handleWebIncidentResolve))
+
+		mux.Handle("GET /notifications", webAuth(http.HandlerFunc(s.handleWebNotifications)))
+		mux.Handle("POST /notifications", webPerm("notifications.write", s.handleWebNotificationCreate))
+		mux.Handle("POST /notifications/{id}", webPerm("notifications.write", s.handleWebNotificationUpdate))
+		mux.Handle("POST /notifications/{id}/delete", webPerm("notifications.write", s.handleWebNotificationDelete))
+		mux.Handle("POST /notifications/{id}/test", webPerm("notifications.write", s.handleWebNotificationTest))
+
+		mux.Handle("GET /maintenance", webAuth(http.HandlerFunc(s.handleWebMaintenance)))
+		mux.Handle("POST /maintenance", webPerm("maintenance.write", s.handleWebMaintenanceCreate))
+		mux.Handle("POST /maintenance/{id}", webPerm("maintenance.write", s.handleWebMaintenanceUpdate))
+		mux.Handle("POST /maintenance/{id}/delete", webPerm("maintenance.write", s.handleWebMaintenanceDelete))
 	}
-
-	mux.Handle("GET /{$}", webAuth(http.HandlerFunc(s.handleWebDashboard)))
-	mux.Handle("GET /monitors", webAuth(http.HandlerFunc(s.handleWebMonitors)))
-	mux.Handle("GET /monitors/new", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
-	mux.Handle("GET /monitors/{id}", webAuth(http.HandlerFunc(s.handleWebMonitorDetail)))
-	mux.Handle("GET /monitors/{id}/edit", webAuth(http.HandlerFunc(s.handleWebMonitorForm)))
-	mux.Handle("POST /monitors", webPerm("monitors.write", s.handleWebMonitorCreate))
-	mux.Handle("POST /monitors/{id}", webPerm("monitors.write", s.handleWebMonitorUpdate))
-	mux.Handle("POST /monitors/{id}/delete", webPerm("monitors.write", s.handleWebMonitorDelete))
-	mux.Handle("POST /monitors/{id}/pause", webPerm("monitors.write", s.handleWebMonitorPause))
-	mux.Handle("POST /monitors/{id}/resume", webPerm("monitors.write", s.handleWebMonitorResume))
-
-	mux.Handle("GET /incidents", webAuth(http.HandlerFunc(s.handleWebIncidents)))
-	mux.Handle("GET /incidents/{id}", webAuth(http.HandlerFunc(s.handleWebIncidentDetail)))
-	mux.Handle("POST /incidents/{id}/ack", webPerm("incidents.write", s.handleWebIncidentAck))
-	mux.Handle("POST /incidents/{id}/resolve", webPerm("incidents.write", s.handleWebIncidentResolve))
-
-	mux.Handle("GET /notifications", webAuth(http.HandlerFunc(s.handleWebNotifications)))
-	mux.Handle("POST /notifications", webPerm("notifications.write", s.handleWebNotificationCreate))
-	mux.Handle("POST /notifications/{id}", webPerm("notifications.write", s.handleWebNotificationUpdate))
-	mux.Handle("POST /notifications/{id}/delete", webPerm("notifications.write", s.handleWebNotificationDelete))
-	mux.Handle("POST /notifications/{id}/test", webPerm("notifications.write", s.handleWebNotificationTest))
-
-	mux.Handle("GET /maintenance", webAuth(http.HandlerFunc(s.handleWebMaintenance)))
-	mux.Handle("POST /maintenance", webPerm("maintenance.write", s.handleWebMaintenanceCreate))
-	mux.Handle("POST /maintenance/{id}", webPerm("maintenance.write", s.handleWebMaintenanceUpdate))
-	mux.Handle("POST /maintenance/{id}/delete", webPerm("maintenance.write", s.handleWebMaintenanceDelete))
 
 	mux.HandleFunc("GET /api/v1/health", s.handleHealth)
 	mux.Handle("GET /metrics", metricsRead(http.HandlerFunc(s.handleMetrics)))

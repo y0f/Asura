@@ -27,6 +27,16 @@ server:
   rate_limit_per_sec: 10
   rate_limit_burst: 20
 
+  # Enable/disable the web UI (default: true)
+  # Set to false for API-only deployments
+  web_ui_enabled: true
+
+  # X-Frame-Options / CSP frame-ancestors control
+  # [] (empty/default) = DENY — no framing allowed
+  # ["self"]           = SAMEORIGIN — only same origin can frame
+  # ["self", "https://dashboard.example.com"] = specific origins
+  # frame_ancestors: []
+
 database:
   # SQLite database file path
   path: "asura.db"
@@ -51,6 +61,16 @@ auth:
     - name: "dashboard"
       hash: "${ASURA_READ_KEY_HASH}"
       role: "readonly"       # Read-only access
+
+  # Session settings for web UI login
+  session:
+    lifetime: 24h            # How long sessions last (default: 24h)
+    cookie_secure: true      # Set Secure flag on cookie (default: true, disable for HTTP-only dev)
+
+  # Login rate limiting (per IP)
+  login:
+    rate_limit_per_sec: 0.2  # ~1 attempt per 5 seconds sustained
+    rate_limit_burst: 5      # Allow 5 rapid attempts before throttling
 
 monitor:
   # Number of concurrent check workers

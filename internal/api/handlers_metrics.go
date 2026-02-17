@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {

@@ -5,7 +5,7 @@ Thanks for your interest in contributing. This guide covers the basics.
 ## Getting Started
 
 ```bash
-git clone https://github.com/asura-monitor/asura.git
+git clone https://github.com/y0f/Asura.git
 cd asura
 make build
 make test

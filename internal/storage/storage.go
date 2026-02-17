@@ -77,6 +77,12 @@ type Store interface {
 	// Audit
 	InsertAudit(ctx context.Context, entry *AuditEntry) error
 
+	// Sessions
+	CreateSession(ctx context.Context, s *Session) error
+	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*Session, error)
+	DeleteSession(ctx context.Context, tokenHash string) error
+	DeleteExpiredSessions(ctx context.Context) (int64, error)
+
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
 

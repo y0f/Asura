@@ -1028,6 +1028,52 @@ func (s *SQLiteStore) InsertAudit(ctx context.Context, entry *AuditEntry) error 
 	return err
 }
 
+// --- Sessions ---
+
+func (s *SQLiteStore) CreateSession(ctx context.Context, sess *Session) error {
+	now := formatTime(time.Now())
+	res, err := s.writeDB.ExecContext(ctx,
+		`INSERT INTO sessions (token_hash, api_key_name, ip_address, created_at, expires_at)
+		 VALUES (?, ?, ?, ?, ?)`,
+		sess.TokenHash, sess.APIKeyName, sess.IPAddress, now, formatTime(sess.ExpiresAt))
+	if err != nil {
+		return err
+	}
+	id, _ := res.LastInsertId()
+	sess.ID = id
+	sess.CreatedAt = parseTime(now)
+	return nil
+}
+
+func (s *SQLiteStore) GetSessionByTokenHash(ctx context.Context, tokenHash string) (*Session, error) {
+	var sess Session
+	var createdAt, expiresAt string
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, token_hash, api_key_name, ip_address, created_at, expires_at
+		 FROM sessions WHERE token_hash=?`, tokenHash).
+		Scan(&sess.ID, &sess.TokenHash, &sess.APIKeyName, &sess.IPAddress, &createdAt, &expiresAt)
+	if err != nil {
+		return nil, err
+	}
+	sess.CreatedAt = parseTime(createdAt)
+	sess.ExpiresAt = parseTime(expiresAt)
+	return &sess, nil
+}
+
+func (s *SQLiteStore) DeleteSession(ctx context.Context, tokenHash string) error {
+	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions WHERE token_hash=?", tokenHash)
+	return err
+}
+
+func (s *SQLiteStore) DeleteExpiredSessions(ctx context.Context) (int64, error) {
+	now := formatTime(time.Now())
+	res, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions WHERE expires_at < ?", now)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 // --- Retention ---
 
 func (s *SQLiteStore) PurgeOldData(ctx context.Context, before time.Time) (int64, error) {
@@ -1070,6 +1116,12 @@ func (s *SQLiteStore) PurgeOldData(ctx context.Context, before time.Time) (int64
 	}
 	n, _ = res.RowsAffected()
 	totalDeleted += n
+
+	expired, err := s.DeleteExpiredSessions(ctx)
+	if err != nil {
+		return totalDeleted, err
+	}
+	totalDeleted += expired
 
 	return totalDeleted, nil
 }

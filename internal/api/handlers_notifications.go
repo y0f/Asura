@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleListNotifications(w http.ResponseWriter, r *http.Request) {

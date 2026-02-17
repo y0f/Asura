@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/asura-monitor/asura/internal/notifier"
-	"github.com/asura-monitor/asura/internal/storage"
+	"github.com/y0f/Asura/internal/notifier"
+	"github.com/y0f/Asura/internal/storage"
 )
 
 func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
