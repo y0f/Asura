@@ -44,6 +44,8 @@ func (s *Server) handleWebLogout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
 	})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -59,10 +61,13 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 		apiKey, ok := s.cfg.LookupAPIKey(cookie.Value)
 		if !ok {
 			http.SetCookie(w, &http.Cookie{
-				Name:   sessionCookie,
-				Value:  "",
-				Path:   "/",
-				MaxAge: -1,
+				Name:     sessionCookie,
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteLaxMode,
 			})
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return

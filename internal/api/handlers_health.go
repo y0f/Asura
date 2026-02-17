@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"runtime"
 	"time"
 )
 
@@ -13,6 +12,5 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"status":  "ok",
 		"version": s.version,
 		"uptime":  time.Since(startTime).String(),
-		"go":      runtime.Version(),
 	})
 }

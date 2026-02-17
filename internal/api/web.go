@@ -283,5 +283,7 @@ func (s *Server) setFlash(w http.ResponseWriter, msg string) {
 		Path:     "/",
 		MaxAge:   5,
 		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
 	})
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -247,7 +248,7 @@ func HashAPIKey(key string) string {
 func (c *Config) LookupAPIKey(key string) (*APIKeyConfig, bool) {
 	hash := HashAPIKey(key)
 	for i := range c.Auth.APIKeys {
-		if c.Auth.APIKeys[i].Hash == hash {
+		if subtle.ConstantTimeCompare([]byte(c.Auth.APIKeys[i].Hash), []byte(hash)) == 1 {
 			return &c.Auth.APIKeys[i], true
 		}
 	}

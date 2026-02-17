@@ -108,6 +108,7 @@ fi
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$DATA_DIR"
 chown "$SERVICE_USER":"$SERVICE_USER" "$DATA_DIR"
+chmod 700 "$DATA_DIR"
 
 # ── Generate config ────────────────────────────────────────────────
 
