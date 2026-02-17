@@ -1,5 +1,7 @@
 <p align="center">
-  <h1 align="center">Asura</h1>
+  <h1 align="center">
+    <img src="assets/asura.gif" alt="Asura Logo"/>
+  </h1>
   <p align="center">A self-contained Go monitoring service with no external runtime dependencies.</p>
   <p align="center">
     <a href="https://github.com/y0f/Asura/actions/workflows/ci.yml"><img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
