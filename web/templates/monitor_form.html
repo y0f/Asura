@@ -1,21 +1,21 @@
 {{define "title"}}{{.Title}}{{end}}
 {{define "content"}}
 <div x-data="{monitorType: '{{if .Data}}{{.Data.Type}}{{else}}http{{end}}'}">
-    <h1 class="text-xl font-semibold text-white mb-4">{{.Title}}</h1>
+    <h1 class="text-xl font-semibold text-white mb-5">{{.Title}}</h1>
 
-    <form method="POST" action="{{if .Data}}/monitors/{{.Data.ID}}{{else}}/monitors{{end}}" class="max-w-2xl space-y-6">
-        <div class="bg-surface-100 border border-border rounded-xl p-6 space-y-5">
+    <form method="POST" action="{{if .Data}}/monitors/{{.Data.ID}}{{else}}/monitors{{end}}" class="max-w-2xl space-y-5">
+        <div class="bg-surface-100 border border-border rounded-xl p-5 md:p-6 space-y-5">
             <div>
                 <label class="block text-sm text-gray-400 mb-1.5">Name</label>
                 <input type="text" name="name" value="{{if .Data}}{{.Data.Name}}{{end}}" required
-                       class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500">
+                       class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Type</label>
                     <select name="type" x-model="monitorType"
-                            class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                            class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all duration-200">
                         <option value="http">HTTP</option>
                         <option value="tcp">TCP</option>
                         <option value="dns">DNS</option>
@@ -26,37 +26,37 @@
                         <option value="heartbeat">Heartbeat</option>
                     </select>
                 </div>
-                <div x-show="monitorType !== 'heartbeat'">
+                <div x-show="monitorType !== 'heartbeat'" x-transition>
                     <label class="block text-sm text-gray-400 mb-1.5">Target</label>
                     <input type="text" name="target" value="{{if .Data}}{{.Data.Target}}{{end}}"
                            placeholder="https://example.com"
-                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                           class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Interval (seconds)</label>
                     <input type="number" name="interval" value="{{if .Data}}{{.Data.Interval}}{{else}}60{{end}}" min="5" max="86400"
-                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                           class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Timeout (seconds)</label>
                     <input type="number" name="timeout" value="{{if .Data}}{{.Data.Timeout}}{{else}}10{{end}}" min="1" max="300"
-                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                           class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Failure Threshold</label>
                     <input type="number" name="failure_threshold" value="{{if .Data}}{{.Data.FailureThreshold}}{{else}}3{{end}}" min="1"
-                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                           class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Success Threshold</label>
                     <input type="number" name="success_threshold" value="{{if .Data}}{{.Data.SuccessThreshold}}{{else}}1{{end}}" min="1"
-                           class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                           class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
                 </div>
             </div>
 
@@ -64,37 +64,37 @@
                 <label class="block text-sm text-gray-400 mb-1.5">Tags (comma-separated)</label>
                 <input type="text" name="tags" value="{{if .Data}}{{range $i, $t := .Data.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}{{end}}"
                        placeholder="production, api, critical"
-                       class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                       class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200">
             </div>
 
-            <div class="flex items-center gap-6">
-                <label class="flex items-center gap-2 cursor-pointer">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="flex items-center gap-2.5 cursor-pointer group">
                     <input type="checkbox" name="track_changes" {{if and .Data .Data.TrackChanges}}checked{{end}}
                            class="w-4 h-4 rounded bg-surface border-border text-indigo-500 focus:ring-indigo-500/50">
-                    <span class="text-sm text-gray-400">Track content changes</span>
+                    <span class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Track content changes</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2.5 cursor-pointer group">
                     <input type="checkbox" name="public" {{if and .Data .Data.Public}}checked{{end}}
                            class="w-4 h-4 rounded bg-surface border-border text-indigo-500 focus:ring-indigo-500/50">
-                    <span class="text-sm text-gray-400">Public (enable badges)</span>
+                    <span class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Public (enable badges)</span>
                 </label>
             </div>
         </div>
 
-        <div class="bg-surface-100 border border-border rounded-xl p-6" x-show="monitorType !== 'heartbeat'" x-cloak>
-            <h3 class="text-sm font-medium text-gray-300 mb-4">Settings (JSON)</h3>
+        <div class="bg-surface-100 border border-border rounded-xl p-5 md:p-6" x-show="monitorType !== 'heartbeat'" x-cloak x-transition>
+            <h3 class="text-sm font-medium text-gray-300 mb-3">Settings (JSON)</h3>
             <textarea name="settings" rows="4" placeholder="{}"
-                      class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y">{{if .Data}}{{printf "%s" .Data.Settings}}{{end}}</textarea>
+                      class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm font-mono placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200 resize-y">{{if .Data}}{{printf "%s" .Data.Settings}}{{end}}</textarea>
         </div>
 
-        <div class="bg-surface-100 border border-border rounded-xl p-6">
-            <h3 class="text-sm font-medium text-gray-300 mb-4">Assertions (JSON)</h3>
+        <div class="bg-surface-100 border border-border rounded-xl p-5 md:p-6">
+            <h3 class="text-sm font-medium text-gray-300 mb-3">Assertions (JSON)</h3>
             <textarea name="assertions" rows="4" placeholder="[]"
-                      class="w-full px-3 py-2 bg-surface border border-border rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y">{{if .Data}}{{printf "%s" .Data.Assertions}}{{end}}</textarea>
+                      class="w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-white text-sm font-mono placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-all duration-200 resize-y">{{if .Data}}{{printf "%s" .Data.Assertions}}{{end}}</textarea>
         </div>
 
         <div class="flex items-center gap-3">
-            <button type="submit" class="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
+            <button type="submit" class="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
                 {{if .Data}}Update Monitor{{else}}Create Monitor{{end}}
             </button>
             <a href="/monitors" class="px-6 py-2.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">Cancel</a>

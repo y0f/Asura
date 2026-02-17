@@ -1,11 +1,12 @@
 {{define "title"}}Monitors{{end}}
 {{define "content"}}
 <div>
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-5">
         <h1 class="text-xl font-semibold text-white">Monitors</h1>
         {{if index .Perms "monitors.write"}}
-        <a href="/monitors/new" class="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
-            + New Monitor
+        <a href="/monitors/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Monitor
         </a>
         {{end}}
     </div>
@@ -13,63 +14,66 @@
     <div id="monitor-list" hx-get="" hx-trigger="every 30s" hx-select="#monitor-list" hx-swap="outerHTML" hx-push-url="false">
         <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
             {{if and .Data .Data.Data}}
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b border-border text-left">
-                        <th class="px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">Monitor</th>
-                        <th class="px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">Last Check</th>
-                        <th class="px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    {{range .Data.Data}}
-                    <tr class="hover:bg-surface-200 transition-colors">
-                        <td class="px-4 py-3">
-                            <a href="/monitors/{{.ID}}" class="text-sm text-white hover:text-indigo-400 transition-colors">{{.Name}}</a>
-                            <div class="text-xs text-gray-600 mt-0.5 truncate max-w-xs">{{.Target}}</div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="text-xs text-gray-400 bg-surface-200 px-2 py-0.5 rounded">{{typeLabel .Type}}</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full {{statusDot .Status}}"></div>
-                                <span class="text-sm {{statusColor .Status}}">{{.Status}}</span>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-400">
-                            {{if .LastCheckAt}}{{timeAgo .LastCheckAt}}{{else}}-{{end}}
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                {{if index $.Perms "monitors.write"}}
-                                {{if .Enabled}}
-                                <form method="POST" action="/monitors/{{.ID}}/pause" class="inline">
-                                    <button type="submit" class="text-xs text-gray-500 hover:text-yellow-400 transition-colors" title="Pause">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>
-                                    </button>
-                                </form>
-                                {{else}}
-                                <form method="POST" action="/monitors/{{.ID}}/resume" class="inline">
-                                    <button type="submit" class="text-xs text-gray-500 hover:text-emerald-400 transition-colors" title="Resume">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                                    </button>
-                                </form>
-                                {{end}}
-                                {{end}}
-                                <a href="/monitors/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
-                            </div>
-                        </td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[640px]">
+                    <thead>
+                        <tr class="border-b border-border text-left">
+                            <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Monitor</th>
+                            <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Last Check</th>
+                            <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        {{range .Data.Data}}
+                        <tr class="hover:bg-surface-200/40 transition-colors duration-150">
+                            <td class="px-5 py-3.5">
+                                <a href="/monitors/{{.ID}}" class="text-sm text-white hover:text-indigo-400 transition-colors font-medium">{{.Name}}</a>
+                                <div class="text-xs text-gray-600 mt-0.5 truncate max-w-xs">{{.Target}}</div>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <span class="text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md">{{typeLabel .Type}}</span>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full {{statusDot .Status}} {{if eq .Status "down"}}animate-pulse-dot{{end}}"></div>
+                                    <span class="text-sm {{statusColor .Status}}">{{.Status}}</span>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3.5 text-sm text-gray-400">
+                                {{if .LastCheckAt}}{{timeAgo .LastCheckAt}}{{else}}<span class="text-gray-600">-</span>{{end}}
+                            </td>
+                            <td class="px-5 py-3.5 text-right">
+                                <div class="flex items-center justify-end gap-2.5">
+                                    {{if index $.Perms "monitors.write"}}
+                                    {{if .Enabled}}
+                                    <form method="POST" action="/monitors/{{.ID}}/pause" class="inline">
+                                        <button type="submit" class="text-gray-500 hover:text-yellow-400 transition-colors" title="Pause">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>
+                                        </button>
+                                    </form>
+                                    {{else}}
+                                    <form method="POST" action="/monitors/{{.ID}}/resume" class="inline">
+                                        <button type="submit" class="text-gray-500 hover:text-emerald-400 transition-colors" title="Resume">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                        </button>
+                                    </form>
+                                    {{end}}
+                                    {{end}}
+                                    <a href="/monitors/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
             {{else}}
-            <div class="px-4 py-12 text-center">
-                <div class="text-gray-500 mb-2">No monitors configured</div>
-                <a href="/monitors/new" class="text-sm text-indigo-400 hover:text-indigo-300">Create your first monitor</a>
+            <div class="px-5 py-16 text-center">
+                <svg class="w-12 h-12 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <p class="text-gray-500 mb-1">No monitors configured</p>
+                <a href="/monitors/new" class="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">Create your first monitor</a>
             </div>
             {{end}}
         </div>
