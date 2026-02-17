@@ -606,14 +606,15 @@ func (s *SQLiteStore) CreateNotificationChannel(ctx context.Context, ch *Notific
 
 func (s *SQLiteStore) GetNotificationChannel(ctx context.Context, id int64) (*NotificationChannel, error) {
 	var ch NotificationChannel
-	var eventsStr, createdAt, updatedAt string
+	var settingsStr, eventsStr, createdAt, updatedAt string
 	err := s.readDB.QueryRowContext(ctx,
 		`SELECT id, name, type, enabled, settings, events, created_at, updated_at
 		 FROM notification_channels WHERE id=?`, id).
-		Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Enabled, &ch.Settings, &eventsStr, &createdAt, &updatedAt)
+		Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Enabled, &settingsStr, &eventsStr, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
+	ch.Settings = json.RawMessage(settingsStr)
 	ch.CreatedAt = parseTime(createdAt)
 	ch.UpdatedAt = parseTime(updatedAt)
 	json.Unmarshal([]byte(eventsStr), &ch.Events)
@@ -632,10 +633,11 @@ func (s *SQLiteStore) ListNotificationChannels(ctx context.Context) ([]*Notifica
 	var channels []*NotificationChannel
 	for rows.Next() {
 		var ch NotificationChannel
-		var eventsStr, createdAt, updatedAt string
-		if err := rows.Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Enabled, &ch.Settings, &eventsStr, &createdAt, &updatedAt); err != nil {
+		var settingsStr, eventsStr, createdAt, updatedAt string
+		if err := rows.Scan(&ch.ID, &ch.Name, &ch.Type, &ch.Enabled, &settingsStr, &eventsStr, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
+		ch.Settings = json.RawMessage(settingsStr)
 		ch.CreatedAt = parseTime(createdAt)
 		ch.UpdatedAt = parseTime(updatedAt)
 		json.Unmarshal([]byte(eventsStr), &ch.Events)
