@@ -26,14 +26,7 @@
         .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
         .htmx-request .htmx-indicator { opacity: 1; }
         .htmx-request.htmx-indicator { opacity: 1; }
-        .embed-mode aside { display: none !important; }
-        .embed-mode main { margin-left: 0 !important; }
     </style>
-    <script>
-        if (window !== window.top) {
-            document.documentElement.classList.add('embed-mode');
-        }
-    </script>
 </head>
 <body class="bg-surface text-gray-100 min-h-screen">
     <div class="flex min-h-screen">
