@@ -112,6 +112,10 @@ monitor:
   # How often to check for expired heartbeats
   heartbeat_check_interval: 30s
 
+  # Allow monitors to target private/reserved IPs (default: false)
+  # Enable only if you need to monitor internal services (e.g. localhost, 10.x, 192.168.x)
+  # allow_private_targets: false
+
   # Allowlist of command paths (empty = all commands blocked, deny-by-default)
   # command_allowlist:
   #   - /usr/local/bin/check_health

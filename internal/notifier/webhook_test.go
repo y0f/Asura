@@ -49,7 +49,7 @@ func TestWebhookSender(t *testing.T) {
 		},
 	}
 
-	sender := &WebhookSender{}
+	sender := &WebhookSender{AllowPrivate: true}
 	err := sender.Send(context.Background(), ch, payload)
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +86,7 @@ func TestWebhookSenderFailure(t *testing.T) {
 	ch := &storage.NotificationChannel{Settings: settings}
 	payload := &Payload{EventType: "test"}
 
-	sender := &WebhookSender{}
+	sender := &WebhookSender{AllowPrivate: true}
 	err := sender.Send(context.Background(), ch, payload)
 	if err == nil {
 		t.Fatal("expected error for 500 response")

@@ -75,10 +75,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	registry := checker.DefaultRegistry(cfg.Monitor.CommandAllowlist)
+	registry := checker.DefaultRegistry(cfg.Monitor.CommandAllowlist, cfg.Monitor.AllowPrivateTargets)
 	incMgr := incident.NewManager(store, logger)
 	pipeline := monitor.NewPipeline(store, registry, incMgr, cfg.Monitor.Workers, logger)
-	dispatcher := notifier.NewDispatcher(store, logger)
+	dispatcher := notifier.NewDispatcher(store, logger, cfg.Monitor.AllowPrivateTargets)
 
 	go forwardNotifications(ctx, pipeline, dispatcher)
 	go pipeline.Run(ctx)

@@ -149,6 +149,15 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		clientIP := extractIP(r, s.cfg.TrustedNets())
+		if sess.IPAddress != "" && sess.IPAddress != clientIP {
+			s.store.DeleteSession(r.Context(), tokenHash)
+			s.clearSessionCookie(w)
+			s.auditLogin("session_ip_mismatch", sess.APIKeyName, clientIP)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
+			return
+		}
+
 		apiKey := s.cfg.LookupAPIKeyByName(sess.APIKeyName)
 		if apiKey == nil {
 			s.store.DeleteSession(r.Context(), tokenHash)

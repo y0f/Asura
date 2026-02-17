@@ -7,12 +7,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
 
-type ICMPChecker struct{}
+type ICMPChecker struct {
+	AllowPrivate bool
+}
 
 func (c *ICMPChecker) Type() string { return "icmp" }
 
@@ -28,6 +31,13 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 	dst := addrs[0]
+
+	if !c.AllowPrivate && safenet.IsPrivateIP(dst) {
+		return &Result{
+			Status:  "down",
+			Message: fmt.Sprintf("blocked: connections to private/reserved IP %s are not allowed", dst),
+		}, nil
+	}
 
 	// Try privileged raw socket first, fall back to udp
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")

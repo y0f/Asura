@@ -117,6 +117,7 @@ type MonitorConfig struct {
 	CommandTimeout         time.Duration `yaml:"command_timeout"`
 	CommandAllowlist       []string      `yaml:"command_allowlist"`
 	HeartbeatCheckInterval time.Duration `yaml:"heartbeat_check_interval"`
+	AllowPrivateTargets    bool          `yaml:"allow_private_targets"`
 }
 
 type LoggingConfig struct {

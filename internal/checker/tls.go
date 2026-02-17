@@ -8,10 +8,13 @@ import (
 	"net"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
-type TLSChecker struct{}
+type TLSChecker struct {
+	AllowPrivate bool
+}
 
 func (c *TLSChecker) Type() string { return "tls" }
 
@@ -37,6 +40,7 @@ func (c *TLSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 	dialer := &tls.Dialer{
 		NetDialer: &net.Dialer{
 			Timeout: time.Duration(monitor.Timeout) * time.Second,
+			Control: safenet.MaybeDialControl(c.AllowPrivate),
 		},
 		Config: &tls.Config{
 			ServerName: host,

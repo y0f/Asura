@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -21,7 +23,9 @@ type WebhookSettings struct {
 	Secret string `json:"secret,omitempty"` // HMAC-SHA256 signing secret
 }
 
-type WebhookSender struct{}
+type WebhookSender struct {
+	AllowPrivate bool
+}
 
 func (s *WebhookSender) Type() string { return "webhook" }
 
@@ -52,7 +56,15 @@ func (s *WebhookSender) Send(ctx context.Context, channel *storage.NotificationC
 		req.Header.Set("X-Asura-Signature", "sha256="+sig)
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout: 10 * time.Second,
+				Control: safenet.MaybeDialControl(s.AllowPrivate),
+			}).DialContext,
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("webhook request failed: %w", err)

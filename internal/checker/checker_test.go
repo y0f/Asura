@@ -18,7 +18,7 @@ func TestHTTPChecker(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := &HTTPChecker{}
+	checker := &HTTPChecker{AllowPrivate: true}
 	monitor := &storage.Monitor{
 		Target:  server.URL,
 		Timeout: 5,
@@ -59,7 +59,7 @@ func TestHTTPCheckerWithSettings(t *testing.T) {
 		Headers: map[string]string{"X-Custom": "test"},
 	})
 
-	checker := &HTTPChecker{}
+	checker := &HTTPChecker{AllowPrivate: true}
 	monitor := &storage.Monitor{
 		Target:   server.URL,
 		Timeout:  5,
@@ -76,7 +76,7 @@ func TestHTTPCheckerWithSettings(t *testing.T) {
 }
 
 func TestHTTPCheckerDown(t *testing.T) {
-	checker := &HTTPChecker{}
+	checker := &HTTPChecker{AllowPrivate: true}
 	monitor := &storage.Monitor{
 		Target:  "http://192.0.2.1:1", // non-routable, will timeout
 		Timeout: 1,
@@ -100,7 +100,7 @@ func TestRegistryGetUnregistered(t *testing.T) {
 }
 
 func TestDefaultRegistryHasAllTypes(t *testing.T) {
-	r := DefaultRegistry(nil)
+	r := DefaultRegistry(nil, false)
 	types := []string{"http", "tcp", "dns", "icmp", "tls", "websocket", "command"}
 	for _, typ := range types {
 		if _, err := r.Get(typ); err != nil {

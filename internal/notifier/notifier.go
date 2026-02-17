@@ -33,14 +33,14 @@ type Dispatcher struct {
 
 const maxConcurrentSends = 10
 
-func NewDispatcher(store storage.Store, logger *slog.Logger) *Dispatcher {
+func NewDispatcher(store storage.Store, logger *slog.Logger, allowPrivateTargets bool) *Dispatcher {
 	d := &Dispatcher{
 		store:   store,
 		senders: make(map[string]Sender),
 		logger:  logger,
 		sem:     make(chan struct{}, maxConcurrentSends),
 	}
-	d.RegisterSender(&WebhookSender{})
+	d.RegisterSender(&WebhookSender{AllowPrivate: allowPrivateTargets})
 	d.RegisterSender(&EmailSender{})
 	d.RegisterSender(&TelegramSender{})
 	d.RegisterSender(&DiscordSender{})

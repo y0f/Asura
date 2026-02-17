@@ -8,10 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
-type TCPChecker struct{}
+type TCPChecker struct {
+	AllowPrivate bool
+}
 
 func (c *TCPChecker) Type() string { return "tcp" }
 
@@ -22,7 +25,7 @@ func (c *TCPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 	}
 
 	timeout := time.Duration(monitor.Timeout) * time.Second
-	dialer := net.Dialer{Timeout: timeout}
+	dialer := net.Dialer{Timeout: timeout, Control: safenet.MaybeDialControl(c.AllowPrivate)}
 
 	start := time.Now()
 	conn, err := dialer.DialContext(ctx, "tcp", monitor.Target)

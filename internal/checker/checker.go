@@ -56,14 +56,14 @@ func (r *Registry) Get(typ string) (Checker, error) {
 }
 
 // DefaultRegistry creates a registry with all built-in checkers.
-func DefaultRegistry(commandAllowlist []string) *Registry {
+func DefaultRegistry(commandAllowlist []string, allowPrivateTargets bool) *Registry {
 	r := NewRegistry()
-	r.Register(&HTTPChecker{})
-	r.Register(&TCPChecker{})
+	r.Register(&HTTPChecker{AllowPrivate: allowPrivateTargets})
+	r.Register(&TCPChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&DNSChecker{})
-	r.Register(&ICMPChecker{})
-	r.Register(&TLSChecker{})
-	r.Register(&WebSocketChecker{})
+	r.Register(&ICMPChecker{AllowPrivate: allowPrivateTargets})
+	r.Register(&TLSChecker{AllowPrivate: allowPrivateTargets})
+	r.Register(&WebSocketChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&CommandChecker{Allowlist: commandAllowlist})
 	return r
 }

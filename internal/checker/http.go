@@ -8,16 +8,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
 const maxBodyRead = 1 << 20 // 1MB
 
-type HTTPChecker struct{}
+type HTTPChecker struct {
+	AllowPrivate bool
+}
 
 func (c *HTTPChecker) Type() string { return "http" }
 
@@ -51,6 +55,10 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	}
 
 	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(monitor.Timeout) * time.Second,
+			Control: safenet.MaybeDialControl(c.AllowPrivate),
+		}).DialContext,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: settings.SkipTLSVerify,
 		},

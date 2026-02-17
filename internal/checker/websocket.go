@@ -4,15 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
-type WebSocketChecker struct{}
+type WebSocketChecker struct {
+	AllowPrivate bool
+}
 
 func (c *WebSocketChecker) Type() string { return "websocket" }
 
@@ -26,7 +30,16 @@ func (c *WebSocketChecker) Check(ctx context.Context, monitor *storage.Monitor) 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	opts := &websocket.DialOptions{}
+	opts := &websocket.DialOptions{
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				DialContext: (&net.Dialer{
+					Timeout: timeout,
+					Control: safenet.MaybeDialControl(c.AllowPrivate),
+				}).DialContext,
+			},
+		},
+	}
 	if len(settings.Headers) > 0 {
 		header := http.Header{}
 		for k, v := range settings.Headers {
