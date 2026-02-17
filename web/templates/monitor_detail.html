@@ -1,7 +1,7 @@
 {{define "title"}}{{.Data.Monitor.Name}}{{end}}
 {{define "content"}}
 {{$mon := .Data.Monitor}}
-<div id="monitor-detail" hx-get="" hx-trigger="every 15s" hx-select="#monitor-detail" hx-swap="outerHTML">
+<div id="monitor-detail" hx-get="" hx-trigger="every 15s" hx-select="#monitor-detail" hx-swap="outerHTML" hx-push-url="false">
     <!-- Header -->
     <div class="flex items-start justify-between mb-4">
         <div>

@@ -29,7 +29,7 @@
                     <h2 class="text-sm font-medium text-gray-300">Monitors</h2>
                     <a href="/monitors/new" class="text-xs text-indigo-400 hover:text-indigo-300">+ Add</a>
                 </div>
-                <div id="monitor-grid" hx-get="" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML">
+                <div id="monitor-grid" hx-get="" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false">
                     {{if .Data.Monitors}}
                     <div class="divide-y divide-border">
                         {{range .Data.Monitors}}

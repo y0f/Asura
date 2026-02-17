@@ -10,7 +10,7 @@
         {{end}}
     </div>
 
-    <div id="monitor-list" hx-get="" hx-trigger="every 30s" hx-select="#monitor-list" hx-swap="outerHTML">
+    <div id="monitor-list" hx-get="" hx-trigger="every 30s" hx-select="#monitor-list" hx-swap="outerHTML" hx-push-url="false">
         <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
             {{if and .Data .Data.Data}}
             <table class="w-full">
