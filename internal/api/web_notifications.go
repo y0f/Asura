@@ -23,6 +23,12 @@ func (s *Server) handleWebNotifications(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleWebNotificationCreate(w http.ResponseWriter, r *http.Request) {
 	ch := s.parseNotificationForm(r)
 
+	if err := validateNotificationChannel(ch); err != nil {
+		s.setFlash(w, err.Error())
+		s.redirect(w, r, "/notifications")
+		return
+	}
+
 	if err := s.store.CreateNotificationChannel(r.Context(), ch); err != nil {
 		s.logger.Error("web: create notification", "error", err)
 		s.setFlash(w, "Failed to create channel")
@@ -38,6 +44,12 @@ func (s *Server) handleWebNotificationUpdate(w http.ResponseWriter, r *http.Requ
 	id, _ := parseID(r)
 	ch := s.parseNotificationForm(r)
 	ch.ID = id
+
+	if err := validateNotificationChannel(ch); err != nil {
+		s.setFlash(w, err.Error())
+		s.redirect(w, r, "/notifications")
+		return
+	}
 
 	if err := s.store.UpdateNotificationChannel(r.Context(), ch); err != nil {
 		s.logger.Error("web: update notification", "error", err)

@@ -91,12 +91,12 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		// Web UI
 		mux.HandleFunc("GET "+s.p("/login"), s.handleWebLogin)
 		mux.HandleFunc("POST "+s.p("/login"), s.handleWebLoginPost)
-		mux.HandleFunc("POST "+s.p("/logout"), s.handleWebLogout)
-
 		webAuth := s.webAuth
 		webPerm := func(perm string, h http.HandlerFunc) http.Handler {
 			return webAuth(s.webRequirePerm(perm, http.HandlerFunc(h)))
 		}
+
+		mux.Handle("POST "+s.p("/logout"), webAuth(http.HandlerFunc(s.handleWebLogout)))
 
 		mux.Handle("GET "+s.p("/{$}"), webAuth(http.HandlerFunc(s.handleWebDashboard)))
 		mux.Handle("GET "+s.p("/monitors"), webAuth(http.HandlerFunc(s.handleWebMonitors)))

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/y0f/Asura/web"
@@ -29,7 +30,7 @@ func (s *Server) newPageData(r *http.Request, title, active string) pageData {
 	}
 	flash := ""
 	if c, err := r.Cookie("flash"); err == nil {
-		flash = c.Value
+		flash, _ = url.QueryUnescape(c.Value)
 	}
 	return pageData{
 		Title:    title,
@@ -285,7 +286,7 @@ func (s *Server) redirect(w http.ResponseWriter, r *http.Request, path string) {
 func (s *Server) setFlash(w http.ResponseWriter, msg string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
-		Value:    msg,
+		Value:    url.QueryEscape(msg),
 		Path:     s.cfg.Server.BasePath + "/",
 		MaxAge:   5,
 		HttpOnly: true,

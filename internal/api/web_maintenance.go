@@ -22,6 +22,11 @@ func (s *Server) handleWebMaintenance(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleWebMaintenanceCreate(w http.ResponseWriter, r *http.Request) {
 	mw := s.parseMaintenanceForm(r)
+	if err := validateMaintenanceWindow(mw); err != nil {
+		s.setFlash(w, err.Error())
+		s.redirect(w, r, "/maintenance")
+		return
+	}
 	if err := s.store.CreateMaintenanceWindow(r.Context(), mw); err != nil {
 		s.logger.Error("web: create maintenance", "error", err)
 		s.setFlash(w, "Failed to create maintenance window")
@@ -36,6 +41,11 @@ func (s *Server) handleWebMaintenanceUpdate(w http.ResponseWriter, r *http.Reque
 	id, _ := parseID(r)
 	mw := s.parseMaintenanceForm(r)
 	mw.ID = id
+	if err := validateMaintenanceWindow(mw); err != nil {
+		s.setFlash(w, err.Error())
+		s.redirect(w, r, "/maintenance")
+		return
+	}
 	if err := s.store.UpdateMaintenanceWindow(r.Context(), mw); err != nil {
 		s.logger.Error("web: update maintenance", "error", err)
 	}
