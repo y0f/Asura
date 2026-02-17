@@ -160,6 +160,22 @@ func Load(path string) (*Config, error) {
 }
 
 func (c *Config) Validate() error {
+	if err := c.validateServer(); err != nil {
+		return err
+	}
+	if err := c.validateDatabase(); err != nil {
+		return err
+	}
+	if err := c.validateMonitorConfig(); err != nil {
+		return err
+	}
+	if err := validateAPIKeys(c.Auth.APIKeys); err != nil {
+		return err
+	}
+	return validateLogLevel(c.Logging.Level)
+}
+
+func (c *Config) validateServer() error {
 	if c.Server.Listen == "" {
 		return fmt.Errorf("server.listen is required")
 	}
@@ -172,6 +188,10 @@ func (c *Config) Validate() error {
 	if c.Server.RateLimitBurst <= 0 {
 		return fmt.Errorf("server.rate_limit_burst must be positive")
 	}
+	return nil
+}
+
+func (c *Config) validateDatabase() error {
 	if c.Database.Path == "" {
 		return fmt.Errorf("database.path is required")
 	}
@@ -181,6 +201,10 @@ func (c *Config) Validate() error {
 	if c.Database.RetentionDays <= 0 {
 		return fmt.Errorf("database.retention_days must be positive")
 	}
+	return nil
+}
+
+func (c *Config) validateMonitorConfig() error {
 	if c.Monitor.Workers <= 0 {
 		return fmt.Errorf("monitor.workers must be positive")
 	}
@@ -196,14 +220,17 @@ func (c *Config) Validate() error {
 	if c.Monitor.SuccessThreshold <= 0 {
 		return fmt.Errorf("monitor.success_threshold must be positive")
 	}
+	return nil
+}
 
+func validateAPIKeys(keys []APIKeyConfig) error {
 	validPerms := make(map[string]bool)
 	for _, p := range AllPermissions {
 		validPerms[p] = true
 	}
 
-	for i := range c.Auth.APIKeys {
-		key := &c.Auth.APIKeys[i]
+	for i := range keys {
+		key := &keys[i]
 		if key.Name == "" {
 			return fmt.Errorf("auth.api_keys[%d].name is required", i)
 		}
@@ -229,13 +256,16 @@ func (c *Config) Validate() error {
 			}
 		}
 	}
+	return nil
+}
 
-	level := strings.ToLower(c.Logging.Level)
-	if level != "debug" && level != "info" && level != "warn" && level != "error" {
+func validateLogLevel(level string) error {
+	switch strings.ToLower(level) {
+	case "debug", "info", "warn", "error":
+		return nil
+	default:
 		return fmt.Errorf("logging.level must be one of: debug, info, warn, error")
 	}
-
-	return nil
 }
 
 func HashAPIKey(key string) string {

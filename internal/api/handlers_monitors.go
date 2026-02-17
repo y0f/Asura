@@ -1,13 +1,16 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/asura-monitor/asura/internal/config"
 	"github.com/asura-monitor/asura/internal/storage"
 )
 
@@ -60,30 +63,7 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Apply defaults
-	if m.Interval == 0 {
-		m.Interval = int(s.cfg.Monitor.DefaultInterval.Seconds())
-	}
-	if m.Timeout == 0 {
-		m.Timeout = int(s.cfg.Monitor.DefaultTimeout.Seconds())
-	}
-	if m.FailureThreshold == 0 {
-		m.FailureThreshold = s.cfg.Monitor.FailureThreshold
-	}
-	if m.SuccessThreshold == 0 {
-		m.SuccessThreshold = s.cfg.Monitor.SuccessThreshold
-	}
-	if m.Tags == nil {
-		m.Tags = []string{}
-	}
-	m.Enabled = true
-
-	// Heartbeat monitors don't need a target — set a placeholder
-	if m.Type == "heartbeat" {
-		if m.Target == "" {
-			m.Target = "heartbeat"
-		}
-	}
+	applyMonitorDefaults(&m, s.cfg.Monitor)
 
 	if err := validateMonitor(&m); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -96,42 +76,18 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create heartbeat record for heartbeat-type monitors
 	var heartbeat *storage.Heartbeat
 	if m.Type == "heartbeat" {
-		token, err := generateToken()
+		var err error
+		heartbeat, err = s.createHeartbeat(r.Context(), &m)
 		if err != nil {
-			s.logger.Error("generate heartbeat token", "error", err)
-			writeError(w, http.StatusInternalServerError, "failed to generate heartbeat token")
-			return
-		}
-		grace := 0
-		if m.Settings != nil {
-			var settings map[string]interface{}
-			if err := readJSONRaw(m.Settings, &settings); err == nil {
-				if g, ok := settings["grace"]; ok {
-					if gf, ok := g.(float64); ok {
-						grace = int(gf)
-					}
-				}
-			}
-		}
-		heartbeat = &storage.Heartbeat{
-			MonitorID: m.ID,
-			Token:     token,
-			Grace:     grace,
-			Status:    "pending",
-		}
-		if err := s.store.CreateHeartbeat(r.Context(), heartbeat); err != nil {
-			s.logger.Error("create heartbeat", "error", err)
-			writeError(w, http.StatusInternalServerError, "failed to create heartbeat")
+			writeError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	}
 
 	s.audit(r, "create", "monitor", m.ID, "")
 
-	// Notify pipeline about new monitor
 	if s.pipeline != nil {
 		s.pipeline.ReloadMonitors()
 	}
@@ -144,6 +100,67 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, m)
+}
+
+func applyMonitorDefaults(m *storage.Monitor, cfg config.MonitorConfig) {
+	if m.Interval == 0 {
+		m.Interval = int(cfg.DefaultInterval.Seconds())
+	}
+	if m.Timeout == 0 {
+		m.Timeout = int(cfg.DefaultTimeout.Seconds())
+	}
+	if m.FailureThreshold == 0 {
+		m.FailureThreshold = cfg.FailureThreshold
+	}
+	if m.SuccessThreshold == 0 {
+		m.SuccessThreshold = cfg.SuccessThreshold
+	}
+	if m.Tags == nil {
+		m.Tags = []string{}
+	}
+	if m.Type == "heartbeat" && m.Target == "" {
+		m.Target = "heartbeat"
+	}
+	m.Enabled = true
+}
+
+func (s *Server) createHeartbeat(ctx context.Context, m *storage.Monitor) (*storage.Heartbeat, error) {
+	token, err := generateToken()
+	if err != nil {
+		s.logger.Error("generate heartbeat token", "error", err)
+		return nil, fmt.Errorf("failed to generate heartbeat token")
+	}
+	grace := parseGraceFromSettings(m.Settings)
+	hb := &storage.Heartbeat{
+		MonitorID: m.ID,
+		Token:     token,
+		Grace:     grace,
+		Status:    "pending",
+	}
+	if err := s.store.CreateHeartbeat(ctx, hb); err != nil {
+		s.logger.Error("create heartbeat", "error", err)
+		return nil, fmt.Errorf("failed to create heartbeat")
+	}
+	return hb, nil
+}
+
+func parseGraceFromSettings(settings json.RawMessage) int {
+	if settings == nil {
+		return 0
+	}
+	var s map[string]interface{}
+	if err := readJSONRaw(settings, &s); err != nil {
+		return 0
+	}
+	g, ok := s["grace"]
+	if !ok {
+		return 0
+	}
+	gf, ok := g.(float64)
+	if !ok {
+		return 0
+	}
+	return int(gf)
 }
 
 func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {

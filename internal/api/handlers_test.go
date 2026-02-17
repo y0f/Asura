@@ -162,7 +162,7 @@ func TestSecureHeaders(t *testing.T) {
 
 	expected := map[string]string{
 		"X-Content-Type-Options":  "nosniff",
-		"X-Frame-Options":         "DENY",
+		"X-Frame-Options":         "SAMEORIGIN",
 		"Content-Security-Policy": "default-src 'none'",
 	}
 

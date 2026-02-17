@@ -217,83 +217,87 @@ func TestAnalytics(t *testing.T) {
 	}
 }
 
-func TestHeartbeatCRUD(t *testing.T) {
+func createTestHeartbeat(t *testing.T) (*SQLiteStore, context.Context, *Monitor) {
+	t.Helper()
 	store := testStore(t)
 	ctx := context.Background()
-
 	m := &Monitor{Name: "Cron Job", Type: "heartbeat", Target: "heartbeat", Interval: 300, Timeout: 10, Enabled: true, Tags: []string{}, FailureThreshold: 1, SuccessThreshold: 1}
-	err := store.CreateMonitor(ctx, m)
-	if err != nil {
+	if err := store.CreateMonitor(ctx, m); err != nil {
 		t.Fatal(err)
 	}
-
 	hb := &Heartbeat{
 		MonitorID: m.ID,
 		Token:     "abc123def456",
 		Grace:     60,
 		Status:    "pending",
 	}
-	err = store.CreateHeartbeat(ctx, hb)
-	if err != nil {
+	if err := store.CreateHeartbeat(ctx, hb); err != nil {
 		t.Fatal(err)
 	}
 	if hb.ID == 0 {
 		t.Fatal("expected non-zero heartbeat ID")
 	}
+	return store, ctx, m
+}
 
-	// Get by token
-	got, err := store.GetHeartbeatByToken(ctx, "abc123def456")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.MonitorID != m.ID {
-		t.Fatalf("expected monitor_id %d, got %d", m.ID, got.MonitorID)
-	}
-	if got.Grace != 60 {
-		t.Fatalf("expected grace 60, got %d", got.Grace)
-	}
+func TestHeartbeatCRUD(t *testing.T) {
+	store, ctx, m := createTestHeartbeat(t)
 
-	// Get by monitor ID
-	got2, err := store.GetHeartbeatByMonitorID(ctx, m.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got2.Token != "abc123def456" {
-		t.Fatalf("expected token abc123def456, got %s", got2.Token)
-	}
+	t.Run("GetByToken", func(t *testing.T) {
+		got, err := store.GetHeartbeatByToken(ctx, "abc123def456")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.MonitorID != m.ID {
+			t.Fatalf("expected monitor_id %d, got %d", m.ID, got.MonitorID)
+		}
+		if got.Grace != 60 {
+			t.Fatalf("expected grace 60, got %d", got.Grace)
+		}
+	})
 
-	// Update ping
-	err = store.UpdateHeartbeatPing(ctx, "abc123def456")
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, _ = store.GetHeartbeatByToken(ctx, "abc123def456")
-	if got.Status != "up" {
-		t.Fatalf("expected status up after ping, got %s", got.Status)
-	}
-	if got.LastPingAt == nil {
-		t.Fatal("expected last_ping_at to be set")
-	}
+	t.Run("GetByMonitorID", func(t *testing.T) {
+		got, err := store.GetHeartbeatByMonitorID(ctx, m.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.Token != "abc123def456" {
+			t.Fatalf("expected token abc123def456, got %s", got.Token)
+		}
+	})
 
-	// Update status
-	err = store.UpdateHeartbeatStatus(ctx, m.ID, "down")
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, _ = store.GetHeartbeatByToken(ctx, "abc123def456")
-	if got.Status != "down" {
-		t.Fatalf("expected status down, got %s", got.Status)
-	}
+	t.Run("UpdatePing", func(t *testing.T) {
+		if err := store.UpdateHeartbeatPing(ctx, "abc123def456"); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := store.GetHeartbeatByToken(ctx, "abc123def456")
+		if got.Status != "up" {
+			t.Fatalf("expected status up after ping, got %s", got.Status)
+		}
+		if got.LastPingAt == nil {
+			t.Fatal("expected last_ping_at to be set")
+		}
+	})
 
-	// Delete
-	err = store.DeleteHeartbeat(ctx, m.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = store.GetHeartbeatByToken(ctx, "abc123def456")
-	if err == nil {
-		t.Fatal("expected error after delete")
-	}
+	t.Run("UpdateStatus", func(t *testing.T) {
+		if err := store.UpdateHeartbeatStatus(ctx, m.ID, "down"); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := store.GetHeartbeatByToken(ctx, "abc123def456")
+		if got.Status != "down" {
+			t.Fatalf("expected status down, got %s", got.Status)
+		}
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		if err := store.DeleteHeartbeat(ctx, m.ID); err != nil {
+			t.Fatal(err)
+		}
+		_, err := store.GetHeartbeatByToken(ctx, "abc123def456")
+		if err == nil {
+			t.Fatal("expected error after delete")
+		}
+	})
 }
 
 func TestMonitorPublicFlag(t *testing.T) {

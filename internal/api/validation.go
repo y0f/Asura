@@ -37,7 +37,6 @@ func validateMonitor(m *storage.Monitor) error {
 		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat")
 	}
 	if m.Type == "heartbeat" {
-		// Heartbeat monitors use a generated ping URL, target is set server-side
 		return nil
 	}
 	if strings.TrimSpace(m.Target) == "" {
@@ -46,6 +45,10 @@ func validateMonitor(m *storage.Monitor) error {
 	if len(m.Target) > 2048 {
 		return fmt.Errorf("target must be at most 2048 characters")
 	}
+	return validateMonitorLimits(m)
+}
+
+func validateMonitorLimits(m *storage.Monitor) error {
 	if m.Interval < 5 {
 		return fmt.Errorf("interval must be at least 5 seconds")
 	}
@@ -64,7 +67,6 @@ func validateMonitor(m *storage.Monitor) error {
 	if m.SuccessThreshold < 1 {
 		return fmt.Errorf("success_threshold must be at least 1")
 	}
-
 	for _, tag := range m.Tags {
 		if len(tag) > 50 {
 			return fmt.Errorf("tag must be at most 50 characters")
@@ -73,23 +75,22 @@ func validateMonitor(m *storage.Monitor) error {
 	if len(m.Tags) > 20 {
 		return fmt.Errorf("at most 20 tags allowed")
 	}
+	return validateMonitorJSON(m)
+}
 
-	// Validate settings JSON if present
+func validateMonitorJSON(m *storage.Monitor) error {
 	if len(m.Settings) > 0 && string(m.Settings) != "{}" {
 		var s map[string]interface{}
 		if err := json.Unmarshal(m.Settings, &s); err != nil {
 			return fmt.Errorf("settings must be a valid JSON object")
 		}
 	}
-
-	// Validate assertions JSON if present
 	if len(m.Assertions) > 0 && string(m.Assertions) != "[]" {
 		var a []interface{}
 		if err := json.Unmarshal(m.Assertions, &a); err != nil {
 			return fmt.Errorf("assertions must be a valid JSON array")
 		}
 	}
-
 	return nil
 }
 

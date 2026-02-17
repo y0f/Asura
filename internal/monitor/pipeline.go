@@ -103,54 +103,14 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 	}
 
 	result := wr.Result
-
-	// Run assertions
-	finalStatus := result.Status
-	if len(mon.Assertions) > 0 && string(mon.Assertions) != "[]" {
-		assertionResult := assertion.Evaluate(mon.Assertions, result.StatusCode, result.Body,
-			result.Headers, result.ResponseTime, result.CertExpiry, result.DNSRecords)
-		if !assertionResult.Pass {
-			if assertionResult.Degraded {
-				finalStatus = "degraded"
-			} else {
-				finalStatus = "down"
-			}
-			if result.Message == "" {
-				result.Message = assertionResult.Message
-			} else {
-				result.Message += "; " + assertionResult.Message
-			}
-		}
-	}
-
-	headersJSON, _ := json.Marshal(result.Headers)
-	dnsJSON, _ := json.Marshal(result.DNSRecords)
-
-	var certExpiry *time.Time
-	if result.CertExpiry != nil {
-		t := time.Unix(*result.CertExpiry, 0)
-		certExpiry = &t
-	}
-
-	cr := &storage.CheckResult{
-		MonitorID:    mon.ID,
-		Status:       finalStatus,
-		ResponseTime: result.ResponseTime,
-		StatusCode:   result.StatusCode,
-		Message:      result.Message,
-		Headers:      string(headersJSON),
-		Body:         result.Body,
-		BodyHash:     result.BodyHash,
-		CertExpiry:   certExpiry,
-		DNSRecords:   string(dnsJSON),
-	}
+	finalStatus := evaluateAssertions(mon, result)
+	cr := buildCheckResult(mon, result, finalStatus)
 
 	if err := p.store.InsertCheckResult(ctx, cr); err != nil {
 		p.logger.Error("insert check result", "error", err)
 		return
 	}
 
-	// Update monitor status
 	now := time.Now()
 	status, err := p.store.GetMonitorStatus(ctx, mon.ID)
 	if err != nil {
@@ -168,7 +128,6 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 		status.ConsecSuccesses = 0
 	}
 
-	// Content change detection
 	if mon.TrackChanges && result.BodyHash != "" {
 		oldHash := status.LastBodyHash
 		if oldHash != "" && oldHash != result.BodyHash {
@@ -183,8 +142,53 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 		p.logger.Error("upsert monitor status", "error", err)
 	}
 
-	// Process incidents
 	p.processIncidents(ctx, mon, finalStatus, status, cr.Message)
+}
+
+func evaluateAssertions(mon *storage.Monitor, result *checker.Result) string {
+	finalStatus := result.Status
+	if len(mon.Assertions) == 0 || string(mon.Assertions) == "[]" {
+		return finalStatus
+	}
+	assertionResult := assertion.Evaluate(mon.Assertions, result.StatusCode, result.Body,
+		result.Headers, result.ResponseTime, result.CertExpiry, result.DNSRecords)
+	if !assertionResult.Pass {
+		if assertionResult.Degraded {
+			finalStatus = "degraded"
+		} else {
+			finalStatus = "down"
+		}
+		if result.Message == "" {
+			result.Message = assertionResult.Message
+		} else {
+			result.Message += "; " + assertionResult.Message
+		}
+	}
+	return finalStatus
+}
+
+func buildCheckResult(mon *storage.Monitor, result *checker.Result, finalStatus string) *storage.CheckResult {
+	headersJSON, _ := json.Marshal(result.Headers)
+	dnsJSON, _ := json.Marshal(result.DNSRecords)
+
+	var certExpiry *time.Time
+	if result.CertExpiry != nil {
+		t := time.Unix(*result.CertExpiry, 0)
+		certExpiry = &t
+	}
+
+	return &storage.CheckResult{
+		MonitorID:    mon.ID,
+		Status:       finalStatus,
+		ResponseTime: result.ResponseTime,
+		StatusCode:   result.StatusCode,
+		Message:      result.Message,
+		Headers:      string(headersJSON),
+		Body:         result.Body,
+		BodyHash:     result.BodyHash,
+		CertExpiry:   certExpiry,
+		DNSRecords:   string(dnsJSON),
+	}
 }
 
 func (p *Pipeline) processIncidents(ctx context.Context, mon *storage.Monitor, finalStatus string, status *storage.MonitorStatus, message string) {
@@ -212,7 +216,6 @@ func (p *Pipeline) processIncidents(ctx context.Context, mon *storage.Monitor, f
 }
 
 func (p *Pipeline) handleContentChange(ctx context.Context, mon *storage.Monitor, oldHash, newHash, newBody string, status *storage.MonitorStatus) {
-	// Retrieve old body from last check result to compute diff
 	oldBody := ""
 	latest, err := p.store.GetLatestCheckResult(ctx, mon.ID)
 	if err == nil && latest != nil {

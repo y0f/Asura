@@ -65,23 +65,7 @@ func main() {
 	pipeline := monitor.NewPipeline(store, registry, incMgr, cfg.Monitor.Workers, logger)
 	dispatcher := notifier.NewDispatcher(store, logger)
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-pipeline.NotifyChan():
-				payload := &notifier.Payload{
-					EventType: event.EventType,
-					Incident:  event.Incident,
-					Monitor:   event.Monitor,
-					Change:    event.Change,
-				}
-				dispatcher.NotifyWithPayload(payload)
-			}
-		}
-	}()
-
+	go forwardNotifications(ctx, pipeline, dispatcher)
 	go pipeline.Run(ctx)
 
 	heartbeatWatcher := monitor.NewHeartbeatWatcher(store, incMgr, pipeline, cfg.Monitor.HeartbeatCheckInterval, logger)
@@ -91,10 +75,50 @@ func main() {
 	go retentionWorker.Run(ctx)
 
 	srv := api.NewServer(cfg, store, pipeline, dispatcher, logger, version)
+	httpServer := startHTTPServer(cfg, srv, logger, cancel)
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case sig := <-quit:
+		logger.Info("received signal, shutting down", "signal", sig)
+	case <-ctx.Done():
+	}
+
+	cancel()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("server shutdown error", "error", err)
+	}
+
+	logger.Info("shutdown complete")
+}
+
+func forwardNotifications(ctx context.Context, pipeline *monitor.Pipeline, dispatcher *notifier.Dispatcher) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event := <-pipeline.NotifyChan():
+			payload := &notifier.Payload{
+				EventType: event.EventType,
+				Incident:  event.Incident,
+				Monitor:   event.Monitor,
+				Change:    event.Change,
+			}
+			dispatcher.NotifyWithPayload(payload)
+		}
+	}
+}
+
+func startHTTPServer(cfg *config.Config, handler http.Handler, logger *slog.Logger, cancel context.CancelFunc) *http.Server {
 	httpServer := &http.Server{
 		Addr:         cfg.Server.Listen,
-		Handler:      srv,
+		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
@@ -121,25 +145,7 @@ func main() {
 		}()
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	select {
-	case sig := <-quit:
-		logger.Info("received signal, shutting down", "signal", sig)
-	case <-ctx.Done():
-	}
-
-	cancel()
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer shutdownCancel()
-
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		logger.Error("server shutdown error", "error", err)
-	}
-
-	logger.Info("shutdown complete")
+	return httpServer
 }
 
 func setupLogger(cfg config.LoggingConfig) *slog.Logger {

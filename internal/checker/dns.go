@@ -37,50 +37,15 @@ func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 	}
 
 	start := time.Now()
-	var records []string
-	var err error
+	records, supported, err := lookupDNSRecords(ctx, resolver, recordType, monitor.Target)
+	elapsed := time.Since(start).Milliseconds()
 
-	switch recordType {
-	case "A":
-		var addrs []net.IP
-		addrs, err = resolver.LookupIP(ctx, "ip4", monitor.Target)
-		for _, a := range addrs {
-			records = append(records, a.String())
-		}
-	case "AAAA":
-		var addrs []net.IP
-		addrs, err = resolver.LookupIP(ctx, "ip6", monitor.Target)
-		for _, a := range addrs {
-			records = append(records, a.String())
-		}
-	case "CNAME":
-		var cname string
-		cname, err = resolver.LookupCNAME(ctx, monitor.Target)
-		if cname != "" {
-			records = append(records, cname)
-		}
-	case "MX":
-		var mxs []*net.MX
-		mxs, err = resolver.LookupMX(ctx, monitor.Target)
-		for _, mx := range mxs {
-			records = append(records, fmt.Sprintf("%d %s", mx.Pref, mx.Host))
-		}
-	case "TXT":
-		records, err = resolver.LookupTXT(ctx, monitor.Target)
-	case "NS":
-		var nss []*net.NS
-		nss, err = resolver.LookupNS(ctx, monitor.Target)
-		for _, ns := range nss {
-			records = append(records, ns.Host)
-		}
-	default:
+	if !supported {
 		return &Result{
 			Status:  "down",
 			Message: fmt.Sprintf("unsupported record type: %s", recordType),
 		}, nil
 	}
-
-	elapsed := time.Since(start).Milliseconds()
 
 	if err != nil {
 		return &Result{
@@ -104,4 +69,44 @@ func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 		DNSRecords:   records,
 		Message:      fmt.Sprintf("found %d record(s)", len(records)),
 	}, nil
+}
+
+func lookupDNSRecords(ctx context.Context, resolver *net.Resolver, recordType, target string) (records []string, supported bool, err error) {
+	switch recordType {
+	case "A":
+		var addrs []net.IP
+		addrs, err = resolver.LookupIP(ctx, "ip4", target)
+		for _, a := range addrs {
+			records = append(records, a.String())
+		}
+	case "AAAA":
+		var addrs []net.IP
+		addrs, err = resolver.LookupIP(ctx, "ip6", target)
+		for _, a := range addrs {
+			records = append(records, a.String())
+		}
+	case "CNAME":
+		var cname string
+		cname, err = resolver.LookupCNAME(ctx, target)
+		if cname != "" {
+			records = append(records, cname)
+		}
+	case "MX":
+		var mxs []*net.MX
+		mxs, err = resolver.LookupMX(ctx, target)
+		for _, mx := range mxs {
+			records = append(records, fmt.Sprintf("%d %s", mx.Pref, mx.Host))
+		}
+	case "TXT":
+		records, err = resolver.LookupTXT(ctx, target)
+	case "NS":
+		var nss []*net.NS
+		nss, err = resolver.LookupNS(ctx, target)
+		for _, ns := range nss {
+			records = append(records, ns.Host)
+		}
+	default:
+		return nil, false, nil
+	}
+	return records, true, err
 }
