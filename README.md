@@ -25,6 +25,20 @@ Asura monitors your infrastructure from a single Go binary backed by SQLite. No 
 git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh
 ```
 
+### Why Asura?
+
+| | Asura | Typical alternative |
+|---|---|---|
+| **Runtime** | Single static binary | Node.js / Java / Python runtime |
+| **Database** | SQLite compiled in | Requires Postgres, MySQL, or Redis |
+| **Binary size** | ~15 MB | 100–500 MB installed |
+| **Concurrency** | Goroutine worker pool with channel backpressure | Single-threaded or thread-per-request |
+| **Deploy** | `scp` binary + run | Package manager, runtime install, migrations |
+| **Config** | One YAML file | Multiple config files, env vars, database setup |
+| **RAM** | Runs on a $5 VPS | Often needs 512 MB+ |
+
+No runtime. No external database. No container required. Build, copy, run.
+
 ### Highlights
 
 | | |
