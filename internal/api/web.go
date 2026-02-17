@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/asura-monitor/asura/web"
@@ -126,10 +125,6 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("%.1fs", float64(ms)/1000)
 	},
-	"jsonMarshal": func(v interface{}) template.JS {
-		b, _ := json.Marshal(v)
-		return template.JS(b)
-	},
 	"incidentDuration": func(started time.Time, resolved *time.Time) string {
 		end := time.Now()
 		if resolved != nil {
@@ -146,12 +141,6 @@ var templateFuncs = template.FuncMap{
 			return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
 		}
 		return fmt.Sprintf("%dd %dh", int(d.Hours()/24), int(d.Hours())%24)
-	},
-	"upper": func(s string) string {
-		if len(s) == 0 {
-			return s
-		}
-		return strings.ToUpper(s[:1]) + s[1:]
 	},
 	"uptimeFmt": func(pct float64) string {
 		if pct >= 99.995 {
@@ -239,12 +228,6 @@ var templateFuncs = template.FuncMap{
 		var records []string
 		json.Unmarshal([]byte(s), &records)
 		return records
-	},
-	"pctOf": func(part, total int64) float64 {
-		if total == 0 {
-			return 0
-		}
-		return float64(part) / float64(total) * 100
 	},
 }
 

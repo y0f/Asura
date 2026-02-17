@@ -49,7 +49,6 @@ type APIKeyConfig struct {
 	Role        string   `yaml:"role,omitempty"`
 	SuperAdmin  bool     `yaml:"super_admin,omitempty"`
 	Permissions []string `yaml:"permissions,omitempty"`
-	rawKey      string
 }
 
 var AllPermissions = []string{
