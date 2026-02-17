@@ -20,7 +20,7 @@
 Asura monitors your infrastructure from a single Go binary backed by SQLite. No Postgres. No Redis. No Node.js. Just `scp` a binary and go.
 
 ```bash
-git clone https://github.com/y0f/Asura.git && cd asura && sudo bash install.sh
+git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh
 ```
 
 ### Highlights
@@ -48,7 +48,7 @@ git clone https://github.com/y0f/Asura.git && cd asura && sudo bash install.sh
 
 ```bash
 git clone https://github.com/y0f/Asura.git
-cd asura
+cd Asura
 sudo bash install.sh
 ```
 
@@ -63,7 +63,7 @@ curl http://localhost:8080/api/v1/health
 
 ```bash
 git clone https://github.com/y0f/Asura.git
-cd asura
+cd Asura
 cp config.example.yaml config.yaml
 # set your API key hash and database.path to /app/data/asura.db
 docker compose up -d
@@ -123,6 +123,67 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 | `auth`     | API keys (SHA-256 hashed), admin / readonly roles     |
 | `monitor`  | Worker count, default intervals, thresholds           |
 | `logging`  | Level (debug/info/warn/error), format (text/json)     |
+
+---
+
+## Authentication
+
+Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in `config.yaml` — there is no user registration or database-stored auth.
+
+### Generating a Key Hash
+
+Pick any secret string as your API key, then hash it:
+
+```bash
+./asura --hash-key "your-secret-key"
+# Output: 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
+```
+
+Paste the hash into your config:
+
+```yaml
+auth:
+  api_keys:
+    - name: "admin"
+      hash: "2c26b46b68ffc..."
+      role: "admin"
+```
+
+### Roles
+
+| Role | Access |
+|------|--------|
+| `admin` | Full read/write access to all resources |
+| `readonly` | Read-only access (monitors, incidents, notifications, maintenance, metrics) |
+
+### Custom Permissions
+
+Instead of a role, you can grant specific permissions:
+
+```yaml
+auth:
+  api_keys:
+    - name: "ci-bot"
+      hash: "..."
+      permissions:
+        - "monitors.read"
+        - "monitors.write"
+        - "incidents.read"
+```
+
+Available permissions: `monitors.read`, `monitors.write`, `incidents.read`, `incidents.write`, `notifications.read`, `notifications.write`, `maintenance.read`, `maintenance.write`, `metrics.read`.
+
+### Using Your Key
+
+**API**: Pass the raw key (not the hash) in the `X-API-Key` header:
+
+```bash
+curl -H "X-API-Key: your-secret-key" http://localhost:8080/api/v1/monitors
+```
+
+**Web UI**: Enter the raw key on the login page. A session cookie (7-day expiry, HttpOnly) is set automatically.
+
+You can configure multiple keys with different names and permissions. Each key's name is recorded in the audit log for traceability.
 
 ---
 
