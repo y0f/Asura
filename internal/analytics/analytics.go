@@ -9,15 +9,15 @@ import (
 
 // MonitorMetrics holds computed metrics for a monitor.
 type MonitorMetrics struct {
-	MonitorID    int64   `json:"monitor_id"`
-	UptimePct    float64 `json:"uptime_pct"`
-	P50          float64 `json:"p50"`
-	P95          float64 `json:"p95"`
-	P99          float64 `json:"p99"`
-	TotalChecks  int64   `json:"total_checks"`
-	UpChecks     int64   `json:"up_checks"`
-	DownChecks   int64   `json:"down_checks"`
-	DegradedChecks int64 `json:"degraded_checks"`
+	MonitorID      int64   `json:"monitor_id"`
+	UptimePct      float64 `json:"uptime_pct"`
+	P50            float64 `json:"p50"`
+	P95            float64 `json:"p95"`
+	P99            float64 `json:"p99"`
+	TotalChecks    int64   `json:"total_checks"`
+	UpChecks       int64   `json:"up_checks"`
+	DownChecks     int64   `json:"down_checks"`
+	DegradedChecks int64   `json:"degraded_checks"`
 }
 
 // ComputeMetrics calculates metrics for a monitor over a time range.

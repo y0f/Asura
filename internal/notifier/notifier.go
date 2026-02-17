@@ -18,9 +18,9 @@ type Sender interface {
 
 // Payload contains the notification data.
 type Payload struct {
-	EventType string                `json:"event_type"`
-	Incident  *storage.Incident     `json:"incident,omitempty"`
-	Monitor   *storage.Monitor      `json:"monitor,omitempty"`
+	EventType string                 `json:"event_type"`
+	Incident  *storage.Incident      `json:"incident,omitempty"`
+	Monitor   *storage.Monitor       `json:"monitor,omitempty"`
 	Change    *storage.ContentChange `json:"change,omitempty"`
 }
 

@@ -7,45 +7,45 @@ import (
 
 // Monitor represents a monitored endpoint.
 type Monitor struct {
-	ID               int64            `json:"id"`
-	Name             string           `json:"name"`
-	Type             string           `json:"type"` // http, tcp, dns, icmp, tls, websocket, command
-	Target           string           `json:"target"`
-	Interval         int              `json:"interval"` // seconds
-	Timeout          int              `json:"timeout"`  // seconds
-	Enabled          bool             `json:"enabled"`
-	Tags             []string         `json:"tags"`
-	Settings         json.RawMessage  `json:"settings,omitempty"`
-	Assertions       json.RawMessage  `json:"assertions,omitempty"`
-	TrackChanges     bool             `json:"track_changes"`
-	FailureThreshold int              `json:"failure_threshold"`
-	SuccessThreshold int              `json:"success_threshold"`
-	Public           bool             `json:"public"`
-	CreatedAt        time.Time        `json:"created_at"`
-	UpdatedAt        time.Time        `json:"updated_at"`
+	ID               int64           `json:"id"`
+	Name             string          `json:"name"`
+	Type             string          `json:"type"` // http, tcp, dns, icmp, tls, websocket, command
+	Target           string          `json:"target"`
+	Interval         int             `json:"interval"` // seconds
+	Timeout          int             `json:"timeout"`  // seconds
+	Enabled          bool            `json:"enabled"`
+	Tags             []string        `json:"tags"`
+	Settings         json.RawMessage `json:"settings,omitempty"`
+	Assertions       json.RawMessage `json:"assertions,omitempty"`
+	TrackChanges     bool            `json:"track_changes"`
+	FailureThreshold int             `json:"failure_threshold"`
+	SuccessThreshold int             `json:"success_threshold"`
+	Public           bool            `json:"public"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
 
 	// Computed fields (not stored directly)
-	Status           string           `json:"status,omitempty"`
-	LastCheckAt      *time.Time       `json:"last_check_at,omitempty"`
-	ConsecFails      int              `json:"consec_fails,omitempty"`
-	ConsecSuccesses  int              `json:"consec_successes,omitempty"`
+	Status          string     `json:"status,omitempty"`
+	LastCheckAt     *time.Time `json:"last_check_at,omitempty"`
+	ConsecFails     int        `json:"consec_fails,omitempty"`
+	ConsecSuccesses int        `json:"consec_successes,omitempty"`
 }
 
 // HTTPSettings holds configuration specific to HTTP checks.
 type HTTPSettings struct {
-	Method           string            `json:"method,omitempty"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	Body             string            `json:"body,omitempty"`
-	FollowRedirects  *bool             `json:"follow_redirects,omitempty"`
-	SkipTLSVerify    bool              `json:"skip_tls_verify,omitempty"`
-	BasicAuthUser    string            `json:"basic_auth_user,omitempty"`
-	BasicAuthPass    string            `json:"basic_auth_pass,omitempty"`
+	Method          string            `json:"method,omitempty"`
+	Headers         map[string]string `json:"headers,omitempty"`
+	Body            string            `json:"body,omitempty"`
+	FollowRedirects *bool             `json:"follow_redirects,omitempty"`
+	SkipTLSVerify   bool              `json:"skip_tls_verify,omitempty"`
+	BasicAuthUser   string            `json:"basic_auth_user,omitempty"`
+	BasicAuthPass   string            `json:"basic_auth_pass,omitempty"`
 }
 
 // TCPSettings holds TCP check configuration.
 type TCPSettings struct {
-	SendData    string `json:"send_data,omitempty"`
-	ExpectData  string `json:"expect_data,omitempty"`
+	SendData   string `json:"send_data,omitempty"`
+	ExpectData string `json:"expect_data,omitempty"`
 }
 
 // DNSSettings holds DNS check configuration.
@@ -74,18 +74,18 @@ type CommandSettings struct {
 
 // CheckResult stores the outcome of a single check execution.
 type CheckResult struct {
-	ID           int64     `json:"id"`
-	MonitorID    int64     `json:"monitor_id"`
-	Status       string    `json:"status"` // up, down, degraded
-	ResponseTime int64     `json:"response_time"` // milliseconds
-	StatusCode   int       `json:"status_code,omitempty"`
-	Message      string    `json:"message,omitempty"`
-	Headers      string    `json:"headers,omitempty"` // JSON encoded
-	Body         string    `json:"body,omitempty"`
-	BodyHash     string    `json:"body_hash,omitempty"`
+	ID           int64      `json:"id"`
+	MonitorID    int64      `json:"monitor_id"`
+	Status       string     `json:"status"`        // up, down, degraded
+	ResponseTime int64      `json:"response_time"` // milliseconds
+	StatusCode   int        `json:"status_code,omitempty"`
+	Message      string     `json:"message,omitempty"`
+	Headers      string     `json:"headers,omitempty"` // JSON encoded
+	Body         string     `json:"body,omitempty"`
+	BodyHash     string     `json:"body_hash,omitempty"`
 	CertExpiry   *time.Time `json:"cert_expiry,omitempty"`
-	DNSRecords   string    `json:"dns_records,omitempty"` // JSON encoded
-	CreatedAt    time.Time `json:"created_at"`
+	DNSRecords   string     `json:"dns_records,omitempty"` // JSON encoded
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 // Incident tracks a period of downtime or degradation.
@@ -137,14 +137,14 @@ type MaintenanceWindow struct {
 
 // ContentChange records when a monitored page's content changes.
 type ContentChange struct {
-	ID         int64     `json:"id"`
-	MonitorID  int64     `json:"monitor_id"`
-	OldHash    string    `json:"old_hash"`
-	NewHash    string    `json:"new_hash"`
-	Diff       string    `json:"diff"`
-	OldBody    string    `json:"-"` // not exposed in API
-	NewBody    string    `json:"-"` // not exposed in API
-	CreatedAt  time.Time `json:"created_at"`
+	ID        int64     `json:"id"`
+	MonitorID int64     `json:"monitor_id"`
+	OldHash   string    `json:"old_hash"`
+	NewHash   string    `json:"new_hash"`
+	Diff      string    `json:"diff"`
+	OldBody   string    `json:"-"` // not exposed in API
+	NewBody   string    `json:"-"` // not exposed in API
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // MonitorStatus holds the runtime state of a monitor.
@@ -184,11 +184,11 @@ type Heartbeat struct {
 
 // AuditEntry logs a mutation in the system.
 type AuditEntry struct {
-	ID        int64     `json:"id"`
-	Action    string    `json:"action"`
-	Entity    string    `json:"entity"`
-	EntityID  int64     `json:"entity_id"`
-	APIKeyName string   `json:"api_key_name"`
-	Detail    string    `json:"detail,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID         int64     `json:"id"`
+	Action     string    `json:"action"`
+	Entity     string    `json:"entity"`
+	EntityID   int64     `json:"entity_id"`
+	APIKeyName string    `json:"api_key_name"`
+	Detail     string    `json:"detail,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
 }

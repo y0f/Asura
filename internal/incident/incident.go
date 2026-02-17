@@ -9,9 +9,9 @@ const (
 
 // Event type constants.
 const (
-	EventCreated       = "created"
-	EventAcknowledged  = "acknowledged"
-	EventResolved      = "resolved"
-	EventCheckFailed   = "check_failed"
+	EventCreated        = "created"
+	EventAcknowledged   = "acknowledged"
+	EventResolved       = "resolved"
+	EventCheckFailed    = "check_failed"
 	EventCheckRecovered = "check_recovered"
 )

@@ -18,15 +18,15 @@ import (
 // Pipeline orchestrates the full monitoring flow:
 // Scheduler -> Workers -> Result Processor -> Incident Manager -> Notifications
 type Pipeline struct {
-	store       storage.Store
-	registry    *checker.Registry
-	incMgr      *incident.Manager
-	logger      *slog.Logger
-	scheduler   *Scheduler
-	jobs        chan Job
-	results     chan WorkerResult
-	notifyChan  chan NotificationEvent
-	workers     int
+	store      storage.Store
+	registry   *checker.Registry
+	incMgr     *incident.Manager
+	logger     *slog.Logger
+	scheduler  *Scheduler
+	jobs       chan Job
+	results    chan WorkerResult
+	notifyChan chan NotificationEvent
+	workers    int
 }
 
 // NotificationEvent is emitted when something noteworthy happens.

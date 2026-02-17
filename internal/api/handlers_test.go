@@ -109,9 +109,9 @@ func TestMonitorCRUD(t *testing.T) {
 
 	// Create
 	body, _ := json.Marshal(map[string]interface{}{
-		"name":    "Test HTTP Monitor",
-		"type":    "http",
-		"target":  "https://example.com",
+		"name":     "Test HTTP Monitor",
+		"type":     "http",
+		"target":   "https://example.com",
 		"interval": 30,
 		"timeout":  5,
 	})
@@ -161,8 +161,8 @@ func TestSecureHeaders(t *testing.T) {
 	srv.ServeHTTP(w, req)
 
 	expected := map[string]string{
-		"X-Content-Type-Options": "nosniff",
-		"X-Frame-Options":       "DENY",
+		"X-Content-Type-Options":  "nosniff",
+		"X-Frame-Options":         "DENY",
 		"Content-Security-Policy": "default-src 'none'",
 	}
 
