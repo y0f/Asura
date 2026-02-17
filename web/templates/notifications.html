@@ -1,8 +1,8 @@
 {{define "title"}}Notifications{{end}}
 {{define "content"}}
 <div x-data="{showForm: false, editId: 0, formData: {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}}">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold text-white">Notification Channels</h1>
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl font-semibold text-white">Notification Channels</h1>
         {{if index .Perms "notifications.write"}}
         <button @click="showForm = true; editId = 0; formData = {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}"
                 class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors">
