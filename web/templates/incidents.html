@@ -4,10 +4,10 @@
     <h1 class="text-xl font-semibold text-white mb-5">Incidents</h1>
 
     <div class="flex flex-wrap gap-2 mb-5">
-        <a href="/incidents" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if not .Data.Filter}}bg-indigo-500/10 text-indigo-400 border-indigo-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">All</a>
-        <a href="/incidents?status=open" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "open"}}bg-red-500/10 text-red-400 border-red-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Open</a>
-        <a href="/incidents?status=acknowledged" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "acknowledged"}}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Acknowledged</a>
-        <a href="/incidents?status=resolved" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "resolved"}}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Resolved</a>
+        <a href="{{.BasePath}}/incidents" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if not .Data.Filter}}bg-indigo-500/10 text-indigo-400 border-indigo-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">All</a>
+        <a href="{{.BasePath}}/incidents?status=open" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "open"}}bg-red-500/10 text-red-400 border-red-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Open</a>
+        <a href="{{.BasePath}}/incidents?status=acknowledged" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "acknowledged"}}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Acknowledged</a>
+        <a href="{{.BasePath}}/incidents?status=resolved" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "resolved"}}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Resolved</a>
     </div>
 
     <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
@@ -35,7 +35,7 @@
                         <td class="px-5 py-3.5 text-sm text-gray-400 tabular-nums">{{incidentDuration .StartedAt .ResolvedAt}}</td>
                         <td class="px-5 py-3.5 text-sm text-gray-500">{{timeAgo .StartedAt}}</td>
                         <td class="px-5 py-3.5 text-right">
-                            <a href="/incidents/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
+                            <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
                         </td>
                     </tr>
                     {{end}}

@@ -3,7 +3,7 @@
 <div x-data="{monitorType: '{{if .Data}}{{.Data.Type}}{{else}}http{{end}}'}">
     <h1 class="text-xl font-semibold text-white mb-5">{{.Title}}</h1>
 
-    <form method="POST" action="{{if .Data}}/monitors/{{.Data.ID}}{{else}}/monitors{{end}}" class="max-w-2xl space-y-5">
+    <form method="POST" action="{{if .Data}}{{.BasePath}}/monitors/{{.Data.ID}}{{else}}{{.BasePath}}/monitors{{end}}" class="max-w-2xl space-y-5">
         <div class="bg-surface-100 border border-border rounded-xl p-5 md:p-6 space-y-5">
             <div>
                 <label class="block text-sm text-gray-400 mb-1.5">Name</label>
@@ -97,7 +97,7 @@
             <button type="submit" class="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
                 {{if .Data}}Update Monitor{{else}}Create Monitor{{end}}
             </button>
-            <a href="/monitors" class="px-6 py-2.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">Cancel</a>
+            <a href="{{.BasePath}}/monitors" class="px-6 py-2.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">Cancel</a>
         </div>
     </form>
 </div>

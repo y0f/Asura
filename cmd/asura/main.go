@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -27,11 +29,24 @@ var version = "dev"
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to configuration file")
 	hashKey := flag.String("hash-key", "", "hash an API key and exit")
+	setup := flag.Bool("setup", false, "generate an API key and exit")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 
 	if *showVersion {
 		fmt.Printf("asura %s\n", version)
+		os.Exit(0)
+	}
+
+	if *setup {
+		key, hash := generateAPIKey()
+		fmt.Println()
+		fmt.Printf("  API Key : %s\n", key)
+		fmt.Printf("  Hash    : %s\n", hash)
+		fmt.Println()
+		fmt.Println("  Put the hash in config.yaml under auth.api_keys[].hash")
+		fmt.Println("  Save the API key — it cannot be recovered.")
+		fmt.Println()
 		os.Exit(0)
 	}
 
@@ -146,6 +161,17 @@ func startHTTPServer(cfg *config.Config, handler http.Handler, logger *slog.Logg
 	}
 
 	return httpServer
+}
+
+func generateAPIKey() (key, hash string) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		fmt.Fprintf(os.Stderr, "error: failed to generate random bytes: %v\n", err)
+		os.Exit(1)
+	}
+	key = "ak_" + hex.EncodeToString(b)
+	hash = config.HashAPIKey(key)
+	return key, hash
 }
 
 func setupLogger(cfg config.LoggingConfig) *slog.Logger {

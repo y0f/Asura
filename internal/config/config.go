@@ -5,6 +5,8 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -18,6 +20,8 @@ type Config struct {
 	Auth     AuthConfig     `yaml:"auth"`
 	Monitor  MonitorConfig  `yaml:"monitor"`
 	Logging  LoggingConfig  `yaml:"logging"`
+
+	trustedNets []net.IPNet
 }
 
 type ServerConfig struct {
@@ -33,6 +37,9 @@ type ServerConfig struct {
 	RateLimitBurst  int           `yaml:"rate_limit_burst"`
 	WebUIEnabled    *bool         `yaml:"web_ui_enabled"`
 	FrameAncestors  []string      `yaml:"frame_ancestors"`
+	BasePath        string        `yaml:"base_path"`
+	ExternalURL     string        `yaml:"external_url"`
+	TrustedProxies  []string      `yaml:"trusted_proxies"`
 }
 
 type DatabaseConfig struct {
@@ -179,6 +186,14 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("validate config: %w", err)
 	}
 
+	cfg.Server.BasePath = NormalizeBasePath(cfg.Server.BasePath)
+
+	nets, err := parseTrustedProxies(cfg.Server.TrustedProxies)
+	if err != nil {
+		return nil, fmt.Errorf("parse trusted_proxies: %w", err)
+	}
+	cfg.trustedNets = nets
+
 	return cfg, nil
 }
 
@@ -210,6 +225,17 @@ func (c *Config) validateServer() error {
 	}
 	if c.Server.RateLimitBurst <= 0 {
 		return fmt.Errorf("server.rate_limit_burst must be positive")
+	}
+	if c.Server.ExternalURL != "" {
+		u, err := url.Parse(c.Server.ExternalURL)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("server.external_url must be an absolute URL (e.g. https://example.com)")
+		}
+	}
+	if bp := c.Server.BasePath; bp != "" {
+		if strings.Contains(bp, "..") || strings.Contains(bp, "?") || strings.Contains(bp, "#") || strings.Contains(bp, "\\") {
+			return fmt.Errorf("server.base_path contains invalid characters")
+		}
 	}
 	return nil
 }
@@ -323,4 +349,62 @@ func (c *Config) LookupAPIKey(key string) (*APIKeyConfig, bool) {
 		}
 	}
 	return nil, false
+}
+
+func NormalizeBasePath(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(s, "/") {
+		s = "/" + s
+	}
+	return strings.TrimRight(s, "/")
+}
+
+func (c *Config) IsTrustedProxy(ip net.IP) bool {
+	for i := range c.trustedNets {
+		if c.trustedNets[i].Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Config) TrustedNets() []net.IPNet {
+	return c.trustedNets
+}
+
+func (c *Config) ResolvedExternalURL() string {
+	if c.Server.ExternalURL != "" {
+		return strings.TrimRight(c.Server.ExternalURL, "/")
+	}
+	return "http://" + c.Server.Listen + c.Server.BasePath
+}
+
+func parseTrustedProxies(proxies []string) ([]net.IPNet, error) {
+	var nets []net.IPNet
+	for _, p := range proxies {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if !strings.Contains(p, "/") {
+			ip := net.ParseIP(p)
+			if ip == nil {
+				return nil, fmt.Errorf("invalid IP: %s", p)
+			}
+			if ip.To4() != nil {
+				p += "/32"
+			} else {
+				p += "/128"
+			}
+		}
+		_, ipNet, err := net.ParseCIDR(p)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CIDR: %s", p)
+		}
+		nets = append(nets, *ipNet)
+	}
+	return nets, nil
 }

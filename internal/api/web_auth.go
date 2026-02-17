@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,35 +31,35 @@ func generateSessionToken() (string, error) {
 }
 
 func (s *Server) handleWebLogin(w http.ResponseWriter, r *http.Request) {
-	s.render(w, "login.html", pageData{})
+	s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath})
 }
 
 func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
-	ip := extractIP(r)
+	ip := extractIP(r, s.cfg.TrustedNets())
 
 	if !s.loginRL.allow(ip) {
 		s.auditLogin("login_rate_limited", "", ip)
-		s.render(w, "login.html", pageData{Error: "Too many login attempts. Try again later."})
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."})
 		return
 	}
 
 	key := r.FormValue("api_key")
 	if key == "" {
-		s.render(w, "login.html", pageData{Error: "API key is required"})
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "API key is required"})
 		return
 	}
 
 	apiKey, ok := s.cfg.LookupAPIKey(key)
 	if !ok {
 		s.auditLogin("login_failed", "", ip)
-		s.render(w, "login.html", pageData{Error: "Invalid API key"})
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Invalid API key"})
 		return
 	}
 
 	token, err := generateSessionToken()
 	if err != nil {
 		s.logger.Error("generate session token", "error", err)
-		s.render(w, "login.html", pageData{Error: "Internal error"})
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Internal error"})
 		return
 	}
 
@@ -70,14 +71,14 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.store.CreateSession(r.Context(), sess); err != nil {
 		s.logger.Error("create session", "error", err)
-		s.render(w, "login.html", pageData{Error: "Internal error"})
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Internal error"})
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
 		Value:    token,
-		Path:     "/",
+		Path:     s.cfg.Server.BasePath + "/",
 		MaxAge:   int(s.cfg.Auth.Session.Lifetime.Seconds()),
 		HttpOnly: true,
 		Secure:   s.cfg.Auth.Session.CookieSecure,
@@ -85,7 +86,7 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 	})
 
 	s.auditLogin("login_success", apiKey.Name, ip)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, s.cfg.Server.BasePath+"/", http.StatusSeeOther)
 }
 
 func (s *Server) handleWebLogout(w http.ResponseWriter, r *http.Request) {
@@ -97,20 +98,20 @@ func (s *Server) handleWebLogout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
 		Value:    "",
-		Path:     "/",
+		Path:     s.cfg.Server.BasePath + "/",
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   s.cfg.Auth.Session.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, s.cfg.Server.BasePath+"/login", http.StatusSeeOther)
 }
 
 func (s *Server) clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookie,
 		Value:    "",
-		Path:     "/",
+		Path:     s.cfg.Server.BasePath + "/",
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   s.cfg.Auth.Session.CookieSecure,
@@ -119,10 +120,11 @@ func (s *Server) clearSessionCookie(w http.ResponseWriter) {
 }
 
 func (s *Server) webAuth(next http.Handler) http.Handler {
+	loginURL := s.cfg.Server.BasePath + "/login"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(sessionCookie)
 		if err != nil || cookie.Value == "" {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 
@@ -131,19 +133,19 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				s.clearSessionCookie(w)
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				http.Redirect(w, r, loginURL, http.StatusSeeOther)
 				return
 			}
 			s.logger.Error("session lookup", "error", err)
 			s.clearSessionCookie(w)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 
 		if time.Now().After(sess.ExpiresAt) {
 			s.store.DeleteSession(r.Context(), tokenHash)
 			s.clearSessionCookie(w)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 
@@ -151,7 +153,7 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 		if apiKey == nil {
 			s.store.DeleteSession(r.Context(), tokenHash)
 			s.clearSessionCookie(w)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 
@@ -167,7 +169,7 @@ func (s *Server) webRequirePerm(perm string, next http.Handler) http.Handler {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		if r.Method == http.MethodPost && !checkOrigin(r) {
+		if r.Method == http.MethodPost && !s.checkOrigin(r) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
@@ -184,11 +186,16 @@ func (s *Server) auditLogin(action, keyName, ip string) {
 	})
 }
 
-func checkOrigin(r *http.Request) bool {
+func (s *Server) checkOrigin(r *http.Request) bool {
 	hosts := make(map[string]bool)
 	hosts[stripPort(r.Host)] = true
+
 	if fwd := r.Header.Get("X-Forwarded-Host"); fwd != "" {
-		hosts[stripPort(fwd)] = true
+		remoteHost, _, _ := net.SplitHostPort(r.RemoteAddr)
+		remoteIP := net.ParseIP(remoteHost)
+		if remoteIP != nil && s.cfg.IsTrustedProxy(remoteIP) {
+			hosts[stripPort(fwd)] = true
+		}
 	}
 
 	origin := r.Header.Get("Origin")

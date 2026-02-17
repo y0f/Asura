@@ -40,7 +40,7 @@
                         </td>
                         <td class="px-5 py-3.5 text-right">
                             {{if index $.Perms "maintenance.write"}}
-                            <form method="POST" action="/maintenance/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this window?')) $el.submit()" class="inline">
+                            <form method="POST" action="{{$.BasePath}}/maintenance/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this window?')) $el.submit()" class="inline">
                                 <button type="submit" class="text-xs text-red-400 hover:text-red-300 transition-colors">Delete</button>
                             </form>
                             {{end}}
@@ -68,7 +68,7 @@
              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
              @click.stop>
             <h3 class="text-lg font-semibold text-white mb-5">New Maintenance Window</h3>
-            <form method="POST" action="/maintenance" class="space-y-4">
+            <form method="POST" action="{{$.BasePath}}/maintenance" class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Name</label>
                     <input type="text" name="name" required

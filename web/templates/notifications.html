@@ -30,10 +30,10 @@
             </div>
             {{if index $.Perms "notifications.write"}}
             <div class="flex items-center gap-2 pt-3 border-t border-border">
-                <form method="POST" action="/notifications/{{.ID}}/test" class="inline">
+                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/test" class="inline">
                     <button type="submit" class="px-3 py-1.5 text-xs text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/10 transition-all duration-150">Test</button>
                 </form>
-                <form method="POST" action="/notifications/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this channel?')) $el.submit()" class="inline">
+                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this channel?')) $el.submit()" class="inline">
                     <button type="submit" class="px-3 py-1.5 text-xs text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-all duration-150">Delete</button>
                 </form>
             </div>
@@ -59,7 +59,7 @@
              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
              @click.stop>
             <h3 class="text-lg font-semibold text-white mb-5">New Notification Channel</h3>
-            <form method="POST" action="/notifications" class="space-y-4">
+            <form method="POST" action="{{$.BasePath}}/notifications" class="space-y-4">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1.5">Name</label>
                     <input type="text" name="name" x-model="formData.name" required

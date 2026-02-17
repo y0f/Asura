@@ -27,13 +27,13 @@
             <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
                 <div class="px-5 py-3.5 border-b border-border flex items-center justify-between">
                     <h2 class="text-sm font-medium text-gray-300">Monitors</h2>
-                    <a href="/monitors/new" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">+ Add</a>
+                    <a href="{{$.BasePath}}/monitors/new" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">+ Add</a>
                 </div>
                 <div id="monitor-grid" hx-get="" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false">
                     {{if .Data.Monitors}}
                     <div class="divide-y divide-border">
                         {{range .Data.Monitors}}
-                        <a href="/monitors/{{.ID}}" class="flex items-center justify-between px-5 py-3 hover:bg-surface-200/50 transition-all duration-150 group">
+                        <a href="{{$.BasePath}}/monitors/{{.ID}}" class="flex items-center justify-between px-5 py-3 hover:bg-surface-200/50 transition-all duration-150 group">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 {{statusDot .Status}}"></div>
                                 <div class="min-w-0">
@@ -55,7 +55,7 @@
                     <div class="px-5 py-14 text-center">
                         <svg class="w-10 h-10 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                         <p class="text-gray-500 text-sm mb-3">No monitors yet</p>
-                        <a href="/monitors/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg transition-colors">
+                        <a href="{{$.BasePath}}/monitors/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Create one
                         </a>
@@ -73,7 +73,7 @@
                 {{if .Data.Incidents}}
                 <div class="divide-y divide-border">
                     {{range .Data.Incidents}}
-                    <a href="/incidents/{{.ID}}" class="block px-5 py-3 hover:bg-surface-200/50 transition-all duration-150">
+                    <a href="{{$.BasePath}}/incidents/{{.ID}}" class="block px-5 py-3 hover:bg-surface-200/50 transition-all duration-150">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-sm text-white">{{.MonitorName}}</span>
                             <span class="text-xs px-2 py-0.5 rounded-full border {{statusBg .Status}}">{{.Status}}</span>

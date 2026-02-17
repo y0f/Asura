@@ -228,10 +228,10 @@ func (rl *rateLimiter) allow(ip string) bool {
 	return rl.getLimiter(ip).Allow()
 }
 
-func (rl *rateLimiter) middleware() func(http.Handler) http.Handler {
+func (rl *rateLimiter) middleware(trustedNets []net.IPNet) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := extractIP(r)
+			ip := extractIP(r, trustedNets)
 			if !rl.getLimiter(ip).Allow() {
 				writeError(w, http.StatusTooManyRequests, "rate limit exceeded")
 				return
@@ -241,15 +241,48 @@ func (rl *rateLimiter) middleware() func(http.Handler) http.Handler {
 	}
 }
 
-func extractIP(r *http.Request) string {
-	// Use RemoteAddr directly to prevent rate-limit bypass via spoofed headers.
-	// If running behind a trusted reverse proxy, configure the proxy to set
-	// RemoteAddr or use a middleware that validates X-Forwarded-For chains.
+func extractIP(r *http.Request, trustedNets []net.IPNet) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
 	}
+
+	remoteIP := net.ParseIP(host)
+	if remoteIP == nil || !isTrusted(remoteIP, trustedNets) {
+		return host
+	}
+
+	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
+		if net.ParseIP(realIP) != nil {
+			return realIP
+		}
+	}
+
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		for i := len(parts) - 1; i >= 0; i-- {
+			ip := strings.TrimSpace(parts[i])
+			parsed := net.ParseIP(ip)
+			if parsed == nil {
+				continue
+			}
+			if !isTrusted(parsed, trustedNets) {
+				return ip
+			}
+		}
+		return strings.TrimSpace(parts[0])
+	}
+
 	return host
+}
+
+func isTrusted(ip net.IP, nets []net.IPNet) bool {
+	for i := range nets {
+		if nets[i].Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 func bodyLimit(maxBytes int64) func(http.Handler) http.Handler {

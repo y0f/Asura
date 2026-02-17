@@ -12,13 +12,14 @@ import (
 )
 
 type pageData struct {
-	Title   string
-	Active  string
-	Perms   map[string]bool
-	Version string
-	Flash   string
-	Error   string
-	Data    interface{}
+	Title    string
+	Active   string
+	Perms    map[string]bool
+	Version  string
+	Flash    string
+	Error    string
+	BasePath string
+	Data     interface{}
 }
 
 func (s *Server) newPageData(r *http.Request, title, active string) pageData {
@@ -31,11 +32,12 @@ func (s *Server) newPageData(r *http.Request, title, active string) pageData {
 		flash = c.Value
 	}
 	return pageData{
-		Title:   title,
-		Active:  active,
-		Perms:   perms,
-		Version: s.version,
-		Flash:   flash,
+		Title:    title,
+		Active:   active,
+		Perms:    perms,
+		Version:  s.version,
+		Flash:    flash,
+		BasePath: s.cfg.Server.BasePath,
 	}
 }
 
@@ -276,11 +278,15 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 	}
 }
 
+func (s *Server) redirect(w http.ResponseWriter, r *http.Request, path string) {
+	http.Redirect(w, r, s.cfg.Server.BasePath+path, http.StatusSeeOther)
+}
+
 func (s *Server) setFlash(w http.ResponseWriter, msg string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
 		Value:    msg,
-		Path:     "/",
+		Path:     s.cfg.Server.BasePath + "/",
 		MaxAge:   5,
 		HttpOnly: true,
 		Secure:   true,

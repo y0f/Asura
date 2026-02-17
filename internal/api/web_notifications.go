@@ -26,12 +26,12 @@ func (s *Server) handleWebNotificationCreate(w http.ResponseWriter, r *http.Requ
 	if err := s.store.CreateNotificationChannel(r.Context(), ch); err != nil {
 		s.logger.Error("web: create notification", "error", err)
 		s.setFlash(w, "Failed to create channel")
-		http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+		s.redirect(w, r, "/notifications")
 		return
 	}
 
 	s.setFlash(w, "Notification channel created")
-	http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+	s.redirect(w, r, "/notifications")
 }
 
 func (s *Server) handleWebNotificationUpdate(w http.ResponseWriter, r *http.Request) {
@@ -42,12 +42,12 @@ func (s *Server) handleWebNotificationUpdate(w http.ResponseWriter, r *http.Requ
 	if err := s.store.UpdateNotificationChannel(r.Context(), ch); err != nil {
 		s.logger.Error("web: update notification", "error", err)
 		s.setFlash(w, "Failed to update channel")
-		http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+		s.redirect(w, r, "/notifications")
 		return
 	}
 
 	s.setFlash(w, "Notification channel updated")
-	http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+	s.redirect(w, r, "/notifications")
 }
 
 func (s *Server) handleWebNotificationDelete(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,7 @@ func (s *Server) handleWebNotificationDelete(w http.ResponseWriter, r *http.Requ
 		s.logger.Error("web: delete notification", "error", err)
 	}
 	s.setFlash(w, "Notification channel deleted")
-	http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+	s.redirect(w, r, "/notifications")
 }
 
 func (s *Server) handleWebNotificationTest(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +64,7 @@ func (s *Server) handleWebNotificationTest(w http.ResponseWriter, r *http.Reques
 	ch, err := s.store.GetNotificationChannel(r.Context(), id)
 	if err != nil {
 		s.setFlash(w, "Channel not found")
-		http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+		s.redirect(w, r, "/notifications")
 		return
 	}
 
@@ -80,7 +80,7 @@ func (s *Server) handleWebNotificationTest(w http.ResponseWriter, r *http.Reques
 	} else {
 		s.setFlash(w, "Test notification sent")
 	}
-	http.Redirect(w, r, "/notifications", http.StatusSeeOther)
+	s.redirect(w, r, "/notifications")
 }
 
 func (s *Server) parseNotificationForm(r *http.Request) *storage.NotificationChannel {

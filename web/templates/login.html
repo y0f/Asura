@@ -36,7 +36,7 @@
             </div>
             {{end}}
 
-            <form method="POST" action="/login" class="space-y-5">
+            <form method="POST" action="{{.BasePath}}/login" class="space-y-5">
                 <div>
                     <input type="password" name="api_key" placeholder="API Key" required autofocus
                            class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200">

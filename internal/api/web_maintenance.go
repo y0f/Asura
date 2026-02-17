@@ -25,11 +25,11 @@ func (s *Server) handleWebMaintenanceCreate(w http.ResponseWriter, r *http.Reque
 	if err := s.store.CreateMaintenanceWindow(r.Context(), mw); err != nil {
 		s.logger.Error("web: create maintenance", "error", err)
 		s.setFlash(w, "Failed to create maintenance window")
-		http.Redirect(w, r, "/maintenance", http.StatusSeeOther)
+		s.redirect(w, r, "/maintenance")
 		return
 	}
 	s.setFlash(w, "Maintenance window created")
-	http.Redirect(w, r, "/maintenance", http.StatusSeeOther)
+	s.redirect(w, r, "/maintenance")
 }
 
 func (s *Server) handleWebMaintenanceUpdate(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func (s *Server) handleWebMaintenanceUpdate(w http.ResponseWriter, r *http.Reque
 		s.logger.Error("web: update maintenance", "error", err)
 	}
 	s.setFlash(w, "Maintenance window updated")
-	http.Redirect(w, r, "/maintenance", http.StatusSeeOther)
+	s.redirect(w, r, "/maintenance")
 }
 
 func (s *Server) handleWebMaintenanceDelete(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func (s *Server) handleWebMaintenanceDelete(w http.ResponseWriter, r *http.Reque
 		s.logger.Error("web: delete maintenance", "error", err)
 	}
 	s.setFlash(w, "Maintenance window deleted")
-	http.Redirect(w, r, "/maintenance", http.StatusSeeOther)
+	s.redirect(w, r, "/maintenance")
 }
 
 func (s *Server) parseMaintenanceForm(r *http.Request) *storage.MaintenanceWindow {

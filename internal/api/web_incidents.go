@@ -28,13 +28,13 @@ func (s *Server) handleWebIncidents(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleWebIncidentDetail(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+		s.redirect(w, r, "/incidents")
 		return
 	}
 
 	inc, err := s.store.GetIncident(r.Context(), id)
 	if err != nil {
-		http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+		s.redirect(w, r, "/incidents")
 		return
 	}
 
@@ -55,11 +55,11 @@ func (s *Server) handleWebIncidentAck(w http.ResponseWriter, r *http.Request) {
 	inc, err := s.store.GetIncident(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+			s.redirect(w, r, "/incidents")
 			return
 		}
 		s.logger.Error("web: get incident for ack", "error", err)
-		http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+		s.redirect(w, r, "/incidents")
 		return
 	}
 
@@ -82,7 +82,7 @@ func (s *Server) handleWebIncidentAck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setFlash(w, "Incident acknowledged")
-	http.Redirect(w, r, "/incidents/"+r.PathValue("id"), http.StatusSeeOther)
+	s.redirect(w, r, "/incidents/"+r.PathValue("id"))
 }
 
 func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +91,7 @@ func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request
 
 	inc, err := s.store.GetIncident(ctx, id)
 	if err != nil {
-		http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+		s.redirect(w, r, "/incidents")
 		return
 	}
 
@@ -114,5 +114,5 @@ func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request
 	}
 
 	s.setFlash(w, "Incident resolved")
-	http.Redirect(w, r, "/incidents/"+r.PathValue("id"), http.StatusSeeOther)
+	s.redirect(w, r, "/incidents/"+r.PathValue("id"))
 }

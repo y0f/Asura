@@ -25,14 +25,14 @@ func (s *Server) handleWebMonitors(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+		s.redirect(w, r, "/monitors")
 		return
 	}
 
 	ctx := r.Context()
 	mon, err := s.store.GetMonitor(ctx, id)
 	if err != nil {
-		http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+		s.redirect(w, r, "/monitors")
 		return
 	}
 
@@ -81,12 +81,12 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 	if idStr != "" {
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+			s.redirect(w, r, "/monitors")
 			return
 		}
 		mon, err := s.store.GetMonitor(r.Context(), id)
 		if err != nil {
-			http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+			s.redirect(w, r, "/monitors")
 			return
 		}
 		pd.Title = "Edit " + mon.Name
@@ -123,13 +123,13 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	s.setFlash(w, "Monitor created")
-	http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+	s.redirect(w, r, "/monitors")
 }
 
 func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+		s.redirect(w, r, "/monitors")
 		return
 	}
 
@@ -158,13 +158,13 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	s.setFlash(w, "Monitor updated")
-	http.Redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10), http.StatusSeeOther)
+	s.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
 }
 
 func (s *Server) handleWebMonitorDelete(w http.ResponseWriter, r *http.Request) {
 	id, err := parseID(r)
 	if err != nil {
-		http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+		s.redirect(w, r, "/monitors")
 		return
 	}
 
@@ -177,7 +177,7 @@ func (s *Server) handleWebMonitorDelete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	s.setFlash(w, "Monitor deleted")
-	http.Redirect(w, r, "/monitors", http.StatusSeeOther)
+	s.redirect(w, r, "/monitors")
 }
 
 func (s *Server) handleWebMonitorPause(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +187,7 @@ func (s *Server) handleWebMonitorPause(w http.ResponseWriter, r *http.Request) {
 		s.pipeline.ReloadMonitors()
 	}
 	s.setFlash(w, "Monitor paused")
-	http.Redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10), http.StatusSeeOther)
+	s.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
 }
 
 func (s *Server) handleWebMonitorResume(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +197,7 @@ func (s *Server) handleWebMonitorResume(w http.ResponseWriter, r *http.Request) 
 		s.pipeline.ReloadMonitors()
 	}
 	s.setFlash(w, "Monitor resumed")
-	http.Redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10), http.StatusSeeOther)
+	s.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
 }
 
 func (s *Server) applyMonitorDefaults(m *storage.Monitor) {
