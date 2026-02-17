@@ -6,6 +6,8 @@
     <a href="https://goreportcard.com/report/github.com/y0f/Asura"><img src="https://goreportcard.com/badge/github.com/y0f/Asura" alt="Go Report Card"></a>
     <a href="https://github.com/y0f/Asura/blob/main/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/y0f/Asura" alt="Go Version"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <a href="https://github.com/y0f/Asura/releases/latest"><img src="https://img.shields.io/github/v/release/y0f/Asura" alt="Release"></a>
+    <a href="https://github.com/y0f/Asura/pkgs/container/asura"><img src="https://img.shields.io/badge/ghcr.io-asura-blue?logo=docker" alt="Docker"></a>
   </p>
   <p align="center">
     <a href="#quick-start">Quick Start</a> &middot;
