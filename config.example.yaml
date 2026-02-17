@@ -3,10 +3,10 @@
 # Environment variables can be used: ${VAR_NAME}
 
 server:
-  # Address to listen on
-  listen: ":8080"
+  # Address to listen on. Use 127.0.0.1 behind a reverse proxy.
+  listen: "127.0.0.1:8090"
 
-  # TLS certificate paths (optional, omit for plain HTTP)
+  # TLS certificate paths (optional, omit for plain HTTP behind reverse proxy)
   # tls_cert: /path/to/cert.pem
   # tls_key: /path/to/key.pem
 
@@ -18,10 +18,27 @@ server:
   # Maximum request body size in bytes (default: 1MB)
   max_body_size: 1048576
 
+  # Serve under a sub-path for reverse proxy deployments.
+  # Example: base_path: "/asura" → all routes at /asura/...
+  # Leave empty or omit to serve from root.
+  # base_path: "/asura"
+
+  # Public URL used in notification messages and links.
+  # Falls back to http://{listen}{base_path} if unset.
+  # external_url: "https://example.com/asura"
+
+  # Trusted reverse proxy IPs or CIDRs.
+  # When a request comes from a trusted proxy, Asura reads the real
+  # client IP from X-Real-IP or X-Forwarded-For headers.
+  # Without this, all requests behind a proxy appear from 127.0.0.1.
+  # trusted_proxies:
+  #   - "127.0.0.1"
+  #   - "::1"
+  #   - "10.0.0.0/8"
+
   # CORS allowed origins (empty = no CORS headers)
-  cors_origins:
-    - "http://localhost:3000"
-    # - "https://your-app.example.com"
+  # cors_origins:
+  #   - "https://your-app.example.com"
 
   # Per-IP rate limiting
   rate_limit_per_sec: 10
@@ -52,7 +69,8 @@ database:
 
 auth:
   # API keys for authentication.
-  # Generate a hash with: asura --hash-key "your-secret-key"
+  # Generate a key+hash pair: asura --setup
+  # Or hash an existing key:  asura --hash-key "your-key"
   api_keys:
     - name: "admin"
       hash: "${ASURA_ADMIN_KEY_HASH}"

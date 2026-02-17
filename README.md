@@ -11,6 +11,7 @@
   </p>
   <p align="center">
     <a href="#quick-start">Quick Start</a> &middot;
+    <a href="#production-deployment">Production Deployment</a> &middot;
     <a href="#api">API Docs</a> &middot;
     <a href="#configuration">Configuration</a> &middot;
     <a href="CONTRIBUTING.md">Contributing</a>
@@ -31,7 +32,7 @@ git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh
 |---|---|---|
 | **Runtime** | Single static binary | Node.js / Java / Python runtime |
 | **Database** | SQLite compiled in | Requires Postgres, MySQL, or Redis |
-| **Binary size** | ~15 MB | 100–500 MB installed |
+| **Binary size** | ~15 MB | 100-500 MB installed |
 | **Concurrency** | Goroutine worker pool with channel backpressure | Single-threaded or thread-per-request |
 | **Deploy** | `scp` binary + run | Package manager, runtime install, migrations |
 | **Config** | One YAML file | Multiple config files, env vars, database setup |
@@ -53,6 +54,8 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
+| **Sub-path support** | Serve from `/asura` or any prefix behind a reverse proxy |
+| **Trusted proxies** | Correct client IP detection behind nginx/caddy |
 | **SQLite + WAL** | Concurrent reads, single writer, zero config |
 | **~15 MB** | Cross-compiles to `linux/amd64` and `linux/arm64` |
 
@@ -68,11 +71,13 @@ cd Asura
 sudo bash install.sh
 ```
 
-Installs Go (if needed), builds the binary, creates a systemd service with a generated admin key. Under 2 minutes on a fresh Ubuntu box.
+Installs Go (if needed), builds the binary, creates a systemd service with a cryptographically generated admin key. Under 2 minutes on a fresh Ubuntu box.
+
+**Important:** By default, Asura binds to `127.0.0.1:8090` and is **not** accessible from the internet. You must set up a reverse proxy to expose it. See [Production Deployment](#production-deployment) below.
 
 ```bash
 systemctl status asura
-curl http://localhost:8080/api/v1/health
+curl http://127.0.0.1:8090/api/v1/health
 ```
 
 ### Docker Compose
@@ -89,7 +94,7 @@ docker compose up -d
 
 ```bash
 make build
-./asura -hash-key "your-secret-key"
+./asura --setup                        # generates key + hash
 cp config.example.yaml config.yaml     # paste the hash
 ./asura -config config.yaml
 ```
@@ -103,6 +108,142 @@ scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura
 
 ---
 
+## Production Deployment
+
+This section walks through deploying Asura on a VPS so that it is **never exposed directly to the internet**. The pattern: Asura listens on localhost, nginx terminates TLS and proxies to it.
+
+### 1. Install Asura
+
+```bash
+git clone https://github.com/y0f/Asura.git
+cd Asura
+sudo bash install.sh
+```
+
+Save the admin API key printed at the end. It cannot be recovered.
+
+### 2. Configure
+
+Edit `/etc/asura/config.yaml`:
+
+```yaml
+server:
+  # Bind to localhost only — never bind to 0.0.0.0 on a public server
+  listen: "127.0.0.1:8090"
+
+  # Serve all routes under /asura (optional, remove for root)
+  base_path: "/asura"
+
+  # Your public URL — used in notification links
+  external_url: "https://example.com/asura"
+
+  # Trust nginx's forwarded headers for real client IP
+  trusted_proxies:
+    - "127.0.0.1"
+    - "::1"
+
+auth:
+  session:
+    cookie_secure: true    # Requires HTTPS (which nginx provides)
+```
+
+### 3. Set up nginx reverse proxy
+
+Create `/etc/nginx/sites-available/asura`:
+
+```nginx
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name example.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    # Proxy /asura to Asura (base_path handles the prefix natively)
+    location /asura/ {
+        proxy_pass http://127.0.0.1:8090;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable and reload:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/asura /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 4. Verify
+
+```bash
+# Local health check (bypasses nginx)
+curl http://127.0.0.1:8090/asura/api/v1/health
+
+# Public health check (through nginx + TLS)
+curl https://example.com/asura/api/v1/health
+
+# Web UI
+# Open https://example.com/asura/ in your browser
+```
+
+### Security Checklist
+
+- [ ] **Bind to localhost** — `listen: "127.0.0.1:8090"`, never `0.0.0.0`
+- [ ] **Firewall** — Only ports 22, 80, 443 open (`ufw allow 22,80,443/tcp`)
+- [ ] **TLS via reverse proxy** — Let nginx/caddy handle certificates
+- [ ] **cookie_secure: true** — Session cookies require HTTPS
+- [ ] **trusted_proxies configured** — So rate limiting uses real IPs, not `127.0.0.1`
+- [ ] **API key saved securely** — Store it in a password manager, not a text file
+- [ ] **Systemd hardening** — The included `asura.service` uses `NoNewPrivileges`, `ProtectSystem`, `PrivateTmp`
+
+### Alternative: Caddy
+
+Caddy handles TLS automatically:
+
+```
+example.com {
+    reverse_proxy /asura/* 127.0.0.1:8090
+}
+```
+
+### Serving from Root (no base_path)
+
+If you want Asura at `https://monitor.example.com/` instead of a sub-path, omit `base_path` and proxy the entire domain:
+
+```yaml
+server:
+  listen: "127.0.0.1:8090"
+  # base_path is empty — serves from root
+```
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name monitor.example.com;
+    # ...TLS config...
+    location / {
+        proxy_pass http://127.0.0.1:8090;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+---
+
 ## Manual Setup
 
 ```bash
@@ -110,15 +251,20 @@ scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura
 make build
 sudo install -m 755 asura /usr/local/bin/asura
 
+# Generate API key
+asura --setup
+
 # System user + directories
 sudo useradd --system --no-create-home --shell /usr/sbin/nologin asura
 sudo mkdir -p /etc/asura /var/lib/asura
 sudo chown asura:asura /var/lib/asura
+sudo chmod 700 /var/lib/asura
 
 # Config
-asura -hash-key "your-secret-key"
 sudo cp config.example.yaml /etc/asura/config.yaml
-# set hash + database.path to /var/lib/asura/asura.db
+# set hash, database.path, base_path, trusted_proxies
+sudo chmod 640 /etc/asura/config.yaml
+sudo chown root:asura /etc/asura/config.yaml
 
 # Systemd
 sudo cp asura.service /etc/systemd/system/
@@ -134,28 +280,59 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 
 | Section    | Controls                                              |
 |------------|-------------------------------------------------------|
-| `server`   | Listen address, TLS, timeouts, CORS, rate limiting, web UI toggle, frame embedding |
+| `server`   | Listen address, TLS, timeouts, CORS, rate limiting, base path, external URL, trusted proxies, web UI toggle, frame embedding |
 | `database` | SQLite path, read pool size, retention policy         |
 | `auth`     | API keys (SHA-256 hashed), roles, session lifetime, login rate limiting |
 | `monitor`  | Worker count, default intervals, thresholds           |
 | `logging`  | Level (debug/info/warn/error), format (text/json)     |
 
+### Key Server Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `listen` | `:8080` | Address to bind. Use `127.0.0.1:PORT` in production |
+| `base_path` | `""` | URL prefix for all routes (e.g. `/asura`) |
+| `external_url` | auto | Public URL for notification links |
+| `trusted_proxies` | `[]` | IPs/CIDRs whose `X-Real-IP`/`X-Forwarded-For` headers are trusted |
+| `rate_limit_per_sec` | `10` | Per-IP request rate limit |
+| `web_ui_enabled` | `true` | Set `false` for API-only mode |
+
 ---
 
 ## Authentication
 
-Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in `config.yaml` — there is no user registration or database-stored auth.
+Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in `config.yaml` -- there is no user registration or database-stored auth.
 
-### Generating a Key Hash
+### Generating a Key (Recommended)
 
-Pick any secret string as your API key, then hash it:
+Use the built-in generator for a cryptographically secure key:
+
+```bash
+./asura --setup
+```
+
+Output:
+
+```
+  API Key : ak_a8f3e7b2c1d9...
+  Hash    : fa223e3e1c4b96...
+
+  Put the hash in config.yaml under auth.api_keys[].hash
+  Save the API key -- it cannot be recovered.
+```
+
+The `ak_` prefix makes keys identifiable in logs and config without exposing the secret.
+
+### Hashing an Existing Key
+
+If you prefer to choose your own key:
 
 ```bash
 ./asura --hash-key "your-secret-key"
 # Output: 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
 ```
 
-Paste the hash into your config:
+### Config
 
 ```yaml
 auth:
@@ -194,7 +371,7 @@ Available permissions: `monitors.read`, `monitors.write`, `incidents.read`, `inc
 **API**: Pass the raw key (not the hash) in the `X-API-Key` header:
 
 ```bash
-curl -H "X-API-Key: your-secret-key" http://localhost:8080/api/v1/monitors
+curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitors
 ```
 
 **Web UI**: Enter the raw key on the login page. A server-side session is created with a secure random token stored in a cookie (24h expiry by default, HttpOnly, Secure). The raw API key is never stored in the cookie. Login attempts are rate-limited per IP.
@@ -205,7 +382,7 @@ You can configure multiple keys with different names and permissions. Each key's
 
 ## API
 
-All endpoints return JSON. Authenticate with `X-API-Key` header.
+All endpoints return JSON. Authenticate with `X-API-Key` header. When `base_path` is configured, all paths are prefixed (e.g. `/asura/api/v1/health`).
 
 ### Health *(no auth)*
 
@@ -255,7 +432,7 @@ Create a heartbeat monitor to track cron jobs, workers, or pipelines. If they st
 
 ```bash
 # Create heartbeat monitor
-curl -X POST http://localhost:8080/api/v1/monitors \
+curl -X POST https://example.com/asura/api/v1/monitors \
   -H "X-API-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"name":"Nightly Backup","type":"heartbeat","interval":3600,"settings":{"grace":300}}'
@@ -273,7 +450,7 @@ Response includes the ping token:
 Ping from your script (no auth needed):
 
 ```bash
-curl -X POST http://your-server:8080/api/v1/heartbeat/a1b2c3d4e5f6...
+curl -X POST https://example.com/asura/api/v1/heartbeat/a1b2c3d4e5f6...
 ```
 
 If no ping arrives within `interval + grace` seconds, the monitor goes down and an incident is created.
@@ -289,8 +466,8 @@ GET  /api/v1/badge/{id}/response   24h median response time
 Set `"public": true` on a monitor to enable badges. Embed in a README:
 
 ```markdown
-![Status](https://your-server/api/v1/badge/1/status)
-![Uptime](https://your-server/api/v1/badge/1/uptime)
+![Status](https://example.com/asura/api/v1/badge/1/status)
+![Uptime](https://example.com/asura/api/v1/badge/1/uptime)
 ```
 
 ### Incidents
@@ -415,8 +592,8 @@ Webhook notifications include an `X-Asura-Signature` header: `sha256=<hex HMAC-S
 ## Architecture
 
 ```
-Scheduler → Worker Pool → Result Processor → Dispatcher
-    ↓            ↓              ↓                ↓
+Scheduler -> Worker Pool -> Result Processor -> Dispatcher
+    |            |              |                |
   Cron      Concurrent     Incidents +      Webhook/Email/
  Tickers     Checks       Change Diffs    Telegram/Discord/Slack
 ```

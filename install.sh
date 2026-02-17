@@ -116,17 +116,29 @@ if [[ -f "${CONFIG_DIR}/config.yaml" ]]; then
     warn "Config already exists at ${CONFIG_DIR}/config.yaml — skipping generation"
     ADMIN_KEY="(existing config preserved)"
 else
-    ADMIN_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 32)
-    ADMIN_HASH=$("${INSTALL_DIR}/asura" -hash-key "$ADMIN_KEY")
+    SETUP_OUTPUT=$("${INSTALL_DIR}/asura" -setup)
+    ADMIN_KEY=$(echo "$SETUP_OUTPUT" | grep 'API Key' | awk '{print $NF}')
+    ADMIN_HASH=$(echo "$SETUP_OUTPUT" | grep 'Hash' | awk '{print $NF}')
 
     cat > "${CONFIG_DIR}/config.yaml" <<'YAML'
 server:
-  listen: ":8080"
+  listen: "127.0.0.1:8090"
   read_timeout: 30s
   write_timeout: 30s
   idle_timeout: 120s
   rate_limit_per_sec: 10
   rate_limit_burst: 20
+
+  # Serve under a sub-path (e.g. "/asura" for https://example.com/asura)
+  # base_path: "/asura"
+
+  # Public URL for notification links (optional, auto-detected if unset)
+  # external_url: "https://example.com/asura"
+
+  # Trusted reverse proxy IPs/CIDRs for X-Forwarded-For / X-Real-IP
+  # trusted_proxies:
+  #   - "127.0.0.1"
+  #   - "::1"
 
 database:
   path: "PLACEHOLDER_DATA_DIR/asura.db"
@@ -139,6 +151,9 @@ auth:
     - name: "admin"
       hash: "PLACEHOLDER_HASH"
       role: "admin"
+  session:
+    lifetime: 24h
+    cookie_secure: true
 
 monitor:
   workers: 10
@@ -180,8 +195,12 @@ echo "  Config file   : ${CONFIG_DIR}/config.yaml"
 echo "  Database      : ${DATA_DIR}/asura.db"
 echo "  Binary        : ${INSTALL_DIR}/asura"
 echo ""
-echo "  Health check  : curl http://localhost:8080/api/v1/health"
+echo "  Health check  : curl http://127.0.0.1:8090/api/v1/health"
 echo "  Service       : systemctl status asura"
+echo ""
+echo "  IMPORTANT: Asura binds to 127.0.0.1 by default (not exposed)."
+echo "  Set up a reverse proxy (nginx/caddy) to expose it securely."
+echo "  See README.md for reverse proxy configuration examples."
 echo ""
 echo "  Save your admin API key — it cannot be recovered."
 echo ""
