@@ -4,8 +4,8 @@ set -euo pipefail
 # Asura – one-command VPS installer
 # Usage: sudo bash install.sh
 
-GO_VERSION="1.22.5"
-GO_MIN_VERSION="1.22"
+GO_VERSION="1.24.0"
+GO_MIN_VERSION="1.24"
 INSTALL_DIR="/usr/local/bin"
 CONFIG_DIR="/etc/asura"
 DATA_DIR="/var/lib/asura"
