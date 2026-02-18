@@ -104,10 +104,18 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		headers[k] = resp.Header.Get(k)
 	}
 
+	status := "up"
+	var msg string
+	if settings.ExpectedStatus > 0 && resp.StatusCode != settings.ExpectedStatus {
+		status = "down"
+		msg = fmt.Sprintf("expected status %d, got %d", settings.ExpectedStatus, resp.StatusCode)
+	}
+
 	result := &Result{
-		Status:       "up",
+		Status:       status,
 		ResponseTime: elapsed,
 		StatusCode:   resp.StatusCode,
+		Message:      msg,
 		Body:         body,
 		BodyHash:     bodyHash,
 		Headers:      headers,

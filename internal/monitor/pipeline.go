@@ -114,6 +114,7 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 	now := time.Now()
 	status, err := p.store.GetMonitorStatus(ctx, mon.ID)
 	if err != nil {
+		p.logger.Warn("get monitor status, using defaults", "monitor_id", mon.ID, "error", err)
 		status = &storage.MonitorStatus{MonitorID: mon.ID}
 	}
 

@@ -40,6 +40,7 @@ type HTTPSettings struct {
 	SkipTLSVerify   bool              `json:"skip_tls_verify,omitempty"`
 	BasicAuthUser   string            `json:"basic_auth_user,omitempty"`
 	BasicAuthPass   string            `json:"basic_auth_pass,omitempty"`
+	ExpectedStatus  int               `json:"expected_status,omitempty"`
 }
 
 // TCPSettings holds TCP check configuration.

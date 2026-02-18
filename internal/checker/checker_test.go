@@ -91,6 +91,83 @@ func TestHTTPCheckerDown(t *testing.T) {
 	}
 }
 
+func TestHTTPCheckerExpectedStatus(t *testing.T) {
+	tests := []struct {
+		name           string
+		serverStatus   int
+		expectedStatus int
+		wantStatus     string
+		wantMessage    string
+	}{
+		{
+			name:           "matching expected status",
+			serverStatus:   200,
+			expectedStatus: 200,
+			wantStatus:     "up",
+		},
+		{
+			name:           "mismatched expected status",
+			serverStatus:   502,
+			expectedStatus: 200,
+			wantStatus:     "down",
+			wantMessage:    "expected status 200, got 502",
+		},
+		{
+			name:           "no expected status set",
+			serverStatus:   502,
+			expectedStatus: 0,
+			wantStatus:     "up",
+		},
+		{
+			name:           "expected non-200 status matches",
+			serverStatus:   201,
+			expectedStatus: 201,
+			wantStatus:     "up",
+		},
+		{
+			name:           "expected non-200 status mismatches",
+			serverStatus:   200,
+			expectedStatus: 201,
+			wantStatus:     "down",
+			wantMessage:    "expected status 201, got 200",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.serverStatus)
+			}))
+			defer server.Close()
+
+			settings, _ := json.Marshal(storage.HTTPSettings{
+				ExpectedStatus: tt.expectedStatus,
+			})
+
+			c := &HTTPChecker{AllowPrivate: true}
+			monitor := &storage.Monitor{
+				Target:   server.URL,
+				Timeout:  5,
+				Settings: settings,
+			}
+
+			result, err := c.Check(context.Background(), monitor)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result.Status != tt.wantStatus {
+				t.Errorf("status = %q, want %q (message: %s)", result.Status, tt.wantStatus, result.Message)
+			}
+			if tt.wantMessage != "" && result.Message != tt.wantMessage {
+				t.Errorf("message = %q, want %q", result.Message, tt.wantMessage)
+			}
+			if result.StatusCode != tt.serverStatus {
+				t.Errorf("status_code = %d, want %d", result.StatusCode, tt.serverStatus)
+			}
+		})
+	}
+}
+
 func TestRegistryGetUnregistered(t *testing.T) {
 	r := NewRegistry()
 	_, err := r.Get("unknown")
