@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS request_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_logs_created ON request_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_request_logs_monitor ON request_logs(monitor_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_monitor ON request_logs(monitor_id, created_at) WHERE monitor_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_request_logs_group   ON request_logs(route_group, created_at);
 
 CREATE TABLE IF NOT EXISTS request_log_rollups (
@@ -230,9 +230,9 @@ CREATE TABLE IF NOT EXISTS request_logs (
 	route_group    TEXT    NOT NULL DEFAULT '',
 	created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
-CREATE INDEX idx_request_logs_created ON request_logs(created_at);
-CREATE INDEX idx_request_logs_monitor ON request_logs(monitor_id, created_at) WHERE monitor_id IS NOT NULL;
-CREATE INDEX idx_request_logs_group   ON request_logs(route_group, created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_created ON request_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_monitor ON request_logs(monitor_id, created_at) WHERE monitor_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_request_logs_group   ON request_logs(route_group, created_at);
 
 CREATE TABLE IF NOT EXISTS request_log_rollups (
 	id              INTEGER PRIMARY KEY AUTOINCREMENT,
