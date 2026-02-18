@@ -24,7 +24,7 @@
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
             <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Visitors 24h</div>
-            <div class="text-2xl font-semibold text-blue-400 tabular-nums">{{.Data.Visitors24h}}</div>
+            <div class="text-2xl font-semibold text-muted-light tabular-nums">{{.Data.Visitors24h}}</div>
         </div>
     </div>
 
@@ -50,7 +50,7 @@
                 {{if .Data.Monitors}}
                 <div class="divide-y divide-line">
                     {{range .Data.Monitors}}
-                    <a href="{{$.BasePath}}/monitors/{{.ID}}" x-show="filter==='' || filter==='{{.Type}}'" x-transition.opacity
+                    <a href="{{$.BasePath}}/monitors/{{.ID}}" x-show="filter==='' || filter==='{{.Type}}'"
                        class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 transition-colors group">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 {{statusDot .Status}} {{if eq .Status "down"}}animate-pulse-dot{{end}}"></div>

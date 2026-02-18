@@ -10,7 +10,7 @@ import (
 func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	monitors, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 100})
+	monitors, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 10})
 	if err != nil {
 		s.logger.Error("web: list monitors", "error", err)
 	}

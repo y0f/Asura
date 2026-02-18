@@ -198,7 +198,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, p Pagination) (*Paginate
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
-		 ORDER BY m.id DESC
+		 ORDER BY m.name COLLATE NOCASE ASC
 		 LIMIT ? OFFSET ?`, p.PerPage, offset)
 	if err != nil {
 		return nil, err

@@ -40,7 +40,7 @@
                     </thead>
                     <tbody class="divide-y divide-line">
                         {{range .Data.Data}}
-                        <tr x-show="filter==='' || filter==='{{.Type}}'" x-transition.opacity class="hover:bg-surface-200/20 transition-colors">
+                        <tr x-show="filter==='' || filter==='{{.Type}}'" class="hover:bg-surface-200/20 transition-colors">
                             <td class="px-4 py-3">
                                 <a href="{{$.BasePath}}/monitors/{{.ID}}" class="text-[13px] text-muted-light hover:text-white transition-colors font-medium">{{.Name}}</a>
                                 <div class="text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono">{{.Target}}</div>
