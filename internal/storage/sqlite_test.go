@@ -510,6 +510,179 @@ func TestSessionCRUD(t *testing.T) {
 	})
 }
 
+func TestRequestLogBatchInsertAndList(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC()
+	mid := int64(1)
+	logs := []*RequestLog{
+		{Method: "GET", Path: "/", StatusCode: 200, LatencyMs: 5, ClientIP: "aaa", UserAgent: "Mozilla/5.0", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/api/v1/monitors", StatusCode: 200, LatencyMs: 12, ClientIP: "bbb", RouteGroup: "api", CreatedAt: now},
+		{Method: "GET", Path: "/api/v1/badge/1/status", StatusCode: 200, LatencyMs: 3, ClientIP: "aaa", MonitorID: &mid, RouteGroup: "badge", CreatedAt: now},
+		{Method: "POST", Path: "/login", StatusCode: 303, LatencyMs: 80, ClientIP: "ccc", RouteGroup: "auth", CreatedAt: now},
+	}
+
+	if err := store.InsertRequestLogBatch(ctx, logs); err != nil {
+		t.Fatal(err)
+	}
+
+	// List all
+	result, err := store.ListRequestLogs(ctx, RequestLogFilter{}, Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Total != 4 {
+		t.Fatalf("expected 4 logs, got %d", result.Total)
+	}
+	entries := result.Data.([]*RequestLog)
+	if len(entries) != 4 {
+		t.Fatalf("expected 4 entries, got %d", len(entries))
+	}
+
+	// Filter by route group
+	result, err = store.ListRequestLogs(ctx, RequestLogFilter{RouteGroup: "api"}, Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 api log, got %d", result.Total)
+	}
+
+	// Filter by method
+	result, err = store.ListRequestLogs(ctx, RequestLogFilter{Method: "POST"}, Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 POST log, got %d", result.Total)
+	}
+
+	// Filter by monitor_id
+	result, err = store.ListRequestLogs(ctx, RequestLogFilter{MonitorID: &mid}, Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 monitor-linked log, got %d", result.Total)
+	}
+	entry := result.Data.([]*RequestLog)[0]
+	if entry.MonitorID == nil || *entry.MonitorID != 1 {
+		t.Fatal("expected monitor_id=1")
+	}
+}
+
+func TestRequestLogStats(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC()
+	logs := []*RequestLog{
+		{Method: "GET", Path: "/", StatusCode: 200, LatencyMs: 10, ClientIP: "aaa", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/monitors", StatusCode: 200, LatencyMs: 20, ClientIP: "aaa", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/api/v1/monitors", StatusCode: 200, LatencyMs: 30, ClientIP: "bbb", RouteGroup: "api", CreatedAt: now},
+	}
+	if err := store.InsertRequestLogBatch(ctx, logs); err != nil {
+		t.Fatal(err)
+	}
+
+	stats, err := store.GetRequestLogStats(ctx, now.Add(-1*time.Hour), now.Add(1*time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.TotalRequests != 3 {
+		t.Fatalf("expected 3 total requests, got %d", stats.TotalRequests)
+	}
+	if stats.UniqueVisitors != 2 {
+		t.Fatalf("expected 2 unique visitors, got %d", stats.UniqueVisitors)
+	}
+	if stats.AvgLatencyMs != 20 {
+		t.Fatalf("expected avg latency 20, got %d", stats.AvgLatencyMs)
+	}
+	if len(stats.TopPaths) < 1 {
+		t.Fatal("expected at least 1 top path")
+	}
+}
+
+func TestRequestLogRollup(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	date := "2025-01-15"
+	ts, _ := time.Parse("2006-01-02T15:04:05Z", date+"T12:00:00Z")
+	logs := []*RequestLog{
+		{Method: "GET", Path: "/", StatusCode: 200, LatencyMs: 10, ClientIP: "aaa", RouteGroup: "web", CreatedAt: ts},
+		{Method: "GET", Path: "/", StatusCode: 200, LatencyMs: 20, ClientIP: "bbb", RouteGroup: "web", CreatedAt: ts},
+		{Method: "GET", Path: "/api/v1/health", StatusCode: 200, LatencyMs: 5, ClientIP: "aaa", RouteGroup: "api", CreatedAt: ts},
+	}
+	if err := store.InsertRequestLogBatch(ctx, logs); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.RollupRequestLogs(ctx, date); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify rollup data exists
+	var count int
+	err := store.readDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM request_log_rollups WHERE date=?", date).Scan(&count)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count < 1 {
+		t.Fatal("expected at least 1 rollup row")
+	}
+
+	// Running rollup again should not error (INSERT OR REPLACE)
+	if err := store.RollupRequestLogs(ctx, date); err != nil {
+		t.Fatal("second rollup should not error:", err)
+	}
+}
+
+func TestRequestLogPurge(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	old := time.Now().UTC().AddDate(0, 0, -60)
+	recent := time.Now().UTC()
+
+	logs := []*RequestLog{
+		{Method: "GET", Path: "/old", StatusCode: 200, LatencyMs: 5, ClientIP: "aaa", RouteGroup: "web", CreatedAt: old},
+		{Method: "GET", Path: "/new", StatusCode: 200, LatencyMs: 5, ClientIP: "bbb", RouteGroup: "web", CreatedAt: recent},
+	}
+	if err := store.InsertRequestLogBatch(ctx, logs); err != nil {
+		t.Fatal(err)
+	}
+
+	deleted, err := store.PurgeOldRequestLogs(ctx, time.Now().UTC().AddDate(0, 0, -30))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("expected 1 deleted, got %d", deleted)
+	}
+
+	result, err := store.ListRequestLogs(ctx, RequestLogFilter{}, Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 remaining log, got %d", result.Total)
+	}
+}
+
+func TestInsertRequestLogBatchEmpty(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	if err := store.InsertRequestLogBatch(ctx, nil); err != nil {
+		t.Fatal("empty batch should not error:", err)
+	}
+	if err := store.InsertRequestLogBatch(ctx, []*RequestLog{}); err != nil {
+		t.Fatal("empty slice should not error:", err)
+	}
+}
+
 func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

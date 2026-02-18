@@ -88,10 +88,12 @@ func main() {
 	heartbeatWatcher := monitor.NewHeartbeatWatcher(store, incMgr, pipeline, cfg.Monitor.HeartbeatCheckInterval, logger)
 	go heartbeatWatcher.Run(ctx)
 
-	retentionWorker := storage.NewRetentionWorker(store, cfg.Database.RetentionDays, cfg.Database.RetentionPeriod, logger)
+	retentionWorker := storage.NewRetentionWorker(store, cfg.Database.RetentionDays, cfg.Database.RequestLogRetentionDays, cfg.Database.RetentionPeriod, logger)
 	go retentionWorker.Run(ctx)
 
 	srv := api.NewServer(cfg, store, pipeline, dispatcher, logger, version)
+	go srv.RequestLogWriter().Run(ctx)
+	go runRollupWorker(ctx, store, logger)
 	httpServer := startHTTPServer(cfg, srv, logger, cancel)
 
 	quit := make(chan os.Signal, 1)
@@ -197,6 +199,23 @@ func setupLogger(cfg config.LoggingConfig) *slog.Logger {
 	}
 
 	return slog.New(handler)
+}
+
+func runRollupWorker(ctx context.Context, store storage.Store, logger *slog.Logger) {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			yesterday := time.Now().UTC().AddDate(0, 0, -1).Format("2006-01-02")
+			if err := store.RollupRequestLogs(ctx, yesterday); err != nil {
+				logger.Error("request log rollup failed", "date", yesterday, "error", err)
+			}
+		}
+	}
 }
 
 func purgeStaleSessionsOnStartup(ctx context.Context, store storage.Store, cfg *config.Config, logger *slog.Logger) {

@@ -194,6 +194,47 @@ type AuditEntry struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
+// RequestLog records a single HTTP request to the Asura server.
+type RequestLog struct {
+	ID         int64     `json:"id"`
+	Method     string    `json:"method"`
+	Path       string    `json:"path"`
+	StatusCode int       `json:"status_code"`
+	LatencyMs  int64     `json:"latency_ms"`
+	ClientIP   string    `json:"client_ip"`
+	UserAgent  string    `json:"user_agent"`
+	Referer    string    `json:"referer"`
+	MonitorID  *int64    `json:"monitor_id,omitempty"`
+	RouteGroup string    `json:"route_group"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+// RequestLogStats holds aggregate request statistics.
+type RequestLogStats struct {
+	TotalRequests  int64       `json:"total_requests"`
+	UniqueVisitors int64       `json:"unique_visitors"`
+	AvgLatencyMs   int64       `json:"avg_latency_ms"`
+	TopPaths       []PathCount `json:"top_paths"`
+	TopReferers    []PathCount `json:"top_referers"`
+}
+
+// PathCount pairs a path or referer with its request count.
+type PathCount struct {
+	Path  string `json:"path"`
+	Count int64  `json:"count"`
+}
+
+// RequestLogFilter holds filter parameters for listing request logs.
+type RequestLogFilter struct {
+	Method     string
+	Path       string
+	StatusCode int
+	RouteGroup string
+	MonitorID  *int64
+	From       time.Time
+	To         time.Time
+}
+
 // Session represents a server-side web UI session.
 type Session struct {
 	ID         int64     `json:"id"`

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/y0f/Asura/internal/storage"
 )
@@ -56,6 +57,14 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		responseTimes = make(map[int64]int64)
 	}
 
+	now := time.Now().UTC()
+	reqStats, _ := s.store.GetRequestLogStats(ctx, now.Add(-24*time.Hour), now)
+	var requests24h, visitors24h int64
+	if reqStats != nil {
+		requests24h = reqStats.TotalRequests
+		visitors24h = reqStats.UniqueVisitors
+	}
+
 	pd := s.newPageData(r, "Dashboard", "dashboard")
 	pd.Data = map[string]interface{}{
 		"Monitors":      monitorList,
@@ -67,6 +76,8 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		"Paused":        paused,
 		"OpenIncidents": len(incidentList),
 		"ResponseTimes": responseTimes,
+		"Requests24h":   requests24h,
+		"Visitors24h":   visitors24h,
 	}
 	s.render(w, "dashboard.html", pd)
 }

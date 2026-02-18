@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 5
+const schemaVersion = 6
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -141,6 +141,35 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS request_logs (
+	id             INTEGER PRIMARY KEY AUTOINCREMENT,
+	method         TEXT    NOT NULL,
+	path           TEXT    NOT NULL,
+	status_code    INTEGER NOT NULL,
+	latency_ms     INTEGER NOT NULL,
+	client_ip      TEXT    NOT NULL,
+	user_agent     TEXT    NOT NULL DEFAULT '',
+	referer        TEXT    NOT NULL DEFAULT '',
+	monitor_id     INTEGER DEFAULT NULL,
+	route_group    TEXT    NOT NULL DEFAULT '',
+	created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_request_logs_created ON request_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_monitor ON request_logs(monitor_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_group   ON request_logs(route_group, created_at);
+
+CREATE TABLE IF NOT EXISTS request_log_rollups (
+	id              INTEGER PRIMARY KEY AUTOINCREMENT,
+	date            TEXT    NOT NULL,
+	route_group     TEXT    NOT NULL DEFAULT '',
+	monitor_id      INTEGER DEFAULT NULL,
+	requests        INTEGER NOT NULL DEFAULT 0,
+	unique_visitors INTEGER NOT NULL DEFAULT 0,
+	avg_latency_ms  INTEGER NOT NULL DEFAULT 0,
+	UNIQUE(date, route_group, monitor_id)
+);
 `
 
 // migrations holds incremental schema changes after the initial schema.
@@ -184,5 +213,36 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);`,
 	{
 		version: 5,
 		sql:     `ALTER TABLE sessions ADD COLUMN key_hash TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		version: 6,
+		sql: `
+CREATE TABLE IF NOT EXISTS request_logs (
+	id             INTEGER PRIMARY KEY AUTOINCREMENT,
+	method         TEXT    NOT NULL,
+	path           TEXT    NOT NULL,
+	status_code    INTEGER NOT NULL,
+	latency_ms     INTEGER NOT NULL,
+	client_ip      TEXT    NOT NULL,
+	user_agent     TEXT    NOT NULL DEFAULT '',
+	referer        TEXT    NOT NULL DEFAULT '',
+	monitor_id     INTEGER DEFAULT NULL,
+	route_group    TEXT    NOT NULL DEFAULT '',
+	created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX idx_request_logs_created ON request_logs(created_at);
+CREATE INDEX idx_request_logs_monitor ON request_logs(monitor_id, created_at) WHERE monitor_id IS NOT NULL;
+CREATE INDEX idx_request_logs_group   ON request_logs(route_group, created_at);
+
+CREATE TABLE IF NOT EXISTS request_log_rollups (
+	id              INTEGER PRIMARY KEY AUTOINCREMENT,
+	date            TEXT    NOT NULL,
+	route_group     TEXT    NOT NULL DEFAULT '',
+	monitor_id      INTEGER DEFAULT NULL,
+	requests        INTEGER NOT NULL DEFAULT 0,
+	unique_visitors INTEGER NOT NULL DEFAULT 0,
+	avg_latency_ms  INTEGER NOT NULL DEFAULT 0,
+	UNIQUE(date, route_group, monitor_id)
+);`,
 	},
 }

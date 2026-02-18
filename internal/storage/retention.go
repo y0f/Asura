@@ -8,18 +8,20 @@ import (
 
 // RetentionWorker periodically purges old data.
 type RetentionWorker struct {
-	store         Store
-	retentionDays int
-	period        time.Duration
-	logger        *slog.Logger
+	store                   Store
+	retentionDays           int
+	requestLogRetentionDays int
+	period                  time.Duration
+	logger                  *slog.Logger
 }
 
-func NewRetentionWorker(store Store, retentionDays int, period time.Duration, logger *slog.Logger) *RetentionWorker {
+func NewRetentionWorker(store Store, retentionDays, requestLogRetentionDays int, period time.Duration, logger *slog.Logger) *RetentionWorker {
 	return &RetentionWorker{
-		store:         store,
-		retentionDays: retentionDays,
-		period:        period,
-		logger:        logger,
+		store:                   store,
+		retentionDays:           retentionDays,
+		requestLogRetentionDays: requestLogRetentionDays,
+		period:                  period,
+		logger:                  logger,
 	}
 }
 
@@ -49,5 +51,15 @@ func (w *RetentionWorker) purge(ctx context.Context) {
 	}
 	if deleted > 0 {
 		w.logger.Info("retention purge completed", "deleted", deleted, "before", before.Format(time.RFC3339))
+	}
+
+	rlBefore := time.Now().AddDate(0, 0, -w.requestLogRetentionDays)
+	rlDeleted, err := w.store.PurgeOldRequestLogs(ctx, rlBefore)
+	if err != nil {
+		w.logger.Error("request log purge failed", "error", err)
+		return
+	}
+	if rlDeleted > 0 {
+		w.logger.Info("request log purge completed", "deleted", rlDeleted, "before", rlBefore.Format(time.RFC3339))
 	}
 }

@@ -43,10 +43,11 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Path            string        `yaml:"path"`
-	MaxReadConns    int           `yaml:"max_read_conns"`
-	RetentionDays   int           `yaml:"retention_days"`
-	RetentionPeriod time.Duration `yaml:"retention_period"`
+	Path                    string        `yaml:"path"`
+	MaxReadConns            int           `yaml:"max_read_conns"`
+	RetentionDays           int           `yaml:"retention_days"`
+	RetentionPeriod         time.Duration `yaml:"retention_period"`
+	RequestLogRetentionDays int           `yaml:"request_log_retention_days"`
 }
 
 type AuthConfig struct {
@@ -137,10 +138,11 @@ func Defaults() *Config {
 			RateLimitBurst:  20,
 		},
 		Database: DatabaseConfig{
-			Path:            "asura.db",
-			MaxReadConns:    4,
-			RetentionDays:   90,
-			RetentionPeriod: 1 * time.Hour,
+			Path:                    "asura.db",
+			MaxReadConns:            4,
+			RetentionDays:           90,
+			RetentionPeriod:         1 * time.Hour,
+			RequestLogRetentionDays: 7,
 		},
 		Auth: AuthConfig{
 			Session: SessionConfig{

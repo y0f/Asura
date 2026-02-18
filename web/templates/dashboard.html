@@ -1,7 +1,7 @@
 {{define "title"}}Dashboard{{end}}
 {{define "content"}}
 <div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         <div class="border border-line rounded-lg px-4 py-3">
             <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Monitors</div>
             <div class="text-2xl font-semibold text-white tabular-nums">{{.Data.Total}}</div>
@@ -17,6 +17,14 @@
         <div class="border border-line rounded-lg px-4 py-3">
             <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Incidents</div>
             <div class="text-2xl font-semibold {{if gt .Data.OpenIncidents 0}}text-yellow-400{{else}}text-muted{{end}} tabular-nums">{{.Data.OpenIncidents}}</div>
+        </div>
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Requests 24h</div>
+            <div class="text-2xl font-semibold text-muted-light tabular-nums">{{.Data.Requests24h}}</div>
+        </div>
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Visitors 24h</div>
+            <div class="text-2xl font-semibold text-blue-400 tabular-nums">{{.Data.Visitors24h}}</div>
         </div>
     </div>
 

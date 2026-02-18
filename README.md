@@ -54,6 +54,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
 | **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
+| **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **Sub-path support** | Serve from `/asura` or any prefix behind a reverse proxy |
@@ -289,7 +290,7 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 | Section    | Controls                                              |
 |------------|-------------------------------------------------------|
 | `server`   | Listen address, TLS, timeouts, CORS, rate limiting, base path, external URL, trusted proxies, web UI toggle, frame embedding |
-| `database` | SQLite path, read pool size, retention policy         |
+| `database` | SQLite path, read pool size, retention policy, request log retention |
 | `auth`     | API keys (SHA-256 hashed), roles, session lifetime, login rate limiting |
 | `monitor`  | Worker count, default intervals, thresholds           |
 | `logging`  | Level (debug/info/warn/error), format (text/json)     |
@@ -506,6 +507,13 @@ GET    /api/v1/maintenance             List
 POST   /api/v1/maintenance             Create
 PUT    /api/v1/maintenance/{id}        Update
 DELETE /api/v1/maintenance/{id}        Delete
+```
+
+### Request Logs
+
+```
+GET    /api/v1/request-logs            List (filter: group, method, status_code, range)
+GET    /api/v1/request-logs/stats      Aggregate stats (requests, visitors, latency)
 ```
 
 ### Other

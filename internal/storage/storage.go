@@ -85,6 +85,13 @@ type Store interface {
 	DeleteSessionsByAPIKeyName(ctx context.Context, apiKeyName string) (int64, error)
 	DeleteSessionsExceptKeyNames(ctx context.Context, validNames []string) (int64, error)
 
+	// Request logs
+	InsertRequestLogBatch(ctx context.Context, logs []*RequestLog) error
+	ListRequestLogs(ctx context.Context, f RequestLogFilter, p Pagination) (*PaginatedResult, error)
+	GetRequestLogStats(ctx context.Context, from, to time.Time) (*RequestLogStats, error)
+	RollupRequestLogs(ctx context.Context, date string) error
+	PurgeOldRequestLogs(ctx context.Context, before time.Time) (int64, error)
+
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
 
