@@ -66,6 +66,7 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 	sess := &storage.Session{
 		TokenHash:  hashSessionToken(token),
 		APIKeyName: apiKey.Name,
+		KeyHash:    apiKey.Hash,
 		IPAddress:  ip,
 		ExpiresAt:  time.Now().Add(s.cfg.Auth.Session.Lifetime),
 	}
@@ -162,6 +163,14 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 		if apiKey == nil {
 			s.store.DeleteSession(r.Context(), tokenHash)
 			s.clearSessionCookie(w)
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
+			return
+		}
+
+		if sess.KeyHash != "" && sess.KeyHash != apiKey.Hash {
+			s.store.DeleteSession(r.Context(), tokenHash)
+			s.clearSessionCookie(w)
+			s.auditLogin("session_key_rotated", sess.APIKeyName, extractIP(r, s.cfg.TrustedNets()))
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}

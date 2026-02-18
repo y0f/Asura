@@ -424,6 +424,90 @@ func TestSessionCRUD(t *testing.T) {
 			t.Fatal("valid session should still exist")
 		}
 	})
+
+	t.Run("DeleteByAPIKeyName", func(t *testing.T) {
+		s2 := testStore(t)
+		s2.CreateSession(ctx, &Session{TokenHash: "key1_sess1", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
+		s2.CreateSession(ctx, &Session{TokenHash: "key1_sess2", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
+		s2.CreateSession(ctx, &Session{TokenHash: "key2_sess1", APIKeyName: "key2", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+		deleted, err := s2.DeleteSessionsByAPIKeyName(ctx, "key1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if deleted != 2 {
+			t.Fatalf("expected 2 deleted, got %d", deleted)
+		}
+
+		_, err = s2.GetSessionByTokenHash(ctx, "key1_sess1")
+		if err == nil {
+			t.Fatal("expected key1 session to be deleted")
+		}
+		got, err := s2.GetSessionByTokenHash(ctx, "key2_sess1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.APIKeyName != "key2" {
+			t.Fatal("key2 session should still exist")
+		}
+	})
+
+	t.Run("DeleteExceptKeyNames", func(t *testing.T) {
+		s3 := testStore(t)
+		s3.CreateSession(ctx, &Session{TokenHash: "admin_tok", APIKeyName: "admin", ExpiresAt: time.Now().Add(24 * time.Hour)})
+		s3.CreateSession(ctx, &Session{TokenHash: "readonly_tok", APIKeyName: "readonly", ExpiresAt: time.Now().Add(24 * time.Hour)})
+		s3.CreateSession(ctx, &Session{TokenHash: "removed_tok", APIKeyName: "removed", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+		deleted, err := s3.DeleteSessionsExceptKeyNames(ctx, []string{"admin", "readonly"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if deleted != 1 {
+			t.Fatalf("expected 1 deleted, got %d", deleted)
+		}
+
+		_, err = s3.GetSessionByTokenHash(ctx, "removed_tok")
+		if err == nil {
+			t.Fatal("expected removed key session to be deleted")
+		}
+		if _, err := s3.GetSessionByTokenHash(ctx, "admin_tok"); err != nil {
+			t.Fatal("admin session should still exist")
+		}
+		if _, err := s3.GetSessionByTokenHash(ctx, "readonly_tok"); err != nil {
+			t.Fatal("readonly session should still exist")
+		}
+	})
+
+	t.Run("DeleteExceptKeyNamesEmpty", func(t *testing.T) {
+		s4 := testStore(t)
+		s4.CreateSession(ctx, &Session{TokenHash: "tok1", APIKeyName: "any", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+		deleted, err := s4.DeleteSessionsExceptKeyNames(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if deleted != 1 {
+			t.Fatalf("expected 1 deleted, got %d", deleted)
+		}
+	})
+
+	t.Run("KeyHashStored", func(t *testing.T) {
+		s5 := testStore(t)
+		s5.CreateSession(ctx, &Session{
+			TokenHash:  "hash_test_tok",
+			APIKeyName: "admin",
+			KeyHash:    "abcdef123456",
+			ExpiresAt:  time.Now().Add(24 * time.Hour),
+		})
+
+		got, err := s5.GetSessionByTokenHash(ctx, "hash_test_tok")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.KeyHash != "abcdef123456" {
+			t.Fatalf("expected key_hash 'abcdef123456', got %q", got.KeyHash)
+		}
+	})
 }
 
 func TestTags(t *testing.T) {

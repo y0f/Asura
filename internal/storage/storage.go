@@ -82,6 +82,8 @@ type Store interface {
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*Session, error)
 	DeleteSession(ctx context.Context, tokenHash string) error
 	DeleteExpiredSessions(ctx context.Context) (int64, error)
+	DeleteSessionsByAPIKeyName(ctx context.Context, apiKeyName string) (int64, error)
+	DeleteSessionsExceptKeyNames(ctx context.Context, validNames []string) (int64, error)
 
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)

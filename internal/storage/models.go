@@ -198,6 +198,7 @@ type Session struct {
 	ID         int64     `json:"id"`
 	TokenHash  string    `json:"-"`
 	APIKeyName string    `json:"api_key_name"`
+	KeyHash    string    `json:"-"`
 	IPAddress  string    `json:"ip_address"`
 	CreatedAt  time.Time `json:"created_at"`
 	ExpiresAt  time.Time `json:"expires_at"`

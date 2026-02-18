@@ -75,6 +75,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	purgeStaleSessionsOnStartup(ctx, store, cfg, logger)
+
 	registry := checker.DefaultRegistry(cfg.Monitor.CommandAllowlist, cfg.Monitor.AllowPrivateTargets)
 	incMgr := incident.NewManager(store, logger)
 	pipeline := monitor.NewPipeline(store, registry, incMgr, cfg.Monitor.Workers, logger)
@@ -195,4 +197,19 @@ func setupLogger(cfg config.LoggingConfig) *slog.Logger {
 	}
 
 	return slog.New(handler)
+}
+
+func purgeStaleSessionsOnStartup(ctx context.Context, store storage.Store, cfg *config.Config, logger *slog.Logger) {
+	validNames := make([]string, len(cfg.Auth.APIKeys))
+	for i, k := range cfg.Auth.APIKeys {
+		validNames[i] = k.Name
+	}
+	deleted, err := store.DeleteSessionsExceptKeyNames(ctx, validNames)
+	if err != nil {
+		logger.Warn("failed to purge stale sessions", "error", err)
+		return
+	}
+	if deleted > 0 {
+		logger.Info("purged sessions for removed API keys", "deleted", deleted)
+	}
 }

@@ -1035,9 +1035,9 @@ func (s *SQLiteStore) InsertAudit(ctx context.Context, entry *AuditEntry) error 
 func (s *SQLiteStore) CreateSession(ctx context.Context, sess *Session) error {
 	now := formatTime(time.Now())
 	res, err := s.writeDB.ExecContext(ctx,
-		`INSERT INTO sessions (token_hash, api_key_name, ip_address, created_at, expires_at)
-		 VALUES (?, ?, ?, ?, ?)`,
-		sess.TokenHash, sess.APIKeyName, sess.IPAddress, now, formatTime(sess.ExpiresAt))
+		`INSERT INTO sessions (token_hash, api_key_name, key_hash, ip_address, created_at, expires_at)
+		 VALUES (?, ?, ?, ?, ?, ?)`,
+		sess.TokenHash, sess.APIKeyName, sess.KeyHash, sess.IPAddress, now, formatTime(sess.ExpiresAt))
 	if err != nil {
 		return err
 	}
@@ -1051,9 +1051,9 @@ func (s *SQLiteStore) GetSessionByTokenHash(ctx context.Context, tokenHash strin
 	var sess Session
 	var createdAt, expiresAt string
 	err := s.readDB.QueryRowContext(ctx,
-		`SELECT id, token_hash, api_key_name, ip_address, created_at, expires_at
+		`SELECT id, token_hash, api_key_name, key_hash, ip_address, created_at, expires_at
 		 FROM sessions WHERE token_hash=?`, tokenHash).
-		Scan(&sess.ID, &sess.TokenHash, &sess.APIKeyName, &sess.IPAddress, &createdAt, &expiresAt)
+		Scan(&sess.ID, &sess.TokenHash, &sess.APIKeyName, &sess.KeyHash, &sess.IPAddress, &createdAt, &expiresAt)
 	if err != nil {
 		return nil, err
 	}
@@ -1065,6 +1065,36 @@ func (s *SQLiteStore) GetSessionByTokenHash(ctx context.Context, tokenHash strin
 func (s *SQLiteStore) DeleteSession(ctx context.Context, tokenHash string) error {
 	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions WHERE token_hash=?", tokenHash)
 	return err
+}
+
+func (s *SQLiteStore) DeleteSessionsByAPIKeyName(ctx context.Context, apiKeyName string) (int64, error) {
+	res, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions WHERE api_key_name=?", apiKeyName)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+func (s *SQLiteStore) DeleteSessionsExceptKeyNames(ctx context.Context, validNames []string) (int64, error) {
+	if len(validNames) == 0 {
+		res, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions")
+		if err != nil {
+			return 0, err
+		}
+		return res.RowsAffected()
+	}
+	placeholders := make([]string, len(validNames))
+	args := make([]interface{}, len(validNames))
+	for i, name := range validNames {
+		placeholders[i] = "?"
+		args[i] = name
+	}
+	query := "DELETE FROM sessions WHERE api_key_name NOT IN (" + strings.Join(placeholders, ",") + ")"
+	res, err := s.writeDB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 func (s *SQLiteStore) DeleteExpiredSessions(ctx context.Context) (int64, error) {
