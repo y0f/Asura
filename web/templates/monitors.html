@@ -11,7 +11,7 @@
         {{end}}
     </div>
 
-    <div x-data="{filter: ''}">
+    <div x-data="{filter: ''}" x-cloak>
         <div class="flex gap-1.5 mb-4 overflow-x-auto pb-1">
             <button @click="filter=''" :class="filter==='' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">All</button>
             <button @click="filter='http'" :class="filter==='http' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">HTTP</button>

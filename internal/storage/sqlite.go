@@ -1374,7 +1374,7 @@ func (s *SQLiteStore) GetRequestLogStats(ctx context.Context, from, to time.Time
 
 	var stats RequestLogStats
 	err := s.readDB.QueryRowContext(ctx,
-		`SELECT COUNT(*), COUNT(DISTINCT client_ip), COALESCE(AVG(latency_ms), 0)
+		`SELECT COUNT(*), COUNT(DISTINCT client_ip), CAST(COALESCE(AVG(latency_ms), 0) AS INTEGER)
 		 FROM request_logs WHERE created_at >= ? AND created_at < ?`,
 		fromStr, toStr).Scan(&stats.TotalRequests, &stats.UniqueVisitors, &stats.AvgLatencyMs)
 	if err != nil {

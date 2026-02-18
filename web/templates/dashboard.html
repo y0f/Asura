@@ -34,7 +34,7 @@
                 <h2 class="text-[11px] text-muted uppercase tracking-widest">Monitors</h2>
                 <a href="{{$.BasePath}}/monitors/new" class="text-[11px] text-brand hover:text-brand/80 transition-colors">+ Add</a>
             </div>
-            <div x-data="{filter: ''}">
+            <div x-data="{filter: ''}" x-cloak>
                 <div class="px-4 py-2 border-b border-line flex gap-1.5 overflow-x-auto rounded-t-lg border-x border-t">
                     <button @click="filter=''" :class="filter==='' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">All</button>
                     <button @click="filter='http'" :class="filter==='http' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">HTTP</button>
