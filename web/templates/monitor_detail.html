@@ -90,7 +90,7 @@
         async fetchData() {
             this.loading = true;
             try {
-                const resp = await fetch('{{$.BasePath}}/api/v1/monitors/{{$mon.ID}}/chart?range=' + this.range, {credentials: 'same-origin'});
+                const resp = await fetch('{{$.BasePath}}/monitors/{{$mon.ID}}/chart?range=' + this.range, {credentials: 'same-origin'});
                 const data = await resp.json();
                 this.points = data.points || [];
             } catch(e) {
