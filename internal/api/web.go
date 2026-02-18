@@ -276,7 +276,7 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
 	if err := t.ExecuteTemplate(w, layoutName, data); err != nil {
 		s.logger.Error("template render", "template", tmpl, "error", err)
 	}
