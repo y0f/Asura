@@ -27,6 +27,8 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
     <script src="{{.BasePath}}/static/htmx.min.js"></script>
     <script defer src="{{.BasePath}}/static/alpine.min.js"></script>
     <style>
@@ -39,6 +41,9 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #222230; border-radius: 3px; }
         ::selection { background: rgba(0,128,255,.15); }
+        .u-wrap { background: transparent !important; }
+        .u-cursor-x, .u-cursor-y { border-color: #434656 !important; }
+        .u-hz .u-cursor-x, .u-vt .u-cursor-y { border-right-style: dashed !important; border-bottom-style: dashed !important; }
     </style>
 </head>
 <body class="bg-surface text-muted-light font-sans min-h-screen antialiased">

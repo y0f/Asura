@@ -59,6 +59,40 @@ func (s *Server) handleMonitorMetrics(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) handleMonitorChart(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	now := time.Now().UTC()
+	var from time.Time
+	switch r.URL.Query().Get("range") {
+	case "1h":
+		from = now.Add(-1 * time.Hour)
+	case "6h":
+		from = now.Add(-6 * time.Hour)
+	case "7d":
+		from = now.Add(-7 * 24 * time.Hour)
+	case "30d":
+		from = now.Add(-30 * 24 * time.Hour)
+	default:
+		from = now.Add(-24 * time.Hour)
+	}
+
+	points, err := s.store.GetResponseTimeSeries(r.Context(), id, from, now, 500)
+	if err != nil {
+		s.logger.Error("get chart data", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to get chart data")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"points": points,
+	})
+}
+
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	up, down, degraded, paused, err := s.store.CountMonitorsByStatus(r.Context())
 	if err != nil {

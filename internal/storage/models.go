@@ -235,6 +235,13 @@ type RequestLogFilter struct {
 	To         time.Time
 }
 
+// TimeSeriesPoint is a single data point for response time charts.
+type TimeSeriesPoint struct {
+	Timestamp    int64  `json:"ts"`
+	ResponseTime int64  `json:"rt"`
+	Status       string `json:"s"`
+}
+
 // Session represents a server-side web UI session.
 type Session struct {
 	ID         int64     `json:"id"`

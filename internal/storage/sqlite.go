@@ -874,6 +874,74 @@ func (s *SQLiteStore) ListContentChanges(ctx context.Context, monitorID int64, p
 
 // --- Analytics ---
 
+func (s *SQLiteStore) GetResponseTimeSeries(ctx context.Context, monitorID int64, from, to time.Time, maxPoints int) ([]*TimeSeriesPoint, error) {
+	fromStr := formatTime(from)
+	toStr := formatTime(to)
+
+	var count int64
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM check_results WHERE monitor_id=? AND created_at >= ? AND created_at < ?`,
+		monitorID, fromStr, toStr).Scan(&count)
+	if err != nil {
+		return nil, fmt.Errorf("count time series: %w", err)
+	}
+
+	var rows *sql.Rows
+	if count <= int64(maxPoints) {
+		rows, err = s.readDB.QueryContext(ctx,
+			`SELECT created_at, response_time, status
+			 FROM check_results
+			 WHERE monitor_id=? AND created_at >= ? AND created_at < ?
+			 ORDER BY created_at ASC`,
+			monitorID, fromStr, toStr)
+	} else {
+		bucketSecs := int64(to.Sub(from).Seconds()) / int64(maxPoints)
+		if bucketSecs < 1 {
+			bucketSecs = 1
+		}
+		rows, err = s.readDB.QueryContext(ctx,
+			`SELECT MIN(created_at) as created_at,
+			        CAST(AVG(response_time) AS INTEGER) as response_time,
+			        CASE
+			            WHEN SUM(CASE WHEN status='down' THEN 1 ELSE 0 END) > 0 THEN 'down'
+			            WHEN SUM(CASE WHEN status='degraded' THEN 1 ELSE 0 END) > 0 THEN 'degraded'
+			            ELSE 'up'
+			        END as status
+			 FROM check_results
+			 WHERE monitor_id=? AND created_at >= ? AND created_at < ?
+			 GROUP BY (CAST(strftime('%s', created_at) AS INTEGER) / ?)
+			 ORDER BY created_at ASC`,
+			monitorID, fromStr, toStr, bucketSecs)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("query time series: %w", err)
+	}
+	defer rows.Close()
+
+	var points []*TimeSeriesPoint
+	for rows.Next() {
+		var createdAt string
+		var rt int64
+		var status string
+		if err := rows.Scan(&createdAt, &rt, &status); err != nil {
+			return nil, fmt.Errorf("scan time series: %w", err)
+		}
+		t := parseTime(createdAt)
+		points = append(points, &TimeSeriesPoint{
+			Timestamp:    t.Unix(),
+			ResponseTime: rt,
+			Status:       status,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate time series: %w", err)
+	}
+	if points == nil {
+		points = []*TimeSeriesPoint{}
+	}
+	return points, nil
+}
+
 func (s *SQLiteStore) GetUptimePercent(ctx context.Context, monitorID int64, from, to time.Time) (float64, error) {
 	var total, up int64
 	err := s.readDB.QueryRowContext(ctx,

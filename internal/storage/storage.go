@@ -65,6 +65,7 @@ type Store interface {
 	DeleteHeartbeat(ctx context.Context, monitorID int64) error
 
 	// Analytics
+	GetResponseTimeSeries(ctx context.Context, monitorID int64, from, to time.Time, maxPoints int) ([]*TimeSeriesPoint, error)
 	GetUptimePercent(ctx context.Context, monitorID int64, from, to time.Time) (float64, error)
 	GetResponseTimePercentiles(ctx context.Context, monitorID int64, from, to time.Time) (p50, p95, p99 float64, err error)
 	GetCheckCounts(ctx context.Context, monitorID int64, from, to time.Time) (total, up, down, degraded int64, err error)

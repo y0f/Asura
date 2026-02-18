@@ -82,6 +82,145 @@
     </div>
     {{end}}
 
+    <div id="response-chart" hx-preserve="true" class="border border-line rounded-lg px-4 py-3 mb-5" x-data="{
+        range: '24h',
+        loading: true,
+        chart: null,
+        points: [],
+        async fetchData() {
+            this.loading = true;
+            try {
+                const resp = await fetch('{{$.BasePath}}/api/v1/monitors/{{$mon.ID}}/chart?range=' + this.range, {credentials: 'same-origin'});
+                const data = await resp.json();
+                this.points = data.points || [];
+            } catch(e) {
+                this.points = [];
+            }
+            this.loading = false;
+            this.$nextTick(() => this.render());
+        },
+        render() {
+            const el = this.$refs.chart;
+            if (!el || !this.points.length) return;
+            if (this.chart) { this.chart.destroy(); this.chart = null; }
+
+            const ts = this.points.map(p => p.ts);
+            const rt = this.points.map(p => p.rt);
+            const statuses = this.points.map(p => p.s);
+
+            const opts = {
+                width: el.clientWidth,
+                height: 200,
+                cursor: { show: true, drag: { x: false, y: false } },
+                select: { show: false },
+                legend: { show: false },
+                padding: [12, 8, 0, 0],
+                axes: [
+                    {
+                        stroke: '#434656',
+                        grid: { stroke: '#1a1a22', width: 1 },
+                        ticks: { stroke: '#1a1a22', width: 1 },
+                        font: '10px Inter, system-ui, sans-serif',
+                        gap: 6
+                    },
+                    {
+                        stroke: '#434656',
+                        grid: { stroke: '#1a1a22', width: 1 },
+                        ticks: { stroke: '#1a1a22', width: 1 },
+                        font: '10px Inter, system-ui, sans-serif',
+                        gap: 6,
+                        values: (u, vals) => vals.map(v => v + 'ms')
+                    }
+                ],
+                series: [
+                    {},
+                    {
+                        label: 'Response Time',
+                        stroke: '#0080ff',
+                        width: 1.5,
+                        fill: 'rgba(0,128,255,0.06)',
+                        points: {
+                            show: false
+                        }
+                    }
+                ],
+                hooks: {
+                    draw: [
+                        (u) => {
+                            const ctx = u.ctx;
+                            const { left, top, width, height } = u.bbox;
+                            for (let i = 0; i < statuses.length; i++) {
+                                if (statuses[i] !== 'down') continue;
+                                const x = Math.round(u.valToPos(ts[i], 'x', true));
+                                ctx.save();
+                                ctx.fillStyle = 'rgba(248,113,113,0.15)';
+                                const bw = Math.max(2, width / statuses.length);
+                                ctx.fillRect(x - bw/2, top, bw, height);
+                                ctx.restore();
+                            }
+                        }
+                    ],
+                    setCursor: [
+                        (u) => {
+                            const idx = u.cursor.idx;
+                            const tip = u.root.querySelector('.chart-tooltip');
+                            if (!tip) return;
+                            if (idx == null) { tip.style.display = 'none'; return; }
+                            const t = new Date(ts[idx] * 1000);
+                            const ms = rt[idx];
+                            const s = statuses[idx];
+                            const time = t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                            const date = t.toLocaleDateString([], {month:'short',day:'numeric'});
+                            tip.innerHTML = '<div class=\"text-[10px] text-muted\">' + date + ' ' + time + '</div><div class=\"text-[12px] text-white font-mono\">' + ms + 'ms</div>' + (s === 'down' ? '<div class=\"text-[10px] text-red-400\">down</div>' : '');
+                            tip.style.display = 'block';
+                            const cx = u.valToPos(ts[idx], 'x', true);
+                            const rect = u.root.getBoundingClientRect();
+                            const tipW = tip.offsetWidth;
+                            let lx = cx + 12;
+                            if (lx + tipW > rect.width) lx = cx - tipW - 12;
+                            tip.style.left = lx + 'px';
+                            tip.style.top = '8px';
+                        }
+                    ]
+                }
+            };
+
+            this.chart = new uPlot(opts, [ts, rt], el);
+        },
+        resizeObs: null,
+        init() {
+            this.fetchData();
+            this.resizeObs = new ResizeObserver(() => {
+                if (this.chart && this.$refs.chart) {
+                    this.chart.setSize({width: this.$refs.chart.clientWidth, height: 200});
+                }
+            });
+            this.$nextTick(() => { if (this.$refs.chart) this.resizeObs.observe(this.$refs.chart); });
+        },
+        destroy() { if (this.resizeObs) this.resizeObs.disconnect(); if (this.chart) this.chart.destroy(); }
+    }" x-init="init()" @beforeunload.window="destroy()" x-cloak>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-[11px] text-muted uppercase tracking-widest">Response Time</h2>
+            <div class="flex gap-1">
+                <template x-for="r in ['1h','6h','24h','7d','30d']" :key="r">
+                    <button @click="range = r; fetchData()"
+                        :class="range === r ? 'text-brand bg-brand/[0.08] border-brand/20' : 'text-muted hover:text-muted-light border-line hover:border-line-light'"
+                        class="px-2 py-0.5 text-[10px] border rounded transition-colors" x-text="r"></button>
+                </template>
+            </div>
+        </div>
+        <div x-show="loading" class="h-[200px] flex items-center justify-center">
+            <div class="text-[11px] text-muted">Loading chart...</div>
+        </div>
+        <div x-show="!loading && !points.length" class="h-[200px] flex items-center justify-center">
+            <div class="text-[11px] text-muted">No data for this time range</div>
+        </div>
+        <div x-show="!loading && points.length" class="relative">
+            <div x-ref="chart"></div>
+            <div class="chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10" style="display:none"></div>
+        </div>
+    </div>
+
     {{if and .Data.LatestCheck (eq $mon.Type "tls")}}
     {{if .Data.LatestCheck.CertExpiry}}
     <div class="border border-line rounded-lg px-4 py-3 mb-5 flex items-center justify-between">

@@ -149,6 +149,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("GET "+s.p("/api/v1/monitors/{id}/checks"), monRead(http.HandlerFunc(s.handleListChecks)))
 	mux.Handle("GET "+s.p("/api/v1/monitors/{id}/metrics"), monRead(http.HandlerFunc(s.handleMonitorMetrics)))
 	mux.Handle("GET "+s.p("/api/v1/monitors/{id}/changes"), monRead(http.HandlerFunc(s.handleListChanges)))
+	mux.Handle("GET "+s.p("/api/v1/monitors/{id}/chart"), monRead(http.HandlerFunc(s.handleMonitorChart)))
 
 	mux.Handle("GET "+s.p("/api/v1/incidents"), incRead(http.HandlerFunc(s.handleListIncidents)))
 	mux.Handle("GET "+s.p("/api/v1/incidents/{id}"), incRead(http.HandlerFunc(s.handleGetIncident)))
