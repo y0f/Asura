@@ -1,51 +1,62 @@
 {{define "title"}}Incidents{{end}}
 {{define "content"}}
 <div>
-    <h1 class="text-xl font-semibold text-white mb-5">Incidents</h1>
+    <h1 class="text-[15px] font-medium text-white mb-5">Incidents</h1>
 
-    <div class="flex flex-wrap gap-2 mb-5">
-        <a href="{{.BasePath}}/incidents" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if not .Data.Filter}}bg-indigo-500/10 text-indigo-400 border-indigo-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">All</a>
-        <a href="{{.BasePath}}/incidents?status=open" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "open"}}bg-red-500/10 text-red-400 border-red-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Open</a>
-        <a href="{{.BasePath}}/incidents?status=acknowledged" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "acknowledged"}}bg-yellow-500/10 text-yellow-400 border-yellow-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Acknowledged</a>
-        <a href="{{.BasePath}}/incidents?status=resolved" class="px-3.5 py-1.5 text-sm rounded-lg border transition-all duration-150 {{if eq .Data.Filter "resolved"}}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{{else}}text-gray-400 border-border hover:bg-surface-200 hover:border-border-light{{end}}">Resolved</a>
+    <div class="flex gap-1.5 mb-4">
+        <a href="{{.BasePath}}/incidents" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if not .Data.Filter}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
+        <a href="{{.BasePath}}/incidents?status=open" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "open"}}text-red-400 border-red-500/30 bg-red-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Open</a>
+        <a href="{{.BasePath}}/incidents?status=acknowledged" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "acknowledged"}}text-yellow-400 border-yellow-500/30 bg-yellow-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Acknowledged</a>
+        <a href="{{.BasePath}}/incidents?status=resolved" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "resolved"}}text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Resolved</a>
     </div>
 
-    <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
+    <div class="border border-line rounded-lg overflow-hidden">
         {{if and .Data.Result .Data.Result.Data}}
         <div class="overflow-x-auto">
             <table class="w-full min-w-[700px]">
                 <thead>
-                    <tr class="border-b border-border text-left">
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Monitor</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Cause</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
-                        <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                    <tr class="border-b border-line text-left">
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Monitor</th>
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Status</th>
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Cause</th>
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Duration</th>
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Started</th>
+                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest text-right"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-border">
+                <tbody class="divide-y divide-line">
                     {{range .Data.Result.Data}}
-                    <tr class="hover:bg-surface-200/40 transition-colors duration-150">
-                        <td class="px-5 py-3.5 text-sm text-white font-medium">{{.MonitorName}}</td>
-                        <td class="px-5 py-3.5">
-                            <span class="text-xs px-2.5 py-0.5 rounded-full border {{statusBg .Status}}">{{.Status}}</span>
-                        </td>
-                        <td class="px-5 py-3.5 text-sm text-gray-400 truncate max-w-xs" title="{{.Cause}}">{{.Cause}}</td>
-                        <td class="px-5 py-3.5 text-sm text-gray-400 tabular-nums">{{incidentDuration .StartedAt .ResolvedAt}}</td>
-                        <td class="px-5 py-3.5 text-sm text-gray-500">{{timeAgo .StartedAt}}</td>
-                        <td class="px-5 py-3.5 text-right">
-                            <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-xs text-gray-400 hover:text-white transition-colors">View</a>
+                    <tr class="hover:bg-surface-200/20 transition-colors">
+                        <td class="px-4 py-3 text-[13px] text-white font-medium">{{.MonitorName}}</td>
+                        <td class="px-4 py-3"><span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Status}}">{{.Status}}</span></td>
+                        <td class="px-4 py-3 text-[12px] text-muted truncate max-w-[200px]" title="{{.Cause}}">{{.Cause}}</td>
+                        <td class="px-4 py-3 text-[12px] text-muted tabular-nums font-mono">{{incidentDuration .StartedAt .ResolvedAt}}</td>
+                        <td class="px-4 py-3 text-[12px] text-muted/60">{{timeAgo .StartedAt}}</td>
+                        <td class="px-4 py-3 text-right">
+                            <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-[11px] text-muted hover:text-white transition-colors">View</a>
                         </td>
                     </tr>
                     {{end}}
                 </tbody>
             </table>
         </div>
+        {{if gt .Data.Result.TotalPages 1}}
+        <div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+            <span class="text-[11px] text-muted tabular-nums">Page {{.Data.Result.Page}} / {{.Data.Result.TotalPages}} · {{.Data.Result.Total}} incidents</span>
+            <div class="flex gap-1">
+                {{if gt .Data.Result.Page 1}}
+                <a href="{{$.BasePath}}/incidents?{{if .Data.Filter}}status={{.Data.Filter}}&{{end}}page={{sub .Data.Result.Page 1}}" class="px-2 py-0.5 text-[11px] text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors">&larr;</a>
+                {{end}}
+                {{if lt .Data.Result.Page .Data.Result.TotalPages}}
+                <a href="{{$.BasePath}}/incidents?{{if .Data.Filter}}status={{.Data.Filter}}&{{end}}page={{add .Data.Result.Page 1}}" class="px-2 py-0.5 text-[11px] text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors">&rarr;</a>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
         {{else}}
-        <div class="px-5 py-16 text-center">
-            <svg class="w-10 h-10 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-gray-500 text-sm">No incidents found</p>
+        <div class="px-4 py-16 text-center">
+            <svg class="w-6 h-6 mx-auto text-muted/20 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <p class="text-muted text-[12px]">No incidents found</p>
         </div>
         {{end}}
     </div>

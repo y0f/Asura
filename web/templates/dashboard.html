@@ -1,92 +1,94 @@
 {{define "title"}}Dashboard{{end}}
 {{define "content"}}
 <div>
-    <h1 class="text-xl font-semibold text-white mb-5">Dashboard</h1>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div class="bg-surface-100 border border-border rounded-xl p-4 hover:border-border-light transition-colors duration-200">
-            <div class="text-xs text-gray-500 mb-1.5">Total Monitors</div>
-            <div class="text-2xl font-bold text-white tabular-nums">{{.Data.Total}}</div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Monitors</div>
+            <div class="text-2xl font-semibold text-white tabular-nums">{{.Data.Total}}</div>
         </div>
-        <div class="bg-surface-100 border border-border rounded-xl p-4 hover:border-emerald-500/20 transition-colors duration-200">
-            <div class="text-xs text-gray-500 mb-1.5">Up</div>
-            <div class="text-2xl font-bold text-emerald-400 tabular-nums">{{.Data.Up}}</div>
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Up</div>
+            <div class="text-2xl font-semibold text-emerald-400 tabular-nums">{{.Data.Up}}</div>
         </div>
-        <div class="bg-surface-100 border border-border rounded-xl p-4 hover:border-red-500/20 transition-colors duration-200">
-            <div class="text-xs text-gray-500 mb-1.5">Down</div>
-            <div class="text-2xl font-bold {{if gt .Data.Down 0}}text-red-400{{else}}text-gray-600{{end}} tabular-nums">{{.Data.Down}}</div>
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Down</div>
+            <div class="text-2xl font-semibold {{if gt .Data.Down 0}}text-red-400{{else}}text-muted{{end}} tabular-nums">{{.Data.Down}}</div>
         </div>
-        <div class="bg-surface-100 border border-border rounded-xl p-4 hover:border-yellow-500/20 transition-colors duration-200">
-            <div class="text-xs text-gray-500 mb-1.5">Open Incidents</div>
-            <div class="text-2xl font-bold {{if gt .Data.OpenIncidents 0}}text-yellow-400{{else}}text-gray-600{{end}} tabular-nums">{{.Data.OpenIncidents}}</div>
+        <div class="border border-line rounded-lg px-4 py-3">
+            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Incidents</div>
+            <div class="text-2xl font-semibold {{if gt .Data.OpenIncidents 0}}text-yellow-400{{else}}text-muted{{end}} tabular-nums">{{.Data.OpenIncidents}}</div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2">
-            <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
-                <div class="px-5 py-3.5 border-b border-border flex items-center justify-between">
-                    <h2 class="text-sm font-medium text-gray-300">Monitors</h2>
-                    <a href="{{$.BasePath}}/monitors/new" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">+ Add</a>
-                </div>
-                <div id="monitor-grid" hx-get="" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false">
-                    {{if .Data.Monitors}}
-                    <div class="divide-y divide-border">
-                        {{range .Data.Monitors}}
-                        <a href="{{$.BasePath}}/monitors/{{.ID}}" class="flex items-center justify-between px-5 py-3 hover:bg-surface-200/50 transition-all duration-150 group">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 {{statusDot .Status}}"></div>
-                                <div class="min-w-0">
-                                    <div class="text-sm text-white group-hover:text-indigo-400 transition-colors truncate">{{.Name}}</div>
-                                    <div class="text-xs text-gray-600 truncate">{{typeLabel .Type}} &middot; {{.Target}}</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3 flex-shrink-0 ml-3">
-                                {{$rt := index $.Data.ResponseTimes .ID}}
-                                {{if gt $rt 0}}
-                                <span class="text-xs text-gray-500 tabular-nums">{{formatMs $rt}}</span>
-                                {{end}}
-                                <span class="text-xs px-2 py-0.5 rounded-full border {{statusBg .Status}}">{{.Status}}</span>
-                            </div>
-                        </a>
-                        {{end}}
-                    </div>
-                    {{else}}
-                    <div class="px-5 py-14 text-center">
-                        <svg class="w-10 h-10 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        <p class="text-gray-500 text-sm mb-3">No monitors yet</p>
-                        <a href="{{$.BasePath}}/monitors/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Create one
-                        </a>
-                    </div>
-                    {{end}}
-                </div>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-[11px] text-muted uppercase tracking-widest">Monitors</h2>
+                <a href="{{$.BasePath}}/monitors/new" class="text-[11px] text-brand hover:text-brand/80 transition-colors">+ Add</a>
             </div>
-        </div>
-
-        <div>
-            <div class="bg-surface-100 border border-border rounded-xl overflow-hidden">
-                <div class="px-5 py-3.5 border-b border-border">
-                    <h2 class="text-sm font-medium text-gray-300">Active Incidents</h2>
+            <div x-data="{filter: ''}">
+                <div class="px-4 py-2 border-b border-line flex gap-1.5 overflow-x-auto rounded-t-lg border-x border-t">
+                    <button @click="filter=''" :class="filter==='' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">All</button>
+                    <button @click="filter='http'" :class="filter==='http' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">HTTP</button>
+                    <button @click="filter='tcp'" :class="filter==='tcp' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">TCP</button>
+                    <button @click="filter='dns'" :class="filter==='dns' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">DNS</button>
+                    <button @click="filter='icmp'" :class="filter==='icmp' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">ICMP</button>
+                    <button @click="filter='tls'" :class="filter==='tls' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">TLS</button>
+                    <button @click="filter='websocket'" :class="filter==='websocket' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">WS</button>
+                    <button @click="filter='heartbeat'" :class="filter==='heartbeat' ? 'text-brand border-brand/30 bg-brand/[0.04]' : 'text-muted border-line hover:text-muted-light'" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap">HB</button>
                 </div>
-                {{if .Data.Incidents}}
-                <div class="divide-y divide-border">
-                    {{range .Data.Incidents}}
-                    <a href="{{$.BasePath}}/incidents/{{.ID}}" class="block px-5 py-3 hover:bg-surface-200/50 transition-all duration-150">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-sm text-white">{{.MonitorName}}</span>
-                            <span class="text-xs px-2 py-0.5 rounded-full border {{statusBg .Status}}">{{.Status}}</span>
+            <div id="monitor-grid" hx-get="" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false"
+                 class="border border-line border-t-0 rounded-b-lg overflow-hidden">
+                {{if .Data.Monitors}}
+                <div class="divide-y divide-line">
+                    {{range .Data.Monitors}}
+                    <a href="{{$.BasePath}}/monitors/{{.ID}}" x-show="filter==='' || filter==='{{.Type}}'" x-transition.opacity
+                       class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 transition-colors group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 {{statusDot .Status}} {{if eq .Status "down"}}animate-pulse-dot{{end}}"></div>
+                            <div class="min-w-0">
+                                <div class="text-[13px] text-muted-light group-hover:text-white transition-colors truncate">{{.Name}}</div>
+                                <div class="text-[11px] text-muted truncate font-mono">{{typeLabel .Type}} · {{.Target}}</div>
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-500 truncate">{{.Cause}}</div>
-                        <div class="text-xs text-gray-600 mt-0.5">{{timeAgo .StartedAt}}</div>
+                        <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                            {{$rt := index $.Data.ResponseTimes .ID}}
+                            {{if gt $rt 0}}<span class="text-[11px] text-muted tabular-nums font-mono">{{formatMs $rt}}</span>{{end}}
+                            <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Status}}">{{.Status}}</span>
+                        </div>
                     </a>
                     {{end}}
                 </div>
                 {{else}}
-                <div class="px-5 py-10 text-center">
-                    <svg class="w-8 h-8 mx-auto text-gray-700 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-gray-600 text-sm">No active incidents</p>
+                <div class="px-4 py-14 text-center">
+                    <p class="text-muted text-[13px] mb-3">No monitors configured</p>
+                    <a href="{{$.BasePath}}/monitors/new" class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create your first monitor</a>
+                </div>
+                {{end}}
+            </div>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-[11px] text-muted uppercase tracking-widest mb-3">Active Incidents</h2>
+            <div class="border border-line rounded-lg overflow-hidden">
+                {{if .Data.Incidents}}
+                <div class="divide-y divide-line">
+                    {{range .Data.Incidents}}
+                    <a href="{{$.BasePath}}/incidents/{{.ID}}" class="block px-4 py-3 hover:bg-surface-200/20 transition-colors">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[13px] text-muted-light">{{.MonitorName}}</span>
+                            <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Status}}">{{.Status}}</span>
+                        </div>
+                        <div class="text-[11px] text-muted truncate">{{.Cause}}</div>
+                        <div class="text-[10px] text-muted/50 mt-0.5">{{timeAgo .StartedAt}}</div>
+                    </a>
+                    {{end}}
+                </div>
+                {{else}}
+                <div class="px-4 py-12 text-center">
+                    <svg class="w-6 h-6 mx-auto text-muted/30 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <p class="text-muted text-[11px]">No active incidents</p>
                 </div>
                 {{end}}
             </div>

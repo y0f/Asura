@@ -75,11 +75,11 @@ var templateFuncs = template.FuncMap{
 	},
 	"statusDot": func(status string) string {
 		switch status {
-		case "up":
+		case "up", "resolved":
 			return "bg-emerald-400"
-		case "down":
+		case "down", "created":
 			return "bg-red-400"
-		case "degraded":
+		case "degraded", "acknowledged":
 			return "bg-yellow-400"
 		default:
 			return "bg-gray-500"
@@ -224,6 +224,8 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("%.1fs", f/1000)
 	},
+	"add": func(a, b int) int { return a + b },
+	"sub": func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {
 		if s == "" {
 			return nil
@@ -273,7 +275,7 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
 	if err := t.ExecuteTemplate(w, layoutName, data); err != nil {
 		s.logger.Error("template render", "template", tmpl, "error", err)
 	}

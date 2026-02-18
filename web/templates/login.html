@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Asura</title>
+    <title>Login — Asura</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,41 +12,40 @@
             theme: {
                 extend: {
                     colors: {
-                        surface: { DEFAULT: '#0a0a0f', 50: '#10101a', 100: '#16161f', 200: '#1e1e2a', 300: '#2a2a3a' },
-                        border: { DEFAULT: '#1e1e2a' }
+                        brand: '#0080ff',
+                        surface: { DEFAULT: '#09090b', 50: '#0e0e12', 100: '#131318', 200: '#1a1a22', 300: '#222230' },
+                        muted: { DEFAULT: '#434656', light: '#a7aabc' },
+                        line: { DEFAULT: '#1a1a22', light: '#222230' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>::selection { background: rgba(0,128,255,.15); }</style>
 </head>
-<body class="bg-surface text-gray-100 min-h-screen flex items-center justify-center px-4">
-    <div class="w-full max-w-sm">
-        <div class="bg-surface-100 border border-border rounded-2xl p-8 shadow-2xl shadow-black/40">
-            <div class="text-center mb-8">
-                <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-white text-2xl mx-auto mb-5 shadow-lg shadow-indigo-500/20">A</div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Asura</h1>
-                <p class="text-gray-500 mt-1.5 text-sm">Enter your API key to continue</p>
-            </div>
-
-            {{if .Error}}
-            <div class="mb-5 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                {{.Error}}
-            </div>
-            {{end}}
-
-            <form method="POST" action="{{.BasePath}}/login" class="space-y-5">
-                <div>
-                    <input type="password" name="api_key" placeholder="API Key" required autofocus
-                           class="w-full px-4 py-3 bg-surface border border-border rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200">
-                </div>
-                <button type="submit"
-                        class="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30">
-                    Sign In
-                </button>
-            </form>
+<body class="bg-surface text-muted-light font-sans min-h-screen flex items-center justify-center px-4 antialiased">
+    <div class="w-full max-w-[280px]">
+        <div class="text-center mb-10">
+            <img src="{{.BasePath}}/static/logo.gif" alt="Asura" class="h-5 mx-auto mb-3">
+            <p class="text-muted text-[11px] tracking-wider uppercase">Infrastructure Monitoring</p>
         </div>
+
+        {{if .Error}}
+        <div class="mb-5 px-3 py-2 border border-red-500/15 rounded text-red-400 text-[12px]">{{.Error}}</div>
+        {{end}}
+
+        <form method="POST" action="{{.BasePath}}/login" class="space-y-3">
+            <input type="password" name="api_key" placeholder="API key" required autofocus
+                   class="w-full px-3 py-2.5 bg-surface-50 border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/40 transition-colors">
+            <button type="submit" class="w-full py-2.5 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+                Sign in
+            </button>
+        </form>
     </div>
 </body>
 </html>
