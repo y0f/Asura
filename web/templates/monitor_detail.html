@@ -101,12 +101,16 @@
         },
         render() {
             const el = this.$refs.chart;
+            const tip = this.$refs.tooltip;
             if (!el || !this.points.length) return;
             if (this.chart) { this.chart.destroy(); this.chart = null; }
 
             const ts = this.points.map(p => p.ts);
             const rt = this.points.map(p => p.rt);
             const statuses = this.points.map(p => p.s);
+            const tipDate = tip ? tip.querySelector('.tip-date') : null;
+            const tipVal = tip ? tip.querySelector('.tip-value') : null;
+            const tipSt = tip ? tip.querySelector('.tip-status') : null;
 
             const opts = {
                 width: el.clientWidth,
@@ -162,22 +166,20 @@
                     ],
                     setCursor: [
                         (u) => {
-                            const idx = u.cursor.idx;
-                            const tip = u.root.querySelector('.chart-tooltip');
                             if (!tip) return;
+                            const idx = u.cursor.idx;
                             if (idx == null) { tip.style.display = 'none'; return; }
                             const t = new Date(ts[idx] * 1000);
-                            const ms = rt[idx];
-                            const s = statuses[idx];
                             const time = t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
                             const date = t.toLocaleDateString([], {month:'short',day:'numeric'});
-                            tip.innerHTML = '<div class=\"text-[10px] text-muted\">' + date + ' ' + time + '</div><div class=\"text-[12px] text-white font-mono\">' + ms + 'ms</div>' + (s === 'down' ? '<div class=\"text-[10px] text-red-400\">down</div>' : '');
+                            if (tipDate) tipDate.textContent = date + ' ' + time;
+                            if (tipVal) tipVal.textContent = rt[idx] + 'ms';
+                            if (tipSt) { tipSt.textContent = statuses[idx] === 'down' ? 'down' : ''; tipSt.style.display = statuses[idx] === 'down' ? '' : 'none'; }
                             tip.style.display = 'block';
                             const cx = u.valToPos(ts[idx], 'x', true);
-                            const rect = u.root.getBoundingClientRect();
                             const tipW = tip.offsetWidth;
                             let lx = cx + 12;
-                            if (lx + tipW > rect.width) lx = cx - tipW - 12;
+                            if (lx + tipW > el.clientWidth) lx = cx - tipW - 12;
                             tip.style.left = lx + 'px';
                             tip.style.top = '8px';
                         }
@@ -217,7 +219,11 @@
         </div>
         <div x-show="!loading && points.length" class="relative">
             <div x-ref="chart"></div>
-            <div class="chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10" style="display:none"></div>
+            <div x-ref="tooltip" class="chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10" style="display:none">
+                <div class="tip-date text-[10px] text-muted"></div>
+                <div class="tip-value text-[12px] text-white font-mono"></div>
+                <div class="tip-status text-[10px] text-red-400" style="display:none"></div>
+            </div>
         </div>
     </div>
 
