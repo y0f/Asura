@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/y0f/Asura/internal/storage"
@@ -10,32 +11,28 @@ import (
 func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	monitors, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 10})
+	const perPage = 10
+
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+
+	// Fetch all monitors for accurate stat card counts
+	allResult, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 1000})
 	if err != nil {
 		s.logger.Error("web: list monitors", "error", err)
 	}
 
-	incidents, err := s.store.ListIncidents(ctx, 0, "open", storage.Pagination{Page: 1, PerPage: 10})
-	if err != nil {
-		s.logger.Error("web: list incidents", "error", err)
-	}
-
-	var monitorList []*storage.Monitor
-	if monitors != nil {
-		if ml, ok := monitors.Data.([]*storage.Monitor); ok {
-			monitorList = ml
-		}
-	}
-
-	var incidentList []*storage.Incident
-	if incidents != nil {
-		if il, ok := incidents.Data.([]*storage.Incident); ok {
-			incidentList = il
+	var allMonitors []*storage.Monitor
+	if allResult != nil {
+		if ml, ok := allResult.Data.([]*storage.Monitor); ok {
+			allMonitors = ml
 		}
 	}
 
 	up, down, degraded, paused := 0, 0, 0, 0
-	for _, m := range monitorList {
+	for _, m := range allMonitors {
 		if !m.Enabled {
 			paused++
 			continue
@@ -52,13 +49,44 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Paginate display list
+	total := len(allMonitors)
+	totalPages := (total + perPage - 1) / perPage
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	start := (page - 1) * perPage
+	end := start + perPage
+	if end > total {
+		end = total
+	}
+	displayMonitors := allMonitors[start:end]
+
+	incidents, err := s.store.ListIncidents(ctx, 0, "open", storage.Pagination{Page: 1, PerPage: 10})
+	if err != nil {
+		s.logger.Error("web: list incidents", "error", err)
+	}
+
+	var incidentList []*storage.Incident
+	if incidents != nil {
+		if il, ok := incidents.Data.([]*storage.Incident); ok {
+			incidentList = il
+		}
+	}
+
 	responseTimes, _ := s.store.GetLatestResponseTimes(ctx)
 	if responseTimes == nil {
 		responseTimes = make(map[int64]int64)
 	}
 
 	now := time.Now().UTC()
-	reqStats, _ := s.store.GetRequestLogStats(ctx, now.Add(-24*time.Hour), now)
+	reqStats, err := s.store.GetRequestLogStats(ctx, now.Add(-24*time.Hour), now)
+	if err != nil {
+		s.logger.Error("web: request log stats", "error", err)
+	}
 	var requests24h, visitors24h int64
 	if reqStats != nil {
 		requests24h = reqStats.TotalRequests
@@ -67,9 +95,9 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 
 	pd := s.newPageData(r, "Dashboard", "dashboard")
 	pd.Data = map[string]interface{}{
-		"Monitors":      monitorList,
+		"Monitors":      displayMonitors,
 		"Incidents":     incidentList,
-		"Total":         len(monitorList),
+		"Total":         total,
 		"Up":            up,
 		"Down":          down,
 		"Degraded":      degraded,
@@ -78,6 +106,8 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		"ResponseTimes": responseTimes,
 		"Requests24h":   requests24h,
 		"Visitors24h":   visitors24h,
+		"Page":          page,
+		"TotalPages":    totalPages,
 	}
 	s.render(w, "dashboard.html", pd)
 }

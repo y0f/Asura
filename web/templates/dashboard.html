@@ -73,6 +73,19 @@
                     <a href="{{$.BasePath}}/monitors/new" class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create your first monitor</a>
                 </div>
                 {{end}}
+                {{if gt .Data.TotalPages 1}}
+                <div class="px-4 py-2 border-t border-line flex items-center justify-between">
+                    <span class="text-[11px] text-muted tabular-nums">Page {{.Data.Page}} / {{.Data.TotalPages}}</span>
+                    <div class="flex gap-1">
+                        {{if gt .Data.Page 1}}
+                        <a href="{{$.BasePath}}/?page={{sub .Data.Page 1}}" class="px-2 py-0.5 text-[11px] text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors">&larr;</a>
+                        {{end}}
+                        {{if lt .Data.Page .Data.TotalPages}}
+                        <a href="{{$.BasePath}}/?page={{add .Data.Page 1}}" class="px-2 py-0.5 text-[11px] text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors">&rarr;</a>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
             </div>
             </div>
         </div>
