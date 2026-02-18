@@ -612,7 +612,7 @@ Channel-based pipeline with backpressure. SQLite WAL mode with separate read/wri
 
 ## Web UI
 
-Asura includes a (currently unfinished) lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js.
+Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js.
 
 The UI is enabled by default and can be disabled for API-only deployments:
 
