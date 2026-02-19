@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"html/template"
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/y0f/Asura/internal/config"
 	"github.com/y0f/Asura/internal/monitor"
@@ -25,6 +27,8 @@ type Server struct {
 	loginRL           *rateLimiter
 	cspFrameDirective string
 	reqLogWriter      *RequestLogWriter
+	statusSlugMu      sync.RWMutex
+	statusSlug        string
 }
 
 func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeline, dispatcher *notifier.Dispatcher, logger *slog.Logger, version string) *Server {
@@ -41,11 +45,15 @@ func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeli
 	}
 
 	s.loadTemplates()
+	s.loadStatusSlug()
 
 	mux := http.NewServeMux()
 	s.registerRoutes(mux)
 
 	var handler http.Handler = mux
+	if cfg.IsWebUIEnabled() {
+		handler = s.statusPageRouter(handler)
+	}
 	handler = bodyLimit(cfg.Server.MaxBodySize)(handler)
 	rl := newRateLimiter(cfg.Server.RateLimitPerSec, cfg.Server.RateLimitBurst)
 	handler = rl.middleware(cfg.TrustedNets())(handler)
@@ -136,7 +144,6 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 		mux.Handle("GET "+s.p("/logs"), webAuth(http.HandlerFunc(s.handleWebRequestLogs)))
 
-		mux.HandleFunc("GET "+s.p("/status"), s.handleWebStatusPage)
 		mux.Handle("GET "+s.p("/status-settings"), webAuth(http.HandlerFunc(s.handleWebStatusSettings)))
 		mux.Handle("POST "+s.p("/status-settings"), webPerm("monitors.write", s.handleWebStatusSettingsUpdate))
 	}
@@ -188,4 +195,43 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	mux.Handle("GET "+s.p("/api/v1/request-logs"), metricsRead(http.HandlerFunc(s.handleListRequestLogs)))
 	mux.Handle("GET "+s.p("/api/v1/request-logs/stats"), metricsRead(http.HandlerFunc(s.handleRequestLogStats)))
+}
+
+func (s *Server) loadStatusSlug() {
+	cfg, err := s.store.GetStatusPageConfig(context.Background())
+	if err != nil {
+		s.statusSlug = "status"
+		return
+	}
+	if cfg.Slug == "" {
+		s.statusSlug = "status"
+		return
+	}
+	s.statusSlug = cfg.Slug
+}
+
+func (s *Server) getStatusSlug() string {
+	s.statusSlugMu.RLock()
+	defer s.statusSlugMu.RUnlock()
+	return s.statusSlug
+}
+
+func (s *Server) setStatusSlug(slug string) {
+	s.statusSlugMu.Lock()
+	defer s.statusSlugMu.Unlock()
+	s.statusSlug = slug
+}
+
+func (s *Server) statusPageRouter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			slug := s.getStatusSlug()
+			expected := s.p("/" + slug)
+			if r.URL.Path == expected || r.URL.Path == expected+"/" {
+				s.handleWebStatusPage(w, r)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }

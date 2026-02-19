@@ -249,6 +249,7 @@ type StatusPageConfig struct {
 	Description   string    `json:"description"`
 	ShowIncidents bool      `json:"show_incidents"`
 	CustomCSS     string    `json:"custom_css"`
+	Slug          string    `json:"slug"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 

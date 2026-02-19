@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-5">
         <h1 class="text-[15px] font-medium text-white">Status Page Settings</h1>
         {{if .Data.Enabled}}
-        <a href="{{.BasePath}}/status" target="_blank"
+        <a href="{{.BasePath}}/{{.Data.Slug}}" target="_blank"
            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-line hover:border-line-light text-muted-light text-[12px] rounded transition-colors">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             View Status Page
@@ -19,6 +19,17 @@
                 <div class="w-9 h-5 bg-surface-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
             </label>
             <span class="text-[13px] text-white">Enable status page</span>
+        </div>
+
+        <div>
+            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">URL Slug</label>
+            <div class="flex items-center gap-0">
+                <span class="px-3 py-2 bg-surface-200 border border-r-0 border-line rounded-l text-muted text-[13px]">{{.BasePath}}/</span>
+                <input type="text" name="slug" value="{{.Data.Slug}}"
+                       class="flex-1 px-3 py-2 bg-surface border border-line rounded-r text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors"
+                       placeholder="status" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9]">
+            </div>
+            <p class="mt-1 text-[10px] text-muted">Lowercase letters, numbers, and hyphens only. Determines where the public status page is served.</p>
         </div>
 
         <div>
@@ -67,7 +78,8 @@
         <ul class="text-[12px] text-muted space-y-1">
             <li>Monitors with <span class="text-muted-light font-medium">Public</span> enabled will appear on the status page.</li>
             <li>Toggle the Public field when creating or editing a monitor.</li>
-            <li>The status page is accessible without authentication at <code class="text-muted-light bg-surface-200 px-1 py-0.5 rounded text-[11px]">{{.BasePath}}/status</code></li>
+            <li>The status page is accessible without authentication at <code class="text-muted-light bg-surface-200 px-1 py-0.5 rounded text-[11px]">{{.BasePath}}/{{.Data.Slug}}</code></li>
+            <li>Change the URL slug above to serve the page at a custom path.</li>
             <li>API users can query <code class="text-muted-light bg-surface-200 px-1 py-0.5 rounded text-[11px]">{{.BasePath}}/api/v1/status</code> to build their own status page.</li>
         </ul>
     </div>

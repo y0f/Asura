@@ -24,6 +24,7 @@ func (s *Server) handleUpdateStatusConfig(w http.ResponseWriter, r *http.Request
 		Description   *string `json:"description"`
 		ShowIncidents *bool   `json:"show_incidents"`
 		CustomCSS     *string `json:"custom_css"`
+		Slug          *string `json:"slug"`
 	}
 	if err := readJSON(r, &input); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -63,12 +64,16 @@ func (s *Server) handleUpdateStatusConfig(w http.ResponseWriter, r *http.Request
 	if input.CustomCSS != nil {
 		cfg.CustomCSS = sanitizeCSS(*input.CustomCSS)
 	}
+	if input.Slug != nil {
+		cfg.Slug = validateSlug(*input.Slug)
+	}
 
 	if err := s.store.UpsertStatusPageConfig(ctx, cfg); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to save status page config")
 		return
 	}
 
+	s.setStatusSlug(cfg.Slug)
 	writeJSON(w, http.StatusOK, cfg)
 }
 

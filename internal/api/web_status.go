@@ -139,12 +139,15 @@ func (s *Server) handleWebStatusSettingsUpdate(w http.ResponseWriter, r *http.Re
 		desc = desc[:1000]
 	}
 
+	slug := validateSlug(r.FormValue("slug"))
+
 	cfg := &storage.StatusPageConfig{
 		Enabled:       r.FormValue("enabled") == "on",
 		Title:         title,
 		Description:   desc,
 		ShowIncidents: r.FormValue("show_incidents") == "on",
 		CustomCSS:     sanitizeCSS(r.FormValue("custom_css")),
+		Slug:          slug,
 	}
 
 	if err := s.store.UpsertStatusPageConfig(r.Context(), cfg); err != nil {
@@ -154,6 +157,7 @@ func (s *Server) handleWebStatusSettingsUpdate(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	s.setStatusSlug(slug)
 	s.setFlash(w, "Status page settings saved")
 	s.redirect(w, r, "/status-settings")
 }
@@ -230,6 +234,31 @@ func formatPct(pct float64) string {
 		return "100%"
 	}
 	return fmt.Sprintf("%.2f%%", pct)
+}
+
+var slugPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$`)
+
+var reservedSlugs = map[string]bool{
+	"login": true, "logout": true, "monitors": true, "incidents": true,
+	"notifications": true, "maintenance": true, "logs": true,
+	"status-settings": true, "static": true, "api": true,
+}
+
+func validateSlug(slug string) string {
+	slug = strings.ToLower(strings.TrimSpace(slug))
+	if slug == "" {
+		return "status"
+	}
+	if len(slug) > 50 {
+		slug = slug[:50]
+	}
+	if !slugPattern.MatchString(slug) {
+		return "status"
+	}
+	if reservedSlugs[slug] {
+		return "status"
+	}
+	return slug
 }
 
 var unsafeCSSPattern = regexp.MustCompile(`(?i)(javascript|vbscript|expression|behavior|@import|@charset|url\s*\(|-moz-binding)`)

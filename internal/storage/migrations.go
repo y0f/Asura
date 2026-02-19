@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 7
+const schemaVersion = 8
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -258,5 +258,9 @@ CREATE TABLE IF NOT EXISTS status_page_config (
 	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
 INSERT OR IGNORE INTO status_page_config (id) VALUES (1);`,
+	},
+	{
+		version: 8,
+		sql:     `ALTER TABLE status_page_config ADD COLUMN slug TEXT NOT NULL DEFAULT 'status';`,
 	},
 }
