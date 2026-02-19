@@ -409,6 +409,7 @@ POST   /api/v1/monitors/{id}/resume    Resume
 GET    /api/v1/monitors/{id}/checks    Check history
 GET    /api/v1/monitors/{id}/metrics   Analytics
 GET    /api/v1/monitors/{id}/changes   Content changes
+GET    /api/v1/monitors/{id}/chart     Response time chart data
 ```
 
 | Field              | Type     | Required | Description                                        |
@@ -540,7 +541,7 @@ Events: `incident.created` `incident.acknowledged` `incident.resolved` `content.
 
 **Email (SMTP)**
 ```json
-{"host": "smtp.example.com", "port": 587, "username": "alerts@example.com", "password": "...", "from": "alerts@example.com", "to": "ops@example.com,oncall@example.com"}
+{"host": "smtp.example.com", "port": 587, "username": "alerts@example.com", "password": "...", "from": "alerts@example.com", "to": ["ops@example.com", "oncall@example.com"]}
 ```
 </details>
 
