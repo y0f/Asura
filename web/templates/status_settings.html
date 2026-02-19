@@ -21,6 +21,17 @@
             <span class="text-[13px] text-white">Enable status page</span>
         </div>
 
+        <div class="flex items-center gap-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="api_enabled" class="sr-only peer" {{if .Data.PublicAPIEnabled}}checked{{end}}>
+                <div class="w-9 h-5 bg-surface-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+            </label>
+            <div>
+                <span class="text-[13px] text-white">Enable public API</span>
+                <p class="text-[11px] text-muted mt-0.5">Serves <code class="bg-surface-200 px-1 rounded">GET /api/v1/status</code> even when the status page UI is off</p>
+            </div>
+        </div>
+
         <div>
             <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">URL Slug</label>
             <div class="flex items-center gap-0">

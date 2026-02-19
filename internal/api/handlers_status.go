@@ -19,12 +19,13 @@ func (s *Server) handleGetStatusConfig(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleUpdateStatusConfig(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Enabled       *bool   `json:"enabled"`
-		Title         *string `json:"title"`
-		Description   *string `json:"description"`
-		ShowIncidents *bool   `json:"show_incidents"`
-		CustomCSS     *string `json:"custom_css"`
-		Slug          *string `json:"slug"`
+		Enabled          *bool   `json:"enabled"`
+		PublicAPIEnabled *bool   `json:"public_api_enabled"`
+		Title            *string `json:"title"`
+		Description      *string `json:"description"`
+		ShowIncidents    *bool   `json:"show_incidents"`
+		CustomCSS        *string `json:"custom_css"`
+		Slug             *string `json:"slug"`
 	}
 	if err := readJSON(r, &input); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -40,6 +41,9 @@ func (s *Server) handleUpdateStatusConfig(w http.ResponseWriter, r *http.Request
 
 	if input.Enabled != nil {
 		cfg.Enabled = *input.Enabled
+	}
+	if input.PublicAPIEnabled != nil {
+		cfg.PublicAPIEnabled = *input.PublicAPIEnabled
 	}
 	if input.Title != nil {
 		title := strings.TrimSpace(*input.Title)
@@ -85,7 +89,7 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to load status page config")
 		return
 	}
-	if !cfg.Enabled {
+	if !cfg.Enabled && !cfg.PublicAPIEnabled {
 		writeError(w, http.StatusNotFound, "status page is not enabled")
 		return
 	}

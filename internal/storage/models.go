@@ -259,13 +259,14 @@ type TimeSeriesPoint struct {
 
 // StatusPageConfig holds the configuration for the public status page.
 type StatusPageConfig struct {
-	Enabled       bool      `json:"enabled"`
-	Title         string    `json:"title"`
-	Description   string    `json:"description"`
-	ShowIncidents bool      `json:"show_incidents"`
-	CustomCSS     string    `json:"custom_css"`
-	Slug          string    `json:"slug"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Enabled          bool      `json:"enabled"`
+	PublicAPIEnabled bool      `json:"public_api_enabled"`
+	Title            string    `json:"title"`
+	Description      string    `json:"description"`
+	ShowIncidents    bool      `json:"show_incidents"`
+	CustomCSS        string    `json:"custom_css"`
+	Slug             string    `json:"slug"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 // DailyUptime holds uptime statistics for a single day.

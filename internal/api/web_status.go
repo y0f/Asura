@@ -142,12 +142,13 @@ func (s *Server) handleWebStatusSettingsUpdate(w http.ResponseWriter, r *http.Re
 	slug := validateSlug(r.FormValue("slug"))
 
 	cfg := &storage.StatusPageConfig{
-		Enabled:       r.FormValue("enabled") == "on",
-		Title:         title,
-		Description:   desc,
-		ShowIncidents: r.FormValue("show_incidents") == "on",
-		CustomCSS:     sanitizeCSS(r.FormValue("custom_css")),
-		Slug:          slug,
+		Enabled:          r.FormValue("enabled") == "on",
+		PublicAPIEnabled: r.FormValue("api_enabled") == "on",
+		Title:            title,
+		Description:      desc,
+		ShowIncidents:    r.FormValue("show_incidents") == "on",
+		CustomCSS:        sanitizeCSS(r.FormValue("custom_css")),
+		Slug:             slug,
 	}
 
 	if err := s.store.UpsertStatusPageConfig(r.Context(), cfg); err != nil {

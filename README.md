@@ -495,7 +495,12 @@ If no ping arrives within `interval + grace` seconds, the monitor goes down and 
 GET  /api/v1/status          Public status overview (monitors, uptime, incidents)
 ```
 
-Returns only safe fields (name, type, status, uptime) — no targets, settings, or credentials are exposed. Returns 404 if the status page is disabled in settings. Set `"public": true` on monitors to include them.
+Returns only safe fields (name, type, status, uptime) — no targets, settings, or credentials are exposed. Set `"public": true` on monitors to include them.
+
+Availability is controlled independently of the hosted status page UI:
+- `enabled: true` — hosted status page UI + API both on
+- `public_api_enabled: true` — API on, hosted UI off (useful for building a custom status page)
+- Both `false` — returns 404
 
 ### Status Page Config
 

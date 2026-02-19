@@ -1582,9 +1582,9 @@ func (s *SQLiteStore) GetStatusPageConfig(ctx context.Context) (*StatusPageConfi
 	var cfg StatusPageConfig
 	var updatedAt string
 	err := s.readDB.QueryRowContext(ctx,
-		`SELECT enabled, title, description, show_incidents, custom_css, slug, updated_at
+		`SELECT enabled, api_enabled, title, description, show_incidents, custom_css, slug, updated_at
 		 FROM status_page_config WHERE id=1`).
-		Scan(&cfg.Enabled, &cfg.Title, &cfg.Description, &cfg.ShowIncidents, &cfg.CustomCSS, &cfg.Slug, &updatedAt)
+		Scan(&cfg.Enabled, &cfg.PublicAPIEnabled, &cfg.Title, &cfg.Description, &cfg.ShowIncidents, &cfg.CustomCSS, &cfg.Slug, &updatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("get status page config: %w", err)
 	}
@@ -1594,8 +1594,8 @@ func (s *SQLiteStore) GetStatusPageConfig(ctx context.Context) (*StatusPageConfi
 
 func (s *SQLiteStore) UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error {
 	_, err := s.writeDB.ExecContext(ctx,
-		`UPDATE status_page_config SET enabled=?, title=?, description=?, show_incidents=?, custom_css=?, slug=?, updated_at=? WHERE id=1`,
-		boolToInt(cfg.Enabled), cfg.Title, cfg.Description, boolToInt(cfg.ShowIncidents), cfg.CustomCSS, cfg.Slug, formatTime(time.Now()))
+		`UPDATE status_page_config SET enabled=?, api_enabled=?, title=?, description=?, show_incidents=?, custom_css=?, slug=?, updated_at=? WHERE id=1`,
+		boolToInt(cfg.Enabled), boolToInt(cfg.PublicAPIEnabled), cfg.Title, cfg.Description, boolToInt(cfg.ShowIncidents), cfg.CustomCSS, cfg.Slug, formatTime(time.Now()))
 	if err != nil {
 		return fmt.Errorf("upsert status page config: %w", err)
 	}
