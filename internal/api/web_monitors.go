@@ -81,15 +81,7 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 	if fd.MaxRedirects == 0 && fd.FollowRedirects {
 		fd.MaxRedirects = 10
 	}
-	if fd.HTTP.AuthMethod == "" {
-		if fd.HTTP.BasicAuthUser != "" {
-			fd.HTTP.AuthMethod = "basic"
-		} else if fd.HTTP.BearerToken != "" {
-			fd.HTTP.AuthMethod = "bearer"
-		} else {
-			fd.HTTP.AuthMethod = "none"
-		}
-	}
+	fd.HTTP.AuthMethod = inferHTTPAuthMethod(fd.HTTP)
 	if fd.HTTP.BodyEncoding == "" {
 		fd.HTTP.BodyEncoding = "json"
 	}
@@ -97,6 +89,19 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 	fd.WsHeadersJSON = headersToJSON(fd.WS.Headers)
 	fd.AssertionsJSON = assertionsToJSON(mon.Assertions)
 	return fd
+}
+
+func inferHTTPAuthMethod(h storage.HTTPSettings) string {
+	if h.AuthMethod != "" {
+		return h.AuthMethod
+	}
+	if h.BasicAuthUser != "" {
+		return "basic"
+	}
+	if h.BearerToken != "" {
+		return "bearer"
+	}
+	return "none"
 }
 
 func headersToJSON(headers map[string]string) template.JS {
@@ -126,33 +131,7 @@ func assertionsToJSON(raw json.RawMessage) template.JS {
 func assembleSettings(r *http.Request, monType string) json.RawMessage {
 	switch monType {
 	case "http":
-		s := storage.HTTPSettings{
-			Method:       r.FormValue("settings_method"),
-			Body:         r.FormValue("settings_body"),
-			BodyEncoding: r.FormValue("settings_body_encoding"),
-			AuthMethod:   r.FormValue("settings_auth_method"),
-		}
-		if v := r.FormValue("settings_expected_status"); v != "" {
-			s.ExpectedStatus, _ = strconv.Atoi(v)
-		}
-		if v := r.FormValue("settings_max_redirects"); v != "" {
-			s.MaxRedirects, _ = strconv.Atoi(v)
-			if s.MaxRedirects == 0 {
-				f := false
-				s.FollowRedirects = &f
-			}
-		}
-		s.SkipTLSVerify = r.FormValue("settings_skip_tls_verify") == "on"
-		s.CacheBuster = r.FormValue("settings_cache_buster") == "on"
-		s.Headers = assembleHeaders(r, "settings_header_key", "settings_header_value")
-		switch s.AuthMethod {
-		case "basic":
-			s.BasicAuthUser = r.FormValue("settings_basic_auth_user")
-			s.BasicAuthPass = r.FormValue("settings_basic_auth_pass")
-		case "bearer":
-			s.BearerToken = r.FormValue("settings_bearer_token")
-		}
-		b, _ := json.Marshal(s)
+		b, _ := json.Marshal(assembleHTTPSettings(r))
 		return b
 	case "tcp":
 		s := storage.TCPSettings{
@@ -199,6 +178,36 @@ func assembleSettings(r *http.Request, monType string) json.RawMessage {
 	default:
 		return nil
 	}
+}
+
+func assembleHTTPSettings(r *http.Request) storage.HTTPSettings {
+	s := storage.HTTPSettings{
+		Method:       r.FormValue("settings_method"),
+		Body:         r.FormValue("settings_body"),
+		BodyEncoding: r.FormValue("settings_body_encoding"),
+		AuthMethod:   r.FormValue("settings_auth_method"),
+	}
+	if v := r.FormValue("settings_expected_status"); v != "" {
+		s.ExpectedStatus, _ = strconv.Atoi(v)
+	}
+	if v := r.FormValue("settings_max_redirects"); v != "" {
+		s.MaxRedirects, _ = strconv.Atoi(v)
+		if s.MaxRedirects == 0 {
+			f := false
+			s.FollowRedirects = &f
+		}
+	}
+	s.SkipTLSVerify = r.FormValue("settings_skip_tls_verify") == "on"
+	s.CacheBuster = r.FormValue("settings_cache_buster") == "on"
+	s.Headers = assembleHeaders(r, "settings_header_key", "settings_header_value")
+	switch s.AuthMethod {
+	case "basic":
+		s.BasicAuthUser = r.FormValue("settings_basic_auth_user")
+		s.BasicAuthPass = r.FormValue("settings_basic_auth_pass")
+	case "bearer":
+		s.BearerToken = r.FormValue("settings_bearer_token")
+	}
+	return s
 }
 
 func assembleHeaders(r *http.Request, keyField, valueField string) map[string]string {

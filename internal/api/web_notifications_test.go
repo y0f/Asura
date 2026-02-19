@@ -211,11 +211,11 @@ func TestParseNotificationFormFormMode(t *testing.T) {
 
 func TestParseNotificationFormJSONMode(t *testing.T) {
 	form := url.Values{
-		"name":                {"JSON Channel"},
-		"type":                {"webhook"},
-		"enabled":             {"on"},
-		"notif_settings_mode": {"json"},
-		"settings_json":       {`{"url":"https://example.com","secret":"abc"}`},
+		"name":                  {"JSON Channel"},
+		"type":                  {"webhook"},
+		"enabled":               {"on"},
+		"notif_settings_mode":   {"json"},
+		"settings_json":         {`{"url":"https://example.com","secret":"abc"}`},
 		"event_content_changed": {"on"},
 	}
 

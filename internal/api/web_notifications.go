@@ -202,4 +202,3 @@ func assembleNotificationSettings(r *http.Request, chType string) json.RawMessag
 		return json.RawMessage("{}")
 	}
 }
-

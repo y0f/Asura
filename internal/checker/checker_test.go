@@ -292,9 +292,9 @@ func TestHTTPCheckerCacheBusterWithExistingQuery(t *testing.T) {
 
 func TestHTTPCheckerBodyEncoding(t *testing.T) {
 	tests := []struct {
-		name        string
-		encoding    string
-		wantCT      string
+		name     string
+		encoding string
+		wantCT   string
 	}{
 		{"json", "json", "application/json"},
 		{"xml", "xml", "application/xml"},

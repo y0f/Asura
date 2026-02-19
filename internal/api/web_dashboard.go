@@ -35,33 +35,8 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	up, down, degraded, paused := 0, 0, 0, 0
-	for _, m := range allMonitors {
-		if !m.Enabled {
-			paused++
-			continue
-		}
-		switch m.Status {
-		case "up":
-			up++
-		case "down":
-			down++
-		case "degraded":
-			degraded++
-		default:
-			up++
-		}
-	}
-
-	filtered := allMonitors
-	if typeFilter != "" {
-		filtered = make([]*storage.Monitor, 0)
-		for _, m := range allMonitors {
-			if m.Type == typeFilter {
-				filtered = append(filtered, m)
-			}
-		}
-	}
+	up, down, degraded, paused := countMonitorStats(allMonitors)
+	filtered := filterMonitorsByType(allMonitors, typeFilter)
 
 	total := len(filtered)
 	totalPages := (total + perPage - 1) / perPage
@@ -125,4 +100,35 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		"FilteredTotal": total,
 	}
 	s.render(w, "dashboard.html", pd)
+}
+
+func countMonitorStats(monitors []*storage.Monitor) (up, down, degraded, paused int) {
+	for _, m := range monitors {
+		if !m.Enabled {
+			paused++
+			continue
+		}
+		switch m.Status {
+		case "down":
+			down++
+		case "degraded":
+			degraded++
+		default:
+			up++
+		}
+	}
+	return
+}
+
+func filterMonitorsByType(monitors []*storage.Monitor, t string) []*storage.Monitor {
+	if t == "" {
+		return monitors
+	}
+	out := make([]*storage.Monitor, 0, len(monitors))
+	for _, m := range monitors {
+		if m.Type == t {
+			out = append(out, m)
+		}
+	}
+	return out
 }

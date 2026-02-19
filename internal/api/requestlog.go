@@ -104,15 +104,15 @@ func requestLogMiddleware(writer *RequestLogWriter, basePath string, trustedNets
 			ip := extractIP(r, trustedNets)
 
 			log := &storage.RequestLog{
-				Method:    r.Method,
-				Path:      path,
+				Method:     r.Method,
+				Path:       path,
 				StatusCode: sw.status,
-				LatencyMs: latency,
-				ClientIP:  ip,
-				UserAgent: truncate(r.UserAgent(), 512),
-				Referer:   truncate(r.Referer(), 512),
+				LatencyMs:  latency,
+				ClientIP:   ip,
+				UserAgent:  truncate(r.UserAgent(), 512),
+				Referer:    truncate(r.Referer(), 512),
 				RouteGroup: classifyRoute(trimmed),
-				CreatedAt: start.UTC(),
+				CreatedAt:  start.UTC(),
 			}
 
 			if mid := extractMonitorID(trimmed); mid > 0 {

@@ -200,8 +200,8 @@ func TestAssembleSettingsTLS(t *testing.T) {
 
 func TestAssembleSettingsWebSocket(t *testing.T) {
 	form := url.Values{
-		"settings_send_message":  {"ping"},
-		"settings_expect_reply":  {"pong"},
+		"settings_send_message": {"ping"},
+		"settings_expect_reply": {"pong"},
 	}
 	form.Add("settings_ws_header_key[]", "Auth")
 	form.Add("settings_ws_header_value[]", "tok")
@@ -356,9 +356,9 @@ func TestMonitorToFormDataHTTP(t *testing.T) {
 		{Type: "status_code", Operator: "eq", Value: "200"},
 	})
 	mon := &storage.Monitor{
-		ID:       1,
-		Type:     "http",
-		Settings: settings,
+		ID:         1,
+		Type:       "http",
+		Settings:   settings,
 		Assertions: assertions,
 	}
 	fd := monitorToFormData(mon)
@@ -391,27 +391,27 @@ func TestMonitorToFormDataBearerInference(t *testing.T) {
 
 func TestParseMonitorFormFormMode(t *testing.T) {
 	form := url.Values{
-		"name":                     {"My Monitor"},
-		"description":              {"A test monitor"},
-		"type":                     {"http"},
-		"target":                   {"https://example.com"},
-		"interval":                 {"30"},
-		"timeout":                  {"5"},
-		"failure_threshold":        {"3"},
-		"success_threshold":        {"1"},
-		"tags":                     {"prod, api"},
-		"track_changes":            {"on"},
-		"public":                   {"on"},
-		"upside_down":              {"on"},
-		"resend_interval":          {"60"},
-		"settings_mode":            {"form"},
-		"settings_method":          {"GET"},
-		"settings_auth_method":     {"none"},
-		"assertions_mode":          {"form"},
-		"assertion_count":          {"1"},
-		"assertion_type_0":         {"status_code"},
-		"assertion_operator_0":     {"eq"},
-		"assertion_value_0":        {"200"},
+		"name":                 {"My Monitor"},
+		"description":          {"A test monitor"},
+		"type":                 {"http"},
+		"target":               {"https://example.com"},
+		"interval":             {"30"},
+		"timeout":              {"5"},
+		"failure_threshold":    {"3"},
+		"success_threshold":    {"1"},
+		"tags":                 {"prod, api"},
+		"track_changes":        {"on"},
+		"public":               {"on"},
+		"upside_down":          {"on"},
+		"resend_interval":      {"60"},
+		"settings_mode":        {"form"},
+		"settings_method":      {"GET"},
+		"settings_auth_method": {"none"},
+		"assertions_mode":      {"form"},
+		"assertion_count":      {"1"},
+		"assertion_type_0":     {"status_code"},
+		"assertion_operator_0": {"eq"},
+		"assertion_value_0":    {"200"},
 	}
 
 	srv, _ := testServer(t)
@@ -443,17 +443,17 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 
 func TestParseMonitorFormJSONMode(t *testing.T) {
 	form := url.Values{
-		"name":             {"JSON Monitor"},
-		"type":             {"http"},
-		"target":           {"https://example.com"},
-		"interval":         {"60"},
-		"timeout":          {"10"},
+		"name":              {"JSON Monitor"},
+		"type":              {"http"},
+		"target":            {"https://example.com"},
+		"interval":          {"60"},
+		"timeout":           {"10"},
 		"failure_threshold": {"3"},
 		"success_threshold": {"1"},
-		"settings_mode":    {"json"},
-		"settings_json":    {`{"method":"PUT","body":"test"}`},
-		"assertions_mode":  {"json"},
-		"assertions_json":  {`[{"type":"status_code","operator":"eq","value":"200"}]`},
+		"settings_mode":     {"json"},
+		"settings_json":     {`{"method":"PUT","body":"test"}`},
+		"assertions_mode":   {"json"},
+		"assertions_json":   {`[{"type":"status_code","operator":"eq","value":"200"}]`},
 	}
 
 	srv, _ := testServer(t)
@@ -475,17 +475,17 @@ func TestParseMonitorFormJSONMode(t *testing.T) {
 
 func TestParseMonitorFormJSONModeInvalidJSON(t *testing.T) {
 	form := url.Values{
-		"name":             {"Bad JSON"},
-		"type":             {"http"},
-		"target":           {"https://example.com"},
-		"interval":         {"60"},
-		"timeout":          {"10"},
+		"name":              {"Bad JSON"},
+		"type":              {"http"},
+		"target":            {"https://example.com"},
+		"interval":          {"60"},
+		"timeout":           {"10"},
 		"failure_threshold": {"3"},
 		"success_threshold": {"1"},
-		"settings_mode":    {"json"},
-		"settings_json":    {`{invalid`},
-		"assertions_mode":  {"json"},
-		"assertions_json":  {`[broken`},
+		"settings_mode":     {"json"},
+		"settings_json":     {`{invalid`},
+		"assertions_mode":   {"json"},
+		"assertions_json":   {`[broken`},
 	}
 
 	srv, _ := testServer(t)

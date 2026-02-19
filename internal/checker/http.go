@@ -40,11 +40,7 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 
 	target := monitor.Target
 	if settings.CacheBuster {
-		sep := "?"
-		if strings.Contains(target, "?") {
-			sep = "&"
-		}
-		target += sep + "_=" + strconv.FormatInt(time.Now().UnixNano(), 36)
+		target = cacheBustURL(target)
 	}
 
 	var bodyReader io.Reader
@@ -57,35 +53,8 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		return &Result{Status: "down", Message: fmt.Sprintf("invalid request: %v", err)}, nil
 	}
 
-	if settings.Body != "" {
-		switch settings.BodyEncoding {
-		case "xml":
-			req.Header.Set("Content-Type", "application/xml")
-		case "form":
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		case "json":
-			req.Header.Set("Content-Type", "application/json")
-		}
-	}
-
-	for k, v := range settings.Headers {
-		req.Header.Set(k, v)
-	}
-
-	switch settings.AuthMethod {
-	case "basic":
-		if settings.BasicAuthUser != "" {
-			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
-		}
-	case "bearer":
-		if settings.BearerToken != "" {
-			req.Header.Set("Authorization", "Bearer "+settings.BearerToken)
-		}
-	default:
-		if settings.BasicAuthUser != "" {
-			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
-		}
-	}
+	applyBodyAndHeaders(req, settings)
+	applyAuthentication(req, settings)
 
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
@@ -178,6 +147,47 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	}
 
 	return result, nil
+}
+
+func cacheBustURL(target string) string {
+	sep := "?"
+	if strings.Contains(target, "?") {
+		sep = "&"
+	}
+	return target + sep + "_=" + strconv.FormatInt(time.Now().UnixNano(), 36)
+}
+
+func applyBodyAndHeaders(req *http.Request, settings storage.HTTPSettings) {
+	if settings.Body != "" {
+		switch settings.BodyEncoding {
+		case "xml":
+			req.Header.Set("Content-Type", "application/xml")
+		case "form":
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		case "json":
+			req.Header.Set("Content-Type", "application/json")
+		}
+	}
+	for k, v := range settings.Headers {
+		req.Header.Set(k, v)
+	}
+}
+
+func applyAuthentication(req *http.Request, settings storage.HTTPSettings) {
+	switch settings.AuthMethod {
+	case "basic":
+		if settings.BasicAuthUser != "" {
+			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
+		}
+	case "bearer":
+		if settings.BearerToken != "" {
+			req.Header.Set("Authorization", "Bearer "+settings.BearerToken)
+		}
+	default:
+		if settings.BasicAuthUser != "" {
+			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
+		}
+	}
 }
 
 func resolveMaxRedirects(s storage.HTTPSettings) int {
