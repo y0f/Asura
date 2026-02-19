@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/y0f/Asura/internal/notifier"
@@ -12,7 +13,12 @@ import (
 func (s *Server) handleWebIncidents(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
 	status := r.URL.Query().Get("status")
-	result, err := s.store.ListIncidents(r.Context(), 0, status, p)
+	if !validIncidentStatuses[status] {
+		status = ""
+	}
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+
+	result, err := s.store.ListIncidents(r.Context(), 0, status, q, p)
 	if err != nil {
 		s.logger.Error("web: list incidents", "error", err)
 	}
@@ -21,6 +27,7 @@ func (s *Server) handleWebIncidents(w http.ResponseWriter, r *http.Request) {
 	pd.Data = map[string]interface{}{
 		"Result": result,
 		"Filter": status,
+		"Search": q,
 	}
 	s.render(w, "incidents.html", pd)
 }

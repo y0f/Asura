@@ -183,14 +183,30 @@ func (s *SQLiteStore) GetMonitor(ctx context.Context, id int64) (*Monitor, error
 	return scanMonitor(row)
 }
 
-func (s *SQLiteStore) ListMonitors(ctx context.Context, p Pagination) (*PaginatedResult, error) {
+func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p Pagination) (*PaginatedResult, error) {
+	where := "1=1"
+	var args []interface{}
+
+	if f.Type != "" {
+		where += " AND m.type=?"
+		args = append(args, f.Type)
+	}
+	if f.Search != "" {
+		where += " AND (m.name LIKE '%' || ? || '%' OR m.target LIKE '%' || ? || '%')"
+		args = append(args, f.Search, f.Search)
+	}
+
 	var total int64
-	err := s.readDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM monitors").Scan(&total)
+	countArgs := make([]interface{}, len(args))
+	copy(countArgs, args)
+	err := s.readDB.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM monitors m WHERE "+where, countArgs...).Scan(&total)
 	if err != nil {
 		return nil, err
 	}
 
 	offset := (p.Page - 1) * p.PerPage
+	args = append(args, p.PerPage, offset)
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
@@ -198,8 +214,9 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, p Pagination) (*Paginate
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
+		 WHERE `+where+`
 		 ORDER BY m.name COLLATE NOCASE ASC
-		 LIMIT ? OFFSET ?`, p.PerPage, offset)
+		 LIMIT ? OFFSET ?`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -443,7 +460,7 @@ func (s *SQLiteStore) GetIncident(ctx context.Context, id int64) (*Incident, err
 	return &inc, nil
 }
 
-func (s *SQLiteStore) ListIncidents(ctx context.Context, monitorID int64, status string, p Pagination) (*PaginatedResult, error) {
+func (s *SQLiteStore) ListIncidents(ctx context.Context, monitorID int64, status string, search string, p Pagination) (*PaginatedResult, error) {
 	where := "1=1"
 	args := []interface{}{}
 	if monitorID > 0 {
@@ -454,12 +471,16 @@ func (s *SQLiteStore) ListIncidents(ctx context.Context, monitorID int64, status
 		where += " AND i.status=?"
 		args = append(args, status)
 	}
+	if search != "" {
+		where += " AND (COALESCE(m.name, '') LIKE '%' || ? || '%' OR i.cause LIKE '%' || ? || '%')"
+		args = append(args, search, search)
+	}
 
 	var total int64
 	countArgs := make([]interface{}, len(args))
 	copy(countArgs, args)
 	err := s.readDB.QueryRowContext(ctx,
-		"SELECT COUNT(*) FROM incidents i WHERE "+where, countArgs...).Scan(&total)
+		"SELECT COUNT(*) FROM incidents i LEFT JOIN monitors m ON m.id = i.monitor_id WHERE "+where, countArgs...).Scan(&total)
 	if err != nil {
 		return nil, err
 	}

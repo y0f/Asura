@@ -61,7 +61,7 @@ func TestMonitorCRUD(t *testing.T) {
 	}
 
 	// List
-	result, err := store.ListMonitors(ctx, Pagination{Page: 1, PerPage: 10})
+	result, err := store.ListMonitors(ctx, MonitorListFilter{}, Pagination{Page: 1, PerPage: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +171,7 @@ func TestIncidents(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := store.ListIncidents(ctx, 0, "", Pagination{Page: 1, PerPage: 10})
+	result, err := store.ListIncidents(ctx, 0, "", "", Pagination{Page: 1, PerPage: 10})
 	if err != nil {
 		t.Fatal(err)
 	}

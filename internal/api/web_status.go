@@ -199,7 +199,7 @@ func (s *Server) publicIncidents(ctx context.Context, cfg *storage.StatusPageCon
 		publicIDs[m.ID] = true
 	}
 
-	incResult, err := s.store.ListIncidents(ctx, 0, "", storage.Pagination{Page: 1, PerPage: 20})
+	incResult, err := s.store.ListIncidents(ctx, 0, "", "", storage.Pagination{Page: 1, PerPage: 20})
 	if err != nil || incResult == nil {
 		return []*storage.Incident{}
 	}

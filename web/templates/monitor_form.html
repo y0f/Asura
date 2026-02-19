@@ -2,7 +2,7 @@
 {{define "content"}}
 {{$fd := .Data}}
 {{$mon := $fd.Monitor}}
-<div x-data="{
+<div x-cloak x-data="{
     monitorType: '{{if $mon.Type}}{{$mon.Type}}{{else}}http{{end}}',
     advancedSettings: false,
     advancedAssertions: false,
@@ -58,7 +58,7 @@
                 <div>
                     <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Type</label>
                     <select name="type" x-model="monitorType"
-                            class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                            class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
                         <option value="http">HTTP</option>
                         <option value="tcp">TCP</option>
                         <option value="dns">DNS</option>
@@ -158,7 +158,7 @@
                         <div>
                             <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Method</label>
                             <select name="settings_method" x-model="httpMethod"
-                                    class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
                                 <option value="GET">GET</option>
                                 <option value="POST">POST</option>
                                 <option value="PUT">PUT</option>
@@ -180,7 +180,7 @@
                         <div>
                             <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Body Encoding</label>
                             <select name="settings_body_encoding"
-                                    class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
                                 <option value="json" {{if eq $fd.HTTP.BodyEncoding "json"}}selected{{end}}>JSON</option>
                                 <option value="xml" {{if eq $fd.HTTP.BodyEncoding "xml"}}selected{{end}}>XML</option>
                                 <option value="form" {{if eq $fd.HTTP.BodyEncoding "form"}}selected{{end}}>Form</option>
@@ -218,7 +218,7 @@
                         <div>
                             <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Authentication</label>
                             <select name="settings_auth_method" x-model="authMethod"
-                                    class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
                                 <option value="none">None</option>
                                 <option value="basic">Basic Auth</option>
                                 <option value="bearer">Bearer Token</option>
@@ -286,7 +286,7 @@
                         <div>
                             <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Record Type</label>
                             <select name="settings_record_type"
-                                    class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
                                 <option value="A" {{if eq $fd.DNS.RecordType "A"}}selected{{end}}>A</option>
                                 <option value="AAAA" {{if eq $fd.DNS.RecordType "AAAA"}}selected{{end}}>AAAA</option>
                                 <option value="CNAME" {{if eq $fd.DNS.RecordType "CNAME"}}selected{{end}}>CNAME</option>
@@ -397,7 +397,7 @@
                                 <div>
                                     <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Type</label>
                                     <select :name="'assertion_type_' + i" x-model="a.type"
-                                            class="w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
+                                            class="form-select w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
                                         <option value="status_code">Status Code</option>
                                         <option value="body_contains">Body Contains</option>
                                         <option value="body_regex">Body Regex</option>
@@ -411,7 +411,7 @@
                                 <div>
                                     <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Operator</label>
                                     <select :name="'assertion_operator_' + i" x-model="a.operator"
-                                            class="w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
+                                            class="form-select w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
                                         <template x-for="op in operatorsFor(a.type)" :key="op[0]">
                                             <option :value="op[0]" x-text="op[1]"></option>
                                         </template>
@@ -448,7 +448,7 @@
             <button type="submit" class="px-5 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
                 {{if $mon.ID}}Update{{else}}Create{{end}}
             </button>
-            <a href="{{.BasePath}}/monitors" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</a>
+            <a href="{{.BasePath}}/monitors{{if $mon.ID}}/{{$mon.ID}}{{end}}" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</a>
         </div>
     </form>
 </div>

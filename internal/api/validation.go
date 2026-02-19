@@ -14,6 +14,10 @@ var validMonitorTypes = map[string]bool{
 	"heartbeat": true,
 }
 
+var validIncidentStatuses = map[string]bool{
+	"open": true, "acknowledged": true, "resolved": true,
+}
+
 var validNotificationTypes = map[string]bool{
 	"webhook": true, "email": true, "telegram": true,
 	"discord": true, "slack": true,

@@ -250,6 +250,7 @@ var templateFuncs = template.FuncMap{
 		return template.JS(b)
 	},
 	"safeCSS": func(s string) template.CSS { return template.CSS(s) },
+	"list":    func(args ...string) []string { return args },
 	"add":     func(a, b int) int { return a + b },
 	"sub": func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {

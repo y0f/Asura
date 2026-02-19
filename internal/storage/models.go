@@ -232,6 +232,12 @@ type PathCount struct {
 	Count int64  `json:"count"`
 }
 
+// MonitorListFilter holds filter parameters for listing monitors.
+type MonitorListFilter struct {
+	Type   string
+	Search string
+}
+
 // RequestLogFilter holds filter parameters for listing request logs.
 type RequestLogFilter struct {
 	Method     string

@@ -10,7 +10,7 @@ type Store interface {
 	// Monitors
 	CreateMonitor(ctx context.Context, m *Monitor) error
 	GetMonitor(ctx context.Context, id int64) (*Monitor, error)
-	ListMonitors(ctx context.Context, p Pagination) (*PaginatedResult, error)
+	ListMonitors(ctx context.Context, f MonitorListFilter, p Pagination) (*PaginatedResult, error)
 	UpdateMonitor(ctx context.Context, m *Monitor) error
 	DeleteMonitor(ctx context.Context, id int64) error
 	SetMonitorEnabled(ctx context.Context, id int64, enabled bool) error
@@ -28,7 +28,7 @@ type Store interface {
 	// Incidents
 	CreateIncident(ctx context.Context, inc *Incident) error
 	GetIncident(ctx context.Context, id int64) (*Incident, error)
-	ListIncidents(ctx context.Context, monitorID int64, status string, p Pagination) (*PaginatedResult, error)
+	ListIncidents(ctx context.Context, monitorID int64, status string, search string, p Pagination) (*PaginatedResult, error)
 	UpdateIncident(ctx context.Context, inc *Incident) error
 	DeleteIncident(ctx context.Context, id int64) error
 	GetOpenIncident(ctx context.Context, monitorID int64) (*Incident, error)

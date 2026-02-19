@@ -16,7 +16,7 @@ import (
 
 func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
-	result, err := s.store.ListMonitors(r.Context(), p)
+	result, err := s.store.ListMonitors(r.Context(), storage.MonitorListFilter{}, p)
 	if err != nil {
 		s.logger.Error("list monitors", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to list monitors")

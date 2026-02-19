@@ -15,8 +15,11 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
 	monitorID, _ := strconv.ParseInt(r.URL.Query().Get("monitor_id"), 10, 64)
 	status := r.URL.Query().Get("status")
+	if !validIncidentStatuses[status] {
+		status = ""
+	}
 
-	result, err := s.store.ListIncidents(r.Context(), monitorID, status, p)
+	result, err := s.store.ListIncidents(r.Context(), monitorID, status, "", p)
 	if err != nil {
 		s.logger.Error("list incidents", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to list incidents")

@@ -23,7 +23,7 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		typeFilter = ""
 	}
 
-	allResult, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 1000})
+	allResult, err := s.store.ListMonitors(ctx, storage.MonitorListFilter{}, storage.Pagination{Page: 1, PerPage: 1000})
 	if err != nil {
 		s.logger.Error("web: list monitors", "error", err)
 	}
@@ -78,7 +78,7 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	displayMonitors := filtered[start:end]
 
-	incidents, err := s.store.ListIncidents(ctx, 0, "open", storage.Pagination{Page: 1, PerPage: 10})
+	incidents, err := s.store.ListIncidents(ctx, 0, "open", "", storage.Pagination{Page: 1, PerPage: 10})
 	if err != nil {
 		s.logger.Error("web: list incidents", "error", err)
 	}

@@ -26,7 +26,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(&sb, "asura_monitors_total{status=\"degraded\"} %d\n", degraded)
 	fmt.Fprintf(&sb, "asura_monitors_total{status=\"paused\"} %d\n", paused)
 
-	monitors, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 1000})
+	monitors, err := s.store.ListMonitors(ctx, storage.MonitorListFilter{}, storage.Pagination{Page: 1, PerPage: 1000})
 	if err != nil {
 		s.logger.Error("metrics: list monitors", "error", err)
 		writeError(w, http.StatusInternalServerError, "metrics error")

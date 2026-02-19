@@ -258,13 +258,24 @@ func assembleAssertions(r *http.Request) json.RawMessage {
 
 func (s *Server) handleWebMonitors(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
-	result, err := s.store.ListMonitors(r.Context(), p)
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	typeFilter := r.URL.Query().Get("type")
+	if !validMonitorTypes[typeFilter] {
+		typeFilter = ""
+	}
+
+	f := storage.MonitorListFilter{Type: typeFilter, Search: q}
+	result, err := s.store.ListMonitors(r.Context(), f, p)
 	if err != nil {
 		s.logger.Error("web: list monitors", "error", err)
 	}
 
 	pd := s.newPageData(r, "Monitors", "monitors")
-	pd.Data = result
+	pd.Data = map[string]interface{}{
+		"Result": result,
+		"Search": q,
+		"Type":   typeFilter,
+	}
 	s.render(w, "monitors.html", pd)
 }
 
