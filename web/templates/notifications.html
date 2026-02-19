@@ -102,7 +102,7 @@
     <div x-show="showForm" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" @click.self="showForm = false">
         <div class="bg-surface-100 border border-line rounded-lg p-5 w-full max-w-md max-h-[90vh] overflow-y-auto" x-show="showForm" x-transition @click.stop>
             <h3 class="text-[15px] font-medium text-white mb-4" x-text="editId ? 'Edit Notification Channel' : 'New Notification Channel'"></h3>
-            <form method="POST" :action="editId ? '{{$.BasePath}}/notifications/' + editId : '{{$.BasePath}}/notifications'" class="space-y-3">
+            <form method="POST" action="{{$.BasePath}}/notifications" @submit="if(editId) $el.action = '{{$.BasePath}}/notifications/' + editId" class="space-y-3">
                 <div>
                     <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Name</label>
                     <input type="text" name="name" x-model="formData.name" required
