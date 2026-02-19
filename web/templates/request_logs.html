@@ -42,7 +42,7 @@
             <input type="hidden" name="range" value="{{.Data.TimeRange}}">
             {{if .Data.Filter}}<input type="hidden" name="group" value="{{.Data.Filter}}">{{end}}
             <select name="ip" onchange="this.form.submit()"
-                    class="px-2.5 py-1 text-[11px] border rounded transition-colors focus:outline-none {{if .Data.ClientIP}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line bg-transparent hover:text-muted-light{{end}}">
+                    class="form-select px-2.5 py-1 text-[11px] border rounded transition-colors focus:outline-none {{if .Data.ClientIP}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line bg-surface hover:text-muted-light{{end}}">
                 <option value="">All IPs</option>
                 {{range .Data.TopIPs}}
                 <option value="{{.}}" {{if eq . $.Data.ClientIP}}selected{{end}}>{{.}}</option>

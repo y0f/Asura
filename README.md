@@ -65,6 +65,36 @@ No runtime. No external database. No container required. Build, copy, run.
 
 ---
 
+## Web UI
+
+Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js. No Node.js runtime required — the CSS is pre-built and committed.
+
+![Web UI](assets/webpanel.png)
+
+### Features
+
+- **Form-based monitor configuration** — per-protocol settings with dropdowns, toggles, and key-value builders. No JSON required.
+- **Assertion builder** — visual rule editor with type-aware operator dropdowns and soft/hard failure modes.
+- **Notification channel forms** — per-type fields for Webhook, Email, Telegram, Discord, and Slack. Event checkboxes instead of CSV.
+- **Advanced JSON mode** — toggle on any form to drop into a raw JSON textarea for power users or API parity.
+- **Dashboard** — live status overview with response time sparklines, tag filters, and bulk actions.
+- **Incident timeline** — per-incident event history with ack/resolve actions.
+- **Content change diffs** — line-by-line comparison of body changes.
+- **Request log viewer** — filter by route group, method, status code with visitor analytics.
+- **Public status page** — configurable from the sidebar with 90-day uptime bars and custom CSS.
+- **Sub-path aware** — all links, forms, and assets respect `base_path` configuration.
+
+The web UI and REST API are fully equivalent — every monitor, notification, and setting configurable via API can also be managed through the dashboard.
+
+The UI is enabled by default and can be disabled for API-only deployments:
+
+```yaml
+server:
+  web_ui_enabled: true
+```
+
+---
+
 ## Quick Start
 
 ### VPS (recommended)
@@ -689,38 +719,6 @@ Scheduler -> Worker Pool -> Result Processor -> Dispatcher
 ```
 
 Channel-based pipeline with backpressure. SQLite WAL mode with separate read/write pools.
-
----
-
-## Web UI
-
-Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js. No Node.js runtime required — the CSS is pre-built and committed.
-
-### Features
-
-- **Form-based monitor configuration** — per-protocol settings with dropdowns, toggles, and key-value builders. No JSON required.
-- **Assertion builder** — visual rule editor with type-aware operator dropdowns and soft/hard failure modes.
-- **Notification channel forms** — per-type fields for Webhook, Email, Telegram, Discord, and Slack. Event checkboxes instead of CSV.
-- **Advanced JSON mode** — toggle on any form to drop into a raw JSON textarea for power users or API parity.
-- **Dashboard** — live status overview with response time sparklines, tag filters, and bulk actions.
-- **Incident timeline** — per-incident event history with ack/resolve actions.
-- **Content change diffs** — line-by-line comparison of body changes.
-- **Request log viewer** — filter by route group, method, status code with visitor analytics.
-- **Public status page** — configurable from the sidebar with 90-day uptime bars and custom CSS.
-- **Sub-path aware** — all links, forms, and assets respect `base_path` configuration.
-
-The web UI and REST API are fully equivalent — every monitor, notification, and setting configurable via API can also be managed through the dashboard.
-
-The UI is enabled by default and can be disabled for API-only deployments:
-
-```yaml
-server:
-  web_ui_enabled: true
-```
-
-See the [Configuration](#configuration) section for details.
-
-![Web UI](assets/webpanel.png)
 
 ## Contributing
 
