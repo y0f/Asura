@@ -232,7 +232,7 @@ func (s *Server) checkOrigin(r *http.Request) bool {
 		}
 		return hosts[stripPort(u.Host)]
 	}
-	return true
+	return false
 }
 
 func stripPort(host string) string {

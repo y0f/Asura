@@ -312,7 +312,7 @@ func auth(cfg *config.Config, perm string) func(http.Handler) http.Handler {
 			}
 
 			if !apiKey.HasPermission(perm) {
-				writeError(w, http.StatusForbidden, "missing permission: "+perm)
+				writeError(w, http.StatusForbidden, "forbidden")
 				return
 			}
 
