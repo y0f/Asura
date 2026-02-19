@@ -105,7 +105,7 @@ cd Asura
 sudo bash install.sh
 ```
 
-Installs Go (if needed), builds the binary, creates a systemd service with a cryptographically generated admin key. Under 2 minutes on a fresh Ubuntu box.
+Installs Go (if needed), builds the binary, creates a systemd service and generates an admin key. Under 2 minutes on a fresh Ubuntu box.
 
 **Important:** By default, Asura binds to `127.0.0.1:8090` and is **not** accessible from the internet. You must set up a reverse proxy to expose it. See [Production Deployment](#production-deployment) below.
 
@@ -144,7 +144,7 @@ scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura
 
 ## Production Deployment
 
-This section walks through deploying Asura on a VPS so that it is **never exposed directly to the internet**. The pattern: Asura listens on localhost, nginx terminates TLS and proxies to it.
+Asura listens on localhost, nginx terminates TLS and proxies to it — never exposed directly to the internet.
 
 ### 1. Install Asura
 
@@ -335,7 +335,7 @@ Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in `co
 
 ### Generating a Key (Recommended)
 
-Use the built-in generator for a cryptographically secure key:
+Use the built-in generator:
 
 ```bash
 ./asura --setup
@@ -406,7 +406,7 @@ curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitor
 
 **Web UI**: Enter the raw key on the login page. A server-side session is created with a secure random token stored in a cookie (24h expiry by default, HttpOnly, Secure). The raw API key is never stored in the cookie. Login attempts are rate-limited per IP.
 
-You can configure multiple keys with different names and permissions. Each key's name is recorded in the audit log for traceability. Login successes and failures are also audited.
+You can configure multiple keys with different names and permissions. Each key's name appears in the audit log. Login successes and failures are also recorded.
 
 ---
 
@@ -497,10 +497,10 @@ GET  /api/v1/status          Public status overview (monitors, uptime, incidents
 
 Returns only safe fields (name, type, status, uptime) — no targets, settings, or credentials are exposed. Set `"public": true` on monitors to include them.
 
-Availability is controlled independently of the hosted status page UI:
-- `enabled: true` — hosted status page UI + API both on
-- `public_api_enabled: true` — API on, hosted UI off (useful for building a custom status page)
-- Both `false` — returns 404
+The API and hosted UI are toggled separately:
+- `enabled: true` — web page + API both on
+- `public_api_enabled: true` — API only, no hosted page
+- both `false` — returns 404
 
 ### Status Page Config
 
