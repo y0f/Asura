@@ -47,7 +47,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | | |
 |---|---|
 | **8 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Heartbeat |
-| **Assertion engine** | 8 types -- status code, response time, JSON path, body regex, headers, cert expiry, DNS records |
+| **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
 | **Change detection** | Line-level diffs on response bodies |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
@@ -470,9 +470,9 @@ GET  /api/v1/status/config   Get status page settings
 PUT  /api/v1/status/config   Update status page settings
 ```
 
-Configure the public status page via API. Fields: `enabled` (bool), `title`, `description`, `show_incidents` (bool), `custom_css`.
+Configure the public status page via API. Fields: `enabled` (bool), `title`, `description`, `show_incidents` (bool), `custom_css`, `slug` (URL path, e.g. `"status"` serves at `/{slug}`).
 
-The built-in web UI also serves a hosted status page at `/status` with 90-day uptime bars. Configure it from the sidebar under **Status Page** — set the title, description, toggle incident history, and add custom CSS. Monitors with `public: true` appear automatically.
+The built-in web UI also serves a hosted status page at `/{slug}` with 90-day uptime bars. Configure it from the sidebar under **Status Page** — set the title, description, URL slug, toggle incident history, and add custom CSS. Monitors with `public: true` appear automatically.
 
 ### Status Badges *(no auth, public monitors only)*
 
@@ -510,6 +510,8 @@ POST   /api/v1/notifications/{id}/test Test
 
 Types: `webhook` `email` `telegram` `discord` `slack`
 
+Events: `incident.created` `incident.acknowledged` `incident.resolved` `content.changed`
+
 ### Maintenance Windows
 
 ```
@@ -518,6 +520,8 @@ POST   /api/v1/maintenance             Create
 PUT    /api/v1/maintenance/{id}        Update
 DELETE /api/v1/maintenance/{id}        Delete
 ```
+
+`recurring` values: `""` (one-time), `"daily"`, `"weekly"`, `"monthly"`
 
 ### Request Logs
 
