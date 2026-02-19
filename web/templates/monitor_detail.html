@@ -276,7 +276,11 @@
             <div><span class="text-muted">Fail threshold</span> <span class="text-muted-light ml-1">{{$mon.FailureThreshold}}</span></div>
             <div><span class="text-muted">Success threshold</span> <span class="text-muted-light ml-1">{{$mon.SuccessThreshold}}</span></div>
             <div><span class="text-muted">Enabled</span> <span class="{{if $mon.Enabled}}text-emerald-400{{else}}text-muted{{end}} ml-1">{{if $mon.Enabled}}yes{{else}}no{{end}}</span></div>
+            <div><span class="text-muted">Public</span> <span class="{{if $mon.Public}}text-brand{{else}}text-muted{{end}} ml-1">{{if $mon.Public}}yes{{else}}no{{end}}</span></div>
             {{if $mon.TrackChanges}}<div><span class="text-muted">Track changes</span> <span class="text-brand ml-1">yes</span></div>{{end}}
+            {{if $mon.UpsideDown}}<div><span class="text-muted">Upside-down</span> <span class="text-yellow-400 ml-1">yes</span></div>{{end}}
+            {{if $mon.ResendInterval}}<div><span class="text-muted">Resend every</span> <span class="text-muted-light ml-1">{{$mon.ResendInterval}}s</span></div>{{end}}
+            {{if $mon.Description}}<div class="col-span-full"><span class="text-muted">Description</span> <span class="text-muted-light ml-1">{{$mon.Description}}</span></div>{{end}}
             {{if $mon.Tags}}<div class="col-span-full"><span class="text-muted">Tags</span> <span class="text-muted-light ml-1">{{range $i, $t := $mon.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}</span></div>{{end}}
         </div>
     </div>
