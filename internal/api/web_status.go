@@ -170,7 +170,7 @@ func (s *Server) renderStatusPage(w http.ResponseWriter, data pageData) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'")
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'")
 	if err := t.ExecuteTemplate(w, "status_page", data); err != nil {
 		s.logger.Error("template render", "template", "status_page.html", "error", err)
 	}

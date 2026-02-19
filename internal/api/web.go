@@ -300,7 +300,7 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "+s.cspFrameDirective)
 	if err := t.ExecuteTemplate(w, layoutName, data); err != nil {
 		s.logger.Error("template render", "template", tmpl, "error", err)
 	}
