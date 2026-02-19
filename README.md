@@ -53,7 +53,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
-| **Web dashboard** | Dark/light-mode UI with system preference -- manage everything from the browser |
+| **Web dashboard** | Form-based monitor & notification config, assertion builder, dark/light mode |
 | **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
 | **Public status page** | Configurable hosted page with 90-day uptime bars, or build your own via API |
 | **Analytics** | Uptime %, response time percentiles |
@@ -414,6 +414,7 @@ GET    /api/v1/monitors/{id}/changes   Content changes
 | Field              | Type     | Required | Description                                        |
 |--------------------|----------|----------|----------------------------------------------------|
 | `name`             | string   | yes      | Display name                                       |
+| `description`      | string   |          | Optional description or notes                      |
 | `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `heartbeat` |
 | `target`           | string   | yes      | URL, host:port, domain, or command                 |
 | `interval`         | int      |          | Seconds between checks (default: 60)               |
@@ -425,6 +426,8 @@ GET    /api/v1/monitors/{id}/changes   Content changes
 | `failure_threshold`| int      |          | Failures before incident (default: 3)              |
 | `success_threshold`| int      |          | Successes before recovery (default: 1)             |
 | `public`           | bool     |          | Expose to badges and public status page (default: false) |
+| `upside_down`      | bool     |          | Inverted mode — "up" becomes "down" and vice versa |
+| `resend_interval`  | int      |          | Re-send notifications every N checks while down (0 = once) |
 
 ### Heartbeat Monitoring
 
@@ -513,6 +516,34 @@ Types: `webhook` `email` `telegram` `discord` `slack`
 
 Events: `incident.created` `incident.acknowledged` `incident.resolved` `content.changed`
 
+<details><summary><strong>Notification Settings by Type</strong></summary>
+
+**Webhook**
+```json
+{"url": "https://example.com/hook", "secret": "hmac-secret"}
+```
+
+**Telegram**
+```json
+{"bot_token": "123456:ABC-DEF...", "chat_id": "-1001234567890"}
+```
+
+**Discord**
+```json
+{"webhook_url": "https://discord.com/api/webhooks/..."}
+```
+
+**Slack**
+```json
+{"webhook_url": "https://hooks.slack.com/services/...", "channel": "#alerts"}
+```
+
+**Email (SMTP)**
+```json
+{"host": "smtp.example.com", "port": 587, "username": "alerts@example.com", "password": "...", "from": "alerts@example.com", "to": "ops@example.com,oncall@example.com"}
+```
+</details>
+
 ### Maintenance Windows
 
 ```
@@ -574,8 +605,35 @@ Evaluated after each check. Failed assertions mark a monitor `down` or `degraded
 
 <details><summary><strong>HTTP</strong></summary>
 
+| Field              | Type              | Description                                                |
+|--------------------|-------------------|------------------------------------------------------------|
+| `method`           | string            | HTTP method (default: `GET`)                               |
+| `headers`          | map[string]string | Custom request headers                                     |
+| `body`             | string            | Request body (for POST/PUT/PATCH)                          |
+| `body_encoding`    | string            | Content-Type hint: `json`, `xml`, `form`, or empty for raw |
+| `auth_method`      | string            | `none`, `basic`, or `bearer` (default: inferred)           |
+| `basic_auth_user`  | string            | Basic auth username                                        |
+| `basic_auth_pass`  | string            | Basic auth password                                        |
+| `bearer_token`     | string            | Bearer token (used when `auth_method` is `bearer`)         |
+| `expected_status`  | int               | Expected HTTP status code (0 = any 2xx/3xx)                |
+| `follow_redirects` | bool              | Follow redirects (default: true) — legacy, prefer `max_redirects` |
+| `max_redirects`    | int               | Maximum redirect hops (0 = don't follow, default: 10)      |
+| `skip_tls_verify`  | bool              | Skip TLS certificate verification                          |
+| `cache_buster`     | bool              | Append unique query param to bypass caches                 |
+
 ```json
-{"method":"POST","headers":{"Authorization":"Bearer token"},"body":"{\"key\":\"value\"}","follow_redirects":true,"skip_tls_verify":false,"basic_auth_user":"user","basic_auth_pass":"pass"}
+{
+  "method": "POST",
+  "headers": {"X-Custom": "value"},
+  "body": "{\"key\":\"value\"}",
+  "body_encoding": "json",
+  "auth_method": "bearer",
+  "bearer_token": "eyJhbGci...",
+  "expected_status": 200,
+  "max_redirects": 5,
+  "skip_tls_verify": false,
+  "cache_buster": false
+}
 ```
 </details>
 
@@ -635,7 +693,22 @@ Channel-based pipeline with backpressure. SQLite WAL mode with separate read/wri
 
 ## Web UI
 
-Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js.
+Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js. No Node.js runtime required — the CSS is pre-built and committed.
+
+### Features
+
+- **Form-based monitor configuration** — per-protocol settings with dropdowns, toggles, and key-value builders. No JSON required.
+- **Assertion builder** — visual rule editor with type-aware operator dropdowns and soft/hard failure modes.
+- **Notification channel forms** — per-type fields for Webhook, Email, Telegram, Discord, and Slack. Event checkboxes instead of CSV.
+- **Advanced JSON mode** — toggle on any form to drop into a raw JSON textarea for power users or API parity.
+- **Dashboard** — live status overview with response time sparklines, tag filters, and bulk actions.
+- **Incident timeline** — per-incident event history with ack/resolve actions.
+- **Content change diffs** — line-by-line comparison of body changes.
+- **Request log viewer** — filter by route group, method, status code with visitor analytics.
+- **Public status page** — configurable from the sidebar with 90-day uptime bars and custom CSS.
+- **Sub-path aware** — all links, forms, and assets respect `base_path` configuration.
+
+The web UI and REST API are fully equivalent — every monitor, notification, and setting configurable via API can also be managed through the dashboard.
 
 The UI is enabled by default and can be disabled for API-only deployments:
 

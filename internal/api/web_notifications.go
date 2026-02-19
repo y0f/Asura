@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/y0f/Asura/internal/notifier"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -104,22 +105,101 @@ func (s *Server) parseNotificationForm(r *http.Request) *storage.NotificationCha
 		Enabled: r.FormValue("enabled") == "on",
 	}
 
-	if settings := r.FormValue("settings"); settings != "" {
-		ch.Settings = json.RawMessage(settings)
+	if r.FormValue("notif_settings_mode") == "json" {
+		if raw := strings.TrimSpace(r.FormValue("settings_json")); raw != "" && json.Valid([]byte(raw)) {
+			ch.Settings = json.RawMessage(raw)
+		}
+	} else {
+		ch.Settings = assembleNotificationSettings(r, ch.Type)
 	}
 
-	if events := r.FormValue("events"); events != "" {
-		for _, e := range strings.Split(events, ",") {
-			if trimmed := strings.TrimSpace(e); trimmed != "" {
-				ch.Events = append(ch.Events, trimmed)
-			}
-		}
-	}
+	ch.Events = parseNotificationEvents(r)
 
 	return ch
 }
 
-func parseNotifID(r *http.Request) int64 {
-	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	return id
+func parseNotificationEvents(r *http.Request) []string {
+	var events []string
+	eventKeys := []string{
+		"event_incident_created",
+		"event_incident_resolved",
+		"event_incident_acknowledged",
+		"event_content_changed",
+	}
+	eventValues := []string{
+		"incident.created",
+		"incident.resolved",
+		"incident.acknowledged",
+		"content.changed",
+	}
+	for i, key := range eventKeys {
+		if r.FormValue(key) == "on" {
+			events = append(events, eventValues[i])
+		}
+	}
+	if len(events) > 0 {
+		return events
+	}
+
+	if csv := r.FormValue("events"); csv != "" {
+		for _, e := range strings.Split(csv, ",") {
+			if trimmed := strings.TrimSpace(e); trimmed != "" {
+				events = append(events, trimmed)
+			}
+		}
+	}
+	return events
 }
+
+func assembleNotificationSettings(r *http.Request, chType string) json.RawMessage {
+	switch chType {
+	case "webhook":
+		s := notifier.WebhookSettings{
+			URL:    r.FormValue("notif_webhook_url"),
+			Secret: r.FormValue("notif_webhook_secret"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "telegram":
+		s := notifier.TelegramSettings{
+			BotToken: r.FormValue("notif_telegram_bot_token"),
+			ChatID:   r.FormValue("notif_telegram_chat_id"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "discord":
+		s := notifier.DiscordSettings{
+			WebhookURL: r.FormValue("notif_discord_webhook_url"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "slack":
+		s := notifier.SlackSettings{
+			WebhookURL: r.FormValue("notif_slack_webhook_url"),
+			Channel:    r.FormValue("notif_slack_channel"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "email":
+		port, _ := strconv.Atoi(r.FormValue("notif_email_port"))
+		s := notifier.EmailSettings{
+			Host:     r.FormValue("notif_email_host"),
+			Port:     port,
+			Username: r.FormValue("notif_email_username"),
+			Password: r.FormValue("notif_email_password"),
+			From:     r.FormValue("notif_email_from"),
+		}
+		if toStr := strings.TrimSpace(r.FormValue("notif_email_to")); toStr != "" {
+			for _, addr := range strings.Split(toStr, ",") {
+				if trimmed := strings.TrimSpace(addr); trimmed != "" {
+					s.To = append(s.To, trimmed)
+				}
+			}
+		}
+		b, _ := json.Marshal(s)
+		return b
+	default:
+		return json.RawMessage("{}")
+	}
+}
+

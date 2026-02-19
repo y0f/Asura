@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 8
+const schemaVersion = 9
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 CREATE TABLE IF NOT EXISTS monitors (
 	id              INTEGER PRIMARY KEY AUTOINCREMENT,
 	name            TEXT    NOT NULL,
+	description     TEXT    NOT NULL DEFAULT '',
 	type            TEXT    NOT NULL,
 	target          TEXT    NOT NULL,
 	interval_secs   INTEGER NOT NULL DEFAULT 60,
@@ -22,6 +23,8 @@ CREATE TABLE IF NOT EXISTS monitors (
 	failure_threshold INTEGER NOT NULL DEFAULT 3,
 	success_threshold INTEGER NOT NULL DEFAULT 1,
 	public          INTEGER NOT NULL DEFAULT 0,
+	upside_down     INTEGER NOT NULL DEFAULT 0,
+	resend_interval INTEGER NOT NULL DEFAULT 0,
 	created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
 	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
@@ -262,5 +265,11 @@ INSERT OR IGNORE INTO status_page_config (id) VALUES (1);`,
 	{
 		version: 8,
 		sql:     `ALTER TABLE status_page_config ADD COLUMN slug TEXT NOT NULL DEFAULT 'status';`,
+	},
+	{
+		version: 9,
+		sql: `ALTER TABLE monitors ADD COLUMN description TEXT NOT NULL DEFAULT '';
+ALTER TABLE monitors ADD COLUMN upside_down INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE monitors ADD COLUMN resend_interval INTEGER NOT NULL DEFAULT 0;`,
 	},
 }

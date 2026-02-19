@@ -1,10 +1,58 @@
 {{define "title"}}Notifications{{end}}
 {{define "content"}}
-<div x-data="{showForm: false, editId: 0, formData: {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}}">
+<div x-data="{
+    showForm: false,
+    editId: 0,
+    advancedNotifSettings: false,
+    formData: {name:'', type:'webhook', enabled:true, settings_json:'{}'},
+    events: {created:true, resolved:true, acknowledged:false, changed:false},
+    webhook: {url:'', secret:''},
+    telegram: {bot_token:'', chat_id:''},
+    discord: {webhook_url:''},
+    slack: {webhook_url:'', channel:''},
+    email: {host:'', port:587, username:'', password:'', from:'', to:''},
+    resetForm() {
+        this.editId = 0;
+        this.advancedNotifSettings = false;
+        this.formData = {name:'', type:'webhook', enabled:true, settings_json:'{}'};
+        this.events = {created:true, resolved:true, acknowledged:false, changed:false};
+        this.webhook = {url:'', secret:''};
+        this.telegram = {bot_token:'', chat_id:''};
+        this.discord = {webhook_url:''};
+        this.slack = {webhook_url:'', channel:''};
+        this.email = {host:'', port:587, username:'', password:'', from:'', to:''};
+    },
+    editChannel(ch) {
+        this.resetForm();
+        this.editId = ch.id;
+        this.formData.name = ch.name;
+        this.formData.type = ch.type;
+        this.formData.enabled = ch.enabled;
+        this.formData.settings_json = JSON.stringify(ch.settings || {});
+        this.events = {created:false, resolved:false, acknowledged:false, changed:false};
+        if (ch.events) {
+            ch.events.forEach(e => {
+                if (e === 'incident.created') this.events.created = true;
+                if (e === 'incident.resolved') this.events.resolved = true;
+                if (e === 'incident.acknowledged') this.events.acknowledged = true;
+                if (e === 'content.changed') this.events.changed = true;
+            });
+        }
+        let s = ch.settings || {};
+        switch(ch.type) {
+            case 'webhook': this.webhook = {url: s.url||'', secret: s.secret||''}; break;
+            case 'telegram': this.telegram = {bot_token: s.bot_token||'', chat_id: s.chat_id||''}; break;
+            case 'discord': this.discord = {webhook_url: s.webhook_url||''}; break;
+            case 'slack': this.slack = {webhook_url: s.webhook_url||'', channel: s.channel||''}; break;
+            case 'email': this.email = {host: s.host||'', port: s.port||587, username: s.username||'', password: s.password||'', from: s.from||'', to: (s.to||[]).join(', ')}; break;
+        }
+        this.showForm = true;
+    }
+}">
     <div class="flex items-center justify-between mb-5">
         <h1 class="text-[15px] font-medium text-white">Notification Channels</h1>
         {{if index .Perms "notifications.write"}}
-        <button @click="showForm = true; editId = 0; formData = {name:'', type:'webhook', settings:'{}', events:'incident.created,incident.resolved', enabled:true}"
+        <button @click="resetForm(); showForm = true"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m7-7H5"/></svg>
             New Channel
@@ -30,6 +78,8 @@
             </div>
             {{if index $.Perms "notifications.write"}}
             <div class="flex items-center gap-1.5 pt-2.5 border-t border-line">
+                <button type="button" @click="editChannel({{toJSON .}})"
+                        class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Edit</button>
                 <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/test" class="inline">
                     <button type="submit" class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Test</button>
                 </form>
@@ -44,14 +94,15 @@
     {{else}}
     <div class="border border-line rounded-lg px-4 py-16 text-center">
         <p class="text-muted text-[13px] mb-2">No notification channels</p>
-        <button @click="showForm = true" class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create one</button>
+        <button @click="resetForm(); showForm = true" class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create one</button>
     </div>
     {{end}}
 
+    <!-- Modal -->
     <div x-show="showForm" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" @click.self="showForm = false">
-        <div class="bg-surface-100 border border-line rounded-lg p-5 w-full max-w-md" x-show="showForm" x-transition @click.stop>
-            <h3 class="text-[15px] font-medium text-white mb-4">New Notification Channel</h3>
-            <form method="POST" action="{{$.BasePath}}/notifications" class="space-y-3">
+        <div class="bg-surface-100 border border-line rounded-lg p-5 w-full max-w-md max-h-[90vh] overflow-y-auto" x-show="showForm" x-transition @click.stop>
+            <h3 class="text-[15px] font-medium text-white mb-4" x-text="editId ? 'Edit Notification Channel' : 'New Notification Channel'"></h3>
+            <form method="POST" :action="editId ? '{{$.BasePath}}/notifications/' + editId : '{{$.BasePath}}/notifications'" class="space-y-3">
                 <div>
                     <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Name</label>
                     <input type="text" name="name" x-model="formData.name" required
@@ -68,22 +119,151 @@
                         <option value="slack">Slack</option>
                     </select>
                 </div>
+
+                <!-- Settings -->
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Settings (JSON)</label>
-                    <textarea name="settings" x-model="formData.settings" rows="3"
-                              class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] font-mono focus:outline-none focus:border-brand/30 transition-colors"></textarea>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-[11px] text-muted uppercase tracking-widest">Settings</label>
+                        <button type="button" @click="advancedNotifSettings = !advancedNotifSettings"
+                                class="text-[11px] text-brand hover:text-brand/80 transition-colors">
+                            <span x-text="advancedNotifSettings ? 'Form Mode' : 'Advanced (JSON)'"></span>
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="notif_settings_mode" :value="advancedNotifSettings ? 'json' : 'form'">
+
+                    <!-- Advanced JSON -->
+                    <div x-show="advancedNotifSettings" x-cloak>
+                        <textarea name="settings_json" x-model="formData.settings_json" rows="4"
+                                  class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] font-mono focus:outline-none focus:border-brand/30 transition-colors resize-y"></textarea>
+                    </div>
+
+                    <!-- Webhook -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'webhook'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">URL</label>
+                            <input type="url" name="notif_webhook_url" x-model="webhook.url" required placeholder="https://example.com/webhook"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Secret</label>
+                            <input type="text" name="notif_webhook_secret" x-model="webhook.secret" placeholder="Optional HMAC-SHA256 secret"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Telegram -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'telegram'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Bot Token</label>
+                            <input type="text" name="notif_telegram_bot_token" x-model="telegram.bot_token" required placeholder="123456:ABC-DEF1234..."
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Chat ID</label>
+                            <input type="text" name="notif_telegram_chat_id" x-model="telegram.chat_id" required placeholder="-1001234567890"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Discord -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'discord'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Webhook URL</label>
+                            <input type="url" name="notif_discord_webhook_url" x-model="discord.webhook_url" required placeholder="https://discord.com/api/webhooks/..."
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Slack -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'slack'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Webhook URL</label>
+                            <input type="url" name="notif_slack_webhook_url" x-model="slack.webhook_url" required placeholder="https://hooks.slack.com/services/..."
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Channel</label>
+                            <input type="text" name="notif_slack_channel" x-model="slack.channel" placeholder="Optional (e.g. #alerts)"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'email'" x-cloak class="space-y-3">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">SMTP Host</label>
+                                <input type="text" name="notif_email_host" x-model="email.host" required placeholder="smtp.example.com"
+                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Port</label>
+                                <input type="number" name="notif_email_port" x-model="email.port" placeholder="587"
+                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Username</label>
+                                <input type="text" name="notif_email_username" x-model="email.username" placeholder="SMTP user"
+                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Password</label>
+                                <input type="password" name="notif_email_password" x-model="email.password" placeholder="SMTP password"
+                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">From</label>
+                            <input type="email" name="notif_email_from" x-model="email.from" required placeholder="alerts@example.com"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">To</label>
+                            <input type="text" name="notif_email_to" x-model="email.to" required placeholder="admin@example.com, ops@example.com"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                            <p class="text-[10px] text-muted mt-1">Comma-separated</p>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Events -->
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Events</label>
-                    <input type="text" name="events" x-model="formData.events"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-2">Events</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="event_incident_created" :checked="events.created"
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Incident Created</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="event_incident_resolved" :checked="events.resolved"
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Incident Resolved</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="event_incident_acknowledged" :checked="events.acknowledged"
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Incident Acknowledged</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="event_content_changed" :checked="events.changed"
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Content Changed</span>
+                        </label>
+                    </div>
                 </div>
+
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="enabled" checked class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                    <input type="checkbox" name="enabled" :checked="formData.enabled"
+                           class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
                     <span class="text-[12px] text-muted-light">Enabled</span>
                 </label>
                 <div class="flex items-center gap-3 pt-1">
-                    <button type="submit" class="px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">Create</button>
+                    <button type="submit" class="px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors"
+                            x-text="editId ? 'Update' : 'Create'"></button>
                     <button type="button" @click="showForm = false" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</button>
                 </div>
             </form>

@@ -245,6 +245,10 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("%s — %.2f%% uptime", label, pct)
 	},
+	"toJSON": func(v interface{}) template.JS {
+		b, _ := json.Marshal(v)
+		return template.JS(b)
+	},
 	"safeCSS": func(s string) template.CSS { return template.CSS(s) },
 	"add":     func(a, b int) int { return a + b },
 	"sub": func(a, b int) int { return a - b },

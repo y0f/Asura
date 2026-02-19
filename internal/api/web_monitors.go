@@ -2,13 +2,259 @@ package api
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/assertion"
 	"github.com/y0f/Asura/internal/storage"
 )
+
+type headerPair struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type monitorFormData struct {
+	Monitor         *storage.Monitor
+	HTTP            storage.HTTPSettings
+	TCP             storage.TCPSettings
+	DNS             storage.DNSSettings
+	TLS             storage.TLSSettings
+	WS              storage.WebSocketSettings
+	Cmd             storage.CommandSettings
+	FollowRedirects bool
+	MaxRedirects    int
+	HeadersJSON     template.JS
+	WsHeadersJSON   template.JS
+	AssertionsJSON  template.JS
+	SettingsJSON    string
+	AssertionsRaw   string
+}
+
+func monitorToFormData(mon *storage.Monitor) *monitorFormData {
+	fd := &monitorFormData{Monitor: mon}
+	if mon == nil {
+		fd.Monitor = &storage.Monitor{}
+		fd.FollowRedirects = true
+		fd.MaxRedirects = 10
+		fd.HTTP.AuthMethod = "none"
+		fd.HTTP.BodyEncoding = "json"
+		fd.HeadersJSON = "[]"
+		fd.WsHeadersJSON = "[]"
+		fd.AssertionsJSON = "[]"
+		fd.SettingsJSON = "{}"
+		fd.AssertionsRaw = "[]"
+		return fd
+	}
+
+	if len(mon.Settings) > 0 {
+		fd.SettingsJSON = string(mon.Settings)
+	} else {
+		fd.SettingsJSON = "{}"
+	}
+	if len(mon.Assertions) > 0 {
+		fd.AssertionsRaw = string(mon.Assertions)
+	} else {
+		fd.AssertionsRaw = "[]"
+	}
+
+	switch mon.Type {
+	case "http":
+		json.Unmarshal(mon.Settings, &fd.HTTP)
+	case "tcp":
+		json.Unmarshal(mon.Settings, &fd.TCP)
+	case "dns":
+		json.Unmarshal(mon.Settings, &fd.DNS)
+	case "tls":
+		json.Unmarshal(mon.Settings, &fd.TLS)
+	case "websocket":
+		json.Unmarshal(mon.Settings, &fd.WS)
+	case "command":
+		json.Unmarshal(mon.Settings, &fd.Cmd)
+	}
+
+	fd.FollowRedirects = fd.HTTP.FollowRedirects == nil || *fd.HTTP.FollowRedirects
+	fd.MaxRedirects = fd.HTTP.MaxRedirects
+	if fd.MaxRedirects == 0 && fd.FollowRedirects {
+		fd.MaxRedirects = 10
+	}
+	if fd.HTTP.AuthMethod == "" {
+		if fd.HTTP.BasicAuthUser != "" {
+			fd.HTTP.AuthMethod = "basic"
+		} else if fd.HTTP.BearerToken != "" {
+			fd.HTTP.AuthMethod = "bearer"
+		} else {
+			fd.HTTP.AuthMethod = "none"
+		}
+	}
+	if fd.HTTP.BodyEncoding == "" {
+		fd.HTTP.BodyEncoding = "json"
+	}
+	fd.HeadersJSON = headersToJSON(fd.HTTP.Headers)
+	fd.WsHeadersJSON = headersToJSON(fd.WS.Headers)
+	fd.AssertionsJSON = assertionsToJSON(mon.Assertions)
+	return fd
+}
+
+func headersToJSON(headers map[string]string) template.JS {
+	if len(headers) == 0 {
+		return "[]"
+	}
+	pairs := make([]headerPair, 0, len(headers))
+	for k, v := range headers {
+		pairs = append(pairs, headerPair{Key: k, Value: v})
+	}
+	b, _ := json.Marshal(pairs)
+	return template.JS(b)
+}
+
+func assertionsToJSON(raw json.RawMessage) template.JS {
+	if len(raw) == 0 {
+		return "[]"
+	}
+	var assertions []assertion.Assertion
+	if err := json.Unmarshal(raw, &assertions); err != nil {
+		return "[]"
+	}
+	b, _ := json.Marshal(assertions)
+	return template.JS(b)
+}
+
+func assembleSettings(r *http.Request, monType string) json.RawMessage {
+	switch monType {
+	case "http":
+		s := storage.HTTPSettings{
+			Method:       r.FormValue("settings_method"),
+			Body:         r.FormValue("settings_body"),
+			BodyEncoding: r.FormValue("settings_body_encoding"),
+			AuthMethod:   r.FormValue("settings_auth_method"),
+		}
+		if v := r.FormValue("settings_expected_status"); v != "" {
+			s.ExpectedStatus, _ = strconv.Atoi(v)
+		}
+		if v := r.FormValue("settings_max_redirects"); v != "" {
+			s.MaxRedirects, _ = strconv.Atoi(v)
+			if s.MaxRedirects == 0 {
+				f := false
+				s.FollowRedirects = &f
+			}
+		}
+		s.SkipTLSVerify = r.FormValue("settings_skip_tls_verify") == "on"
+		s.CacheBuster = r.FormValue("settings_cache_buster") == "on"
+		s.Headers = assembleHeaders(r, "settings_header_key", "settings_header_value")
+		switch s.AuthMethod {
+		case "basic":
+			s.BasicAuthUser = r.FormValue("settings_basic_auth_user")
+			s.BasicAuthPass = r.FormValue("settings_basic_auth_pass")
+		case "bearer":
+			s.BearerToken = r.FormValue("settings_bearer_token")
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "tcp":
+		s := storage.TCPSettings{
+			SendData:   r.FormValue("settings_send_data"),
+			ExpectData: r.FormValue("settings_expect_data"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "dns":
+		s := storage.DNSSettings{
+			RecordType: r.FormValue("settings_record_type"),
+			Server:     r.FormValue("settings_dns_server"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "tls":
+		s := storage.TLSSettings{}
+		if v := r.FormValue("settings_warn_days_before"); v != "" {
+			s.WarnDaysBefore, _ = strconv.Atoi(v)
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "websocket":
+		s := storage.WebSocketSettings{
+			SendMessage: r.FormValue("settings_send_message"),
+			ExpectReply: r.FormValue("settings_expect_reply"),
+			Headers:     assembleHeaders(r, "settings_ws_header_key", "settings_ws_header_value"),
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "command":
+		s := storage.CommandSettings{
+			Command: r.FormValue("settings_command"),
+		}
+		if argsStr := strings.TrimSpace(r.FormValue("settings_args")); argsStr != "" {
+			for _, a := range strings.Split(argsStr, ",") {
+				if trimmed := strings.TrimSpace(a); trimmed != "" {
+					s.Args = append(s.Args, trimmed)
+				}
+			}
+		}
+		b, _ := json.Marshal(s)
+		return b
+	default:
+		return nil
+	}
+}
+
+func assembleHeaders(r *http.Request, keyField, valueField string) map[string]string {
+	keys := r.Form[keyField+"[]"]
+	values := r.Form[valueField+"[]"]
+	if len(keys) == 0 {
+		keys = r.Form[keyField]
+		values = r.Form[valueField]
+	}
+	headers := make(map[string]string)
+	for i, k := range keys {
+		k = strings.TrimSpace(k)
+		if k == "" || i >= len(values) {
+			continue
+		}
+		headers[k] = values[i]
+	}
+	if len(headers) == 0 {
+		return nil
+	}
+	return headers
+}
+
+func assembleAssertions(r *http.Request) json.RawMessage {
+	countStr := r.FormValue("assertion_count")
+	count, _ := strconv.Atoi(countStr)
+	if count == 0 {
+		return nil
+	}
+	if count > 50 {
+		count = 50
+	}
+
+	var assertions []assertion.Assertion
+	for i := 0; i < count; i++ {
+		idx := strconv.Itoa(i)
+		aType := r.FormValue("assertion_type_" + idx)
+		if aType == "" {
+			continue
+		}
+		a := assertion.Assertion{
+			Type:     aType,
+			Operator: r.FormValue("assertion_operator_" + idx),
+			Target:   r.FormValue("assertion_target_" + idx),
+			Value:    r.FormValue("assertion_value_" + idx),
+			Degraded: r.FormValue("assertion_degraded_"+idx) == "on",
+		}
+		assertions = append(assertions, a)
+	}
+
+	if len(assertions) == 0 {
+		return nil
+	}
+	b, _ := json.Marshal(assertions)
+	return b
+}
 
 func (s *Server) handleWebMonitors(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
@@ -90,7 +336,9 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pd.Title = "Edit " + mon.Name
-		pd.Data = mon
+		pd.Data = monitorToFormData(mon)
+	} else {
+		pd.Data = monitorToFormData(nil)
 	}
 
 	s.render(w, "monitor_form.html", pd)
@@ -104,7 +352,7 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 	if err := validateMonitor(mon); err != nil {
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = err.Error()
-		pd.Data = mon
+		pd.Data = monitorToFormData(mon)
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -113,7 +361,7 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 		s.logger.Error("web: create monitor", "error", err)
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = "Failed to create monitor"
-		pd.Data = mon
+		pd.Data = monitorToFormData(mon)
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -139,7 +387,7 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 	if err := validateMonitor(mon); err != nil {
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = err.Error()
-		pd.Data = mon
+		pd.Data = monitorToFormData(mon)
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -148,7 +396,7 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 		s.logger.Error("web: update monitor", "error", err)
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = "Failed to update monitor"
-		pd.Data = mon
+		pd.Data = monitorToFormData(mon)
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -231,6 +479,7 @@ func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
 
 	mon := &storage.Monitor{
 		Name:             r.FormValue("name"),
+		Description:      r.FormValue("description"),
 		Type:             r.FormValue("type"),
 		Target:           r.FormValue("target"),
 		Interval:         interval,
@@ -238,8 +487,13 @@ func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
 		Enabled:          true,
 		TrackChanges:     r.FormValue("track_changes") == "on",
 		Public:           r.FormValue("public") == "on",
+		UpsideDown:       r.FormValue("upside_down") == "on",
 		FailureThreshold: failThreshold,
 		SuccessThreshold: successThreshold,
+	}
+
+	if v := r.FormValue("resend_interval"); v != "" {
+		mon.ResendInterval, _ = strconv.Atoi(v)
 	}
 
 	if tags := strings.TrimSpace(r.FormValue("tags")); tags != "" {
@@ -250,12 +504,20 @@ func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
 		}
 	}
 
-	if settings := r.FormValue("settings"); settings != "" {
-		mon.Settings = json.RawMessage(settings)
+	if r.FormValue("settings_mode") == "json" {
+		if raw := strings.TrimSpace(r.FormValue("settings_json")); raw != "" && json.Valid([]byte(raw)) {
+			mon.Settings = json.RawMessage(raw)
+		}
+	} else {
+		mon.Settings = assembleSettings(r, mon.Type)
 	}
 
-	if assertions := r.FormValue("assertions"); assertions != "" {
-		mon.Assertions = json.RawMessage(assertions)
+	if r.FormValue("assertions_mode") == "json" {
+		if raw := strings.TrimSpace(r.FormValue("assertions_json")); raw != "" && json.Valid([]byte(raw)) {
+			mon.Assertions = json.RawMessage(raw)
+		}
+	} else {
+		mon.Assertions = assembleAssertions(r)
 	}
 
 	return mon

@@ -9,6 +9,7 @@ import (
 type Monitor struct {
 	ID               int64           `json:"id"`
 	Name             string          `json:"name"`
+	Description      string          `json:"description,omitempty"`
 	Type             string          `json:"type"` // http, tcp, dns, icmp, tls, websocket, command
 	Target           string          `json:"target"`
 	Interval         int             `json:"interval"` // seconds
@@ -21,6 +22,8 @@ type Monitor struct {
 	FailureThreshold int             `json:"failure_threshold"`
 	SuccessThreshold int             `json:"success_threshold"`
 	Public           bool            `json:"public"`
+	UpsideDown       bool            `json:"upside_down"`
+	ResendInterval   int             `json:"resend_interval"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 
@@ -36,10 +39,15 @@ type HTTPSettings struct {
 	Method          string            `json:"method,omitempty"`
 	Headers         map[string]string `json:"headers,omitempty"`
 	Body            string            `json:"body,omitempty"`
+	BodyEncoding    string            `json:"body_encoding,omitempty"` // json, xml, form, raw
 	FollowRedirects *bool             `json:"follow_redirects,omitempty"`
+	MaxRedirects    int               `json:"max_redirects,omitempty"`
 	SkipTLSVerify   bool              `json:"skip_tls_verify,omitempty"`
+	CacheBuster     bool              `json:"cache_buster,omitempty"`
+	AuthMethod      string            `json:"auth_method,omitempty"` // none, basic, bearer
 	BasicAuthUser   string            `json:"basic_auth_user,omitempty"`
 	BasicAuthPass   string            `json:"basic_auth_pass,omitempty"`
+	BearerToken     string            `json:"bearer_token,omitempty"`
 	ExpectedStatus  int               `json:"expected_status,omitempty"`
 }
 

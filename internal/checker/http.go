@@ -10,6 +10,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,22 +38,53 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		method = "GET"
 	}
 
+	target := monitor.Target
+	if settings.CacheBuster {
+		sep := "?"
+		if strings.Contains(target, "?") {
+			sep = "&"
+		}
+		target += sep + "_=" + strconv.FormatInt(time.Now().UnixNano(), 36)
+	}
+
 	var bodyReader io.Reader
 	if settings.Body != "" {
 		bodyReader = strings.NewReader(settings.Body)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, monitor.Target, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, method, target, bodyReader)
 	if err != nil {
 		return &Result{Status: "down", Message: fmt.Sprintf("invalid request: %v", err)}, nil
+	}
+
+	if settings.Body != "" {
+		switch settings.BodyEncoding {
+		case "xml":
+			req.Header.Set("Content-Type", "application/xml")
+		case "form":
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		case "json":
+			req.Header.Set("Content-Type", "application/json")
+		}
 	}
 
 	for k, v := range settings.Headers {
 		req.Header.Set(k, v)
 	}
 
-	if settings.BasicAuthUser != "" {
-		req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
+	switch settings.AuthMethod {
+	case "basic":
+		if settings.BasicAuthUser != "" {
+			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
+		}
+	case "bearer":
+		if settings.BearerToken != "" {
+			req.Header.Set("Authorization", "Bearer "+settings.BearerToken)
+		}
+	default:
+		if settings.BasicAuthUser != "" {
+			req.SetBasicAuth(settings.BasicAuthUser, settings.BasicAuthPass)
+		}
 	}
 
 	transport := &http.Transport{
@@ -65,18 +98,23 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		DisableKeepAlives: true,
 	}
 
-	followRedirects := true
-	if settings.FollowRedirects != nil {
-		followRedirects = *settings.FollowRedirects
-	}
+	maxRedirects := resolveMaxRedirects(settings)
 
 	client := &http.Client{
 		Transport: transport,
 		Timeout:   time.Duration(monitor.Timeout) * time.Second,
 	}
-	if !followRedirects {
+	if maxRedirects == 0 {
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
+		}
+	} else {
+		limit := maxRedirects
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) >= limit {
+				return fmt.Errorf("stopped after %d redirects", limit)
+			}
+			return nil
 		}
 	}
 
@@ -85,11 +123,15 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	elapsed := time.Since(start).Milliseconds()
 
 	if err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("request failed: %v", err),
-		}, nil
+		if ue, ok := err.(*url.Error); ok && ue.Err == http.ErrUseLastResponse {
+			// not actually an error — we just don't follow redirects
+		} else {
+			return &Result{
+				Status:       "down",
+				ResponseTime: elapsed,
+				Message:      fmt.Sprintf("request failed: %v", err),
+			}, nil
+		}
 	}
 	defer resp.Body.Close()
 
@@ -111,6 +153,15 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		msg = fmt.Sprintf("expected status %d, got %d", settings.ExpectedStatus, resp.StatusCode)
 	}
 
+	if monitor.UpsideDown {
+		if status == "up" {
+			status = "down"
+		} else {
+			status = "up"
+			msg = ""
+		}
+	}
+
 	result := &Result{
 		Status:       status,
 		ResponseTime: elapsed,
@@ -121,11 +172,23 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		Headers:      headers,
 	}
 
-	// Check TLS cert expiry if available
 	if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
 		expiry := resp.TLS.PeerCertificates[0].NotAfter.Unix()
 		result.CertExpiry = &expiry
 	}
 
 	return result, nil
+}
+
+func resolveMaxRedirects(s storage.HTTPSettings) int {
+	if s.MaxRedirects > 0 {
+		return s.MaxRedirects
+	}
+	if s.FollowRedirects != nil {
+		if !*s.FollowRedirects {
+			return 0
+		}
+		return 10
+	}
+	return 10
 }
