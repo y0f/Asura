@@ -36,7 +36,7 @@
                             <div class="flex items-center justify-end gap-3">
                                 <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-[11px] text-muted hover:text-white transition-colors">View</a>
                                 {{if index $.Perms "incidents.write"}}
-                                <form method="POST" action="{{$.BasePath}}/incidents/{{.ID}}/delete"
+                                <form method="POST" action="{{$.BasePath}}/incidents/{{.ID}}/delete" class="inline"
                                       x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
                                     <button type="submit" class="text-[11px] text-muted hover:text-red-400 transition-colors">Delete</button>
                                 </form>
