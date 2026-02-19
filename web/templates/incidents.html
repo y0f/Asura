@@ -33,15 +33,13 @@
                         <td class="px-4 py-3 text-[12px] text-muted tabular-nums font-mono">{{incidentDuration .StartedAt .ResolvedAt}}</td>
                         <td class="px-4 py-3 text-[12px] text-muted/60">{{timeAgo .StartedAt}}</td>
                         <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-3">
-                                <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-[11px] text-muted hover:text-white transition-colors">View</a>
-                                {{if index $.Perms "incidents.write"}}
-                                <form method="POST" action="{{$.BasePath}}/incidents/{{.ID}}/delete" class="inline"
-                                      x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
-                                    <button type="submit" class="text-[11px] text-muted hover:text-red-400 transition-colors">Delete</button>
-                                </form>
-                                {{end}}
-                            </div>
+                            <a href="{{$.BasePath}}/incidents/{{.ID}}" class="text-[11px] text-muted hover:text-white transition-colors">View</a>
+                            {{if index $.Perms "incidents.write"}}
+                            <form method="POST" action="{{$.BasePath}}/incidents/{{.ID}}/delete" style="display:inline"
+                                  x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
+                                <button type="submit" class="text-[11px] text-muted hover:text-white transition-colors ml-3">Delete</button>
+                            </form>
+                            {{end}}
                         </td>
                     </tr>
                     {{end}}
