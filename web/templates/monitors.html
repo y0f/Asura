@@ -65,24 +65,24 @@
                             <div class="flex items-center justify-end gap-2">
                                 {{if index $.Perms "monitors.write"}}
                                 {{if .Enabled}}
-                                <form method="POST" action="{{$.BasePath}}/monitors/{{.ID}}/pause" class="inline">
-                                    <button type="submit" class="text-muted hover:text-yellow-400 transition-colors" title="Pause">
+                                <form method="POST" action="{{$.BasePath}}/monitors/{{.ID}}/pause" class="contents">
+                                    <button type="submit" class="inline-flex items-center text-muted hover:text-yellow-400 transition-colors" title="Pause">
                                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                                     </button>
                                 </form>
                                 {{else}}
-                                <form method="POST" action="{{$.BasePath}}/monitors/{{.ID}}/resume" class="inline">
-                                    <button type="submit" class="text-muted hover:text-emerald-400 transition-colors" title="Resume">
+                                <form method="POST" action="{{$.BasePath}}/monitors/{{.ID}}/resume" class="contents">
+                                    <button type="submit" class="inline-flex items-center text-muted hover:text-emerald-400 transition-colors" title="Resume">
                                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                     </button>
                                 </form>
                                 {{end}}
                                 {{end}}
-                                <a href="{{$.BasePath}}/monitors/{{.ID}}" class="text-muted hover:text-white transition-colors" title="View">
+                                <a href="{{$.BasePath}}/monitors/{{.ID}}" class="inline-flex items-center text-muted hover:text-white transition-colors" title="View">
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                 </a>
                                 {{if index $.Perms "monitors.write"}}
-                                <a href="{{$.BasePath}}/monitors/{{.ID}}/edit" class="text-muted hover:text-brand transition-colors" title="Edit">
+                                <a href="{{$.BasePath}}/monitors/{{.ID}}/edit" class="inline-flex items-center text-muted hover:text-brand transition-colors" title="Edit">
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                                 </a>
                                 {{end}}

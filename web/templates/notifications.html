@@ -80,10 +80,10 @@
             <div class="flex items-center gap-1.5 pt-2.5 border-t border-line">
                 <button type="button" @click="editChannel({{toJSON .}})"
                         class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Edit</button>
-                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/test" class="inline">
+                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/test" class="contents">
                     <button type="submit" class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Test</button>
                 </form>
-                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this channel?')) $el.submit()" class="inline">
+                <form method="POST" action="{{$.BasePath}}/notifications/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this channel?')) $el.submit()" class="contents">
                     <button type="submit" class="px-2 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
                 </form>
             </div>

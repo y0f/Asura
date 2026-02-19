@@ -36,7 +36,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             {{if index $.Perms "maintenance.write"}}
-                            <form method="POST" action="{{$.BasePath}}/maintenance/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this window?')) $el.submit()" class="inline">
+                            <form method="POST" action="{{$.BasePath}}/maintenance/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this window?')) $el.submit()" class="contents">
                                 <button type="submit" class="text-[11px] text-red-400 hover:text-red-300 transition-colors">Delete</button>
                             </form>
                             {{end}}
