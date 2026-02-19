@@ -65,7 +65,7 @@
             </div>
         </main>
     </div>
-<script>function toggleTheme(){var d=document.documentElement.classList.toggle('dark');localStorage.setItem('theme',d?'dark':'light');}</script>
+<script>function toggleTheme(){var d=document.documentElement.classList.toggle('dark');localStorage.setItem('theme',d?'dark':'light');window.dispatchEvent(new CustomEvent('theme-changed'));}</script>
 </body>
 </html>
 {{end}}

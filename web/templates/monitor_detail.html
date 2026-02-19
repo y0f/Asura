@@ -206,6 +206,7 @@
             this.chart = new uPlot(opts, [ts, rt], el);
         },
         resizeObs: null,
+        themeHandler: null,
         init() {
             this.fetchData();
             this.resizeObs = new ResizeObserver(() => {
@@ -214,8 +215,10 @@
                 }
             });
             this.$nextTick(() => { if (this.$refs.chart) this.resizeObs.observe(this.$refs.chart); });
+            this.themeHandler = () => this.fetchData();
+            window.addEventListener('theme-changed', this.themeHandler);
         },
-        destroy() { if (this.resizeObs) this.resizeObs.disconnect(); if (this.chart) this.chart.destroy(); }
+        destroy() { if (this.resizeObs) this.resizeObs.disconnect(); if (this.chart) this.chart.destroy(); if (this.themeHandler) window.removeEventListener('theme-changed', this.themeHandler); }
     }" x-init="init()" x-cloak>
         <div class="flex items-center justify-between mb-3">
             <h2 class="text-[11px] text-muted uppercase tracking-widest">Response Time</h2>
