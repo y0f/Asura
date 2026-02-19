@@ -3,8 +3,10 @@ package checker
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/y0f/Asura/internal/storage"
@@ -183,5 +185,284 @@ func TestDefaultRegistryHasAllTypes(t *testing.T) {
 		if _, err := r.Get(typ); err != nil {
 			t.Fatalf("expected %s checker, got error: %v", typ, err)
 		}
+	}
+}
+
+func TestResolveMaxRedirects(t *testing.T) {
+	boolPtr := func(v bool) *bool { return &v }
+
+	tests := []struct {
+		name string
+		s    storage.HTTPSettings
+		want int
+	}{
+		{"max_redirects set", storage.HTTPSettings{MaxRedirects: 5}, 5},
+		{"max_redirects zero with follow false", storage.HTTPSettings{MaxRedirects: 0, FollowRedirects: boolPtr(false)}, 0},
+		{"follow true", storage.HTTPSettings{FollowRedirects: boolPtr(true)}, 10},
+		{"follow false", storage.HTTPSettings{FollowRedirects: boolPtr(false)}, 0},
+		{"both unset defaults to 10", storage.HTTPSettings{}, 10},
+		{"max_redirects takes priority over follow", storage.HTTPSettings{MaxRedirects: 3, FollowRedirects: boolPtr(false)}, 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveMaxRedirects(tt.s)
+			if got != tt.want {
+				t.Errorf("resolveMaxRedirects() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHTTPCheckerUpsideDown(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	c := &HTTPChecker{AllowPrivate: true}
+
+	t.Run("up becomes down", func(t *testing.T) {
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, UpsideDown: true}
+		result, err := c.Check(context.Background(), mon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result.Status != "down" {
+			t.Errorf("status = %q, want down (upside-down)", result.Status)
+		}
+	})
+
+	t.Run("down becomes up", func(t *testing.T) {
+		settings, _ := json.Marshal(storage.HTTPSettings{ExpectedStatus: 404})
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, UpsideDown: true, Settings: settings}
+		result, err := c.Check(context.Background(), mon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result.Status != "up" {
+			t.Errorf("status = %q, want up (upside-down flipped)", result.Status)
+		}
+	})
+}
+
+func TestHTTPCheckerCacheBuster(t *testing.T) {
+	var receivedURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedURL = r.URL.String()
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+
+	settings, _ := json.Marshal(storage.HTTPSettings{CacheBuster: true})
+	c := &HTTPChecker{AllowPrivate: true}
+	mon := &storage.Monitor{Target: server.URL + "/test", Timeout: 5, Settings: settings}
+
+	_, err := c.Check(context.Background(), mon)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(receivedURL, "_=") {
+		t.Errorf("URL should contain cache buster param, got %q", receivedURL)
+	}
+}
+
+func TestHTTPCheckerCacheBusterWithExistingQuery(t *testing.T) {
+	var receivedURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedURL = r.URL.String()
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+
+	settings, _ := json.Marshal(storage.HTTPSettings{CacheBuster: true})
+	c := &HTTPChecker{AllowPrivate: true}
+	mon := &storage.Monitor{Target: server.URL + "/test?foo=bar", Timeout: 5, Settings: settings}
+
+	_, err := c.Check(context.Background(), mon)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(receivedURL, "&_=") {
+		t.Errorf("URL should use & for cache buster with existing query, got %q", receivedURL)
+	}
+}
+
+func TestHTTPCheckerBodyEncoding(t *testing.T) {
+	tests := []struct {
+		name        string
+		encoding    string
+		wantCT      string
+	}{
+		{"json", "json", "application/json"},
+		{"xml", "xml", "application/xml"},
+		{"form", "form", "application/x-www-form-urlencoded"},
+		{"raw", "raw", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var gotCT string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotCT = r.Header.Get("Content-Type")
+				w.WriteHeader(200)
+			}))
+			defer server.Close()
+
+			settings, _ := json.Marshal(storage.HTTPSettings{
+				Method:       "POST",
+				Body:         "test",
+				BodyEncoding: tt.encoding,
+			})
+
+			c := &HTTPChecker{AllowPrivate: true}
+			mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+			c.Check(context.Background(), mon)
+
+			if tt.wantCT != "" && gotCT != tt.wantCT {
+				t.Errorf("Content-Type = %q, want %q", gotCT, tt.wantCT)
+			}
+			if tt.wantCT == "" && gotCT != "" {
+				t.Errorf("Content-Type should be empty for raw, got %q", gotCT)
+			}
+		})
+	}
+}
+
+func TestHTTPCheckerAuthMethods(t *testing.T) {
+	t.Run("basic auth", func(t *testing.T) {
+		var gotAuth string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotAuth = r.Header.Get("Authorization")
+			w.WriteHeader(200)
+		}))
+		defer server.Close()
+
+		settings, _ := json.Marshal(storage.HTTPSettings{
+			AuthMethod:    "basic",
+			BasicAuthUser: "admin",
+			BasicAuthPass: "secret",
+		})
+
+		c := &HTTPChecker{AllowPrivate: true}
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+		c.Check(context.Background(), mon)
+
+		if !strings.HasPrefix(gotAuth, "Basic ") {
+			t.Errorf("expected Basic auth header, got %q", gotAuth)
+		}
+	})
+
+	t.Run("bearer auth", func(t *testing.T) {
+		var gotAuth string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotAuth = r.Header.Get("Authorization")
+			w.WriteHeader(200)
+		}))
+		defer server.Close()
+
+		settings, _ := json.Marshal(storage.HTTPSettings{
+			AuthMethod:  "bearer",
+			BearerToken: "my-token",
+		})
+
+		c := &HTTPChecker{AllowPrivate: true}
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+		c.Check(context.Background(), mon)
+
+		if gotAuth != "Bearer my-token" {
+			t.Errorf("expected 'Bearer my-token', got %q", gotAuth)
+		}
+	})
+
+	t.Run("none auth", func(t *testing.T) {
+		var gotAuth string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotAuth = r.Header.Get("Authorization")
+			w.WriteHeader(200)
+		}))
+		defer server.Close()
+
+		settings, _ := json.Marshal(storage.HTTPSettings{AuthMethod: "none"})
+
+		c := &HTTPChecker{AllowPrivate: true}
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+		c.Check(context.Background(), mon)
+
+		if gotAuth != "" {
+			t.Errorf("expected no auth header, got %q", gotAuth)
+		}
+	})
+
+	t.Run("legacy basic auth without auth_method", func(t *testing.T) {
+		var gotAuth string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotAuth = r.Header.Get("Authorization")
+			w.WriteHeader(200)
+		}))
+		defer server.Close()
+
+		settings, _ := json.Marshal(storage.HTTPSettings{
+			BasicAuthUser: "user",
+			BasicAuthPass: "pass",
+		})
+
+		c := &HTTPChecker{AllowPrivate: true}
+		mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+		c.Check(context.Background(), mon)
+
+		if !strings.HasPrefix(gotAuth, "Basic ") {
+			t.Errorf("legacy basic auth should work without auth_method, got %q", gotAuth)
+		}
+	})
+}
+
+func TestHTTPCheckerNoRedirects(t *testing.T) {
+	redirectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/redirect" {
+			http.Redirect(w, r, "/target", http.StatusFound)
+			return
+		}
+		w.WriteHeader(200)
+	}))
+	defer redirectServer.Close()
+
+	f := false
+	settings, _ := json.Marshal(storage.HTTPSettings{FollowRedirects: &f})
+
+	c := &HTTPChecker{AllowPrivate: true}
+	mon := &storage.Monitor{Target: redirectServer.URL + "/redirect", Timeout: 5, Settings: settings}
+
+	result, err := c.Check(context.Background(), mon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.StatusCode != 302 {
+		t.Errorf("should not follow redirect, got status %d", result.StatusCode)
+	}
+}
+
+func TestHTTPCheckerRequestBody(t *testing.T) {
+	var receivedBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		receivedBody = string(b)
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+
+	settings, _ := json.Marshal(storage.HTTPSettings{
+		Method: "POST",
+		Body:   `{"key":"value"}`,
+	})
+
+	c := &HTTPChecker{AllowPrivate: true}
+	mon := &storage.Monitor{Target: server.URL, Timeout: 5, Settings: settings}
+	c.Check(context.Background(), mon)
+
+	if receivedBody != `{"key":"value"}` {
+		t.Errorf("body = %q", receivedBody)
 	}
 }
