@@ -148,6 +148,8 @@ func classifyRoute(path string) string {
 		return "auth"
 	case strings.HasPrefix(path, "/metrics"):
 		return "metrics"
+	case path == "/status" || strings.HasPrefix(path, "/status/"):
+		return "status"
 	default:
 		return "web"
 	}

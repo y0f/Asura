@@ -34,6 +34,7 @@
             <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=api" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "api"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">API</a>
             <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=badge" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "badge"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Badge</a>
             <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=auth" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "auth"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Auth</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=status" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "status"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Status</a>
         </div>
     </div>
 
