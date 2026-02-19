@@ -11,9 +11,9 @@
         {{end}}
     </div>
 
-    <form method="GET" action="{{.BasePath}}/monitors" class="mb-3">
+    <form method="GET" action="{{.BasePath}}/monitors" class="mb-4">
         {{if .Data.Type}}<input type="hidden" name="type" value="{{.Data.Type}}">{{end}}
-        <div class="relative">
+        <div class="relative max-w-xs">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" name="q" value="{{.Data.Search}}" placeholder="Search monitors..."
                    class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-none focus:border-brand/40 transition-colors">
