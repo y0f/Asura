@@ -44,7 +44,7 @@ No runtime. No external database. No container required. Build, copy, run.
 
 ### Highlights
 
-| | |
+| Feature | |
 |---|---|
 | **8 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Heartbeat |
 | **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
@@ -53,7 +53,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
-| **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
+| **Web dashboard** | Dark/light-mode UI with system preference -- manage everything from the browser |
 | **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
 | **Public status page** | Configurable hosted page with 90-day uptime bars, or build your own via API |
 | **Analytics** | Uptime %, response time percentiles |
@@ -496,6 +496,7 @@ GET    /api/v1/incidents               List (filter: monitor_id, status)
 GET    /api/v1/incidents/{id}          Get with timeline
 POST   /api/v1/incidents/{id}/ack      Acknowledge
 POST   /api/v1/incidents/{id}/resolve  Resolve
+DELETE /api/v1/incidents/{id}          Delete
 ```
 
 ### Notifications
