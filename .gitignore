@@ -1,4 +1,6 @@
 /asura
+/tailwindcss
+/tailwindcss.exe
 *.db
 *.db-wal
 *.db-shm

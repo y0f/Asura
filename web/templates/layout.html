@@ -5,30 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{template "title" .}} — Asura</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: '#0080ff',
-                        surface: { DEFAULT: '#09090b', 50: '#0e0e12', 100: '#131318', 200: '#1a1a22', 300: '#222230' },
-                        muted: { DEFAULT: '#434656', light: '#a7aabc' },
-                        line: { DEFAULT: '#1a1a22', light: '#222230' }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Menlo', 'Consolas', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
+    <link rel="stylesheet" href="{{.BasePath}}/static/tailwind.css">
+    <link rel="stylesheet" href="{{.BasePath}}/static/uplot.min.css">
+    <script src="{{.BasePath}}/static/uplot.iife.min.js"></script>
     <script src="{{.BasePath}}/static/htmx.min.js"></script>
     <script defer src="{{.BasePath}}/static/alpine.min.js"></script>
     <style>

@@ -3,9 +3,14 @@ VERSION  := $(shell git describe --tags --always --dirty 2>/dev/null || echo "de
 LDFLAGS  := -s -w -X main.version=$(VERSION)
 GOFLAGS  := -trimpath
 
-.PHONY: all build test lint run clean hash-key release
+TAILWIND := ./tailwindcss
+
+.PHONY: all build css test lint run clean hash-key release
 
 all: build
+
+css:
+	$(TAILWIND) -c tailwind.config.js -i web/tailwind.input.css -o web/static/tailwind.css --minify
 
 build:
 	CGO_ENABLED=0 go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINARY) ./cmd/asura

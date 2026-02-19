@@ -5,27 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: '#0080ff',
-                        surface: { DEFAULT: '#09090b', 50: '#0e0e12', 100: '#131318', 200: '#1a1a22', 300: '#222230' },
-                        muted: { DEFAULT: '#434656', light: '#a7aabc' },
-                        line: { DEFAULT: '#1a1a22', light: '#222230' }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{.BasePath}}/static/tailwind.css">
     <script defer src="{{.BasePath}}/static/alpine.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
