@@ -226,7 +226,7 @@ var templateFuncs = template.FuncMap{
 	},
 	"uptimeBarColor": func(pct float64, hasData bool) string {
 		if !hasData {
-			return "bg-surface-300"
+			return "bg-muted/20"
 		}
 		if pct >= 99 {
 			return "bg-emerald-500"
