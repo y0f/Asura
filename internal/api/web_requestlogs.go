@@ -51,6 +51,18 @@ func (s *Server) handleWebRequestLogs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.logger.Error("web: list top client IPs", "error", err)
 	}
+	if f.ClientIP != "" {
+		found := false
+		for _, ip := range topIPs {
+			if ip == f.ClientIP {
+				found = true
+				break
+			}
+		}
+		if !found {
+			topIPs = append([]string{f.ClientIP}, topIPs...)
+		}
+	}
 
 	timeRange := q.Get("range")
 	if timeRange == "" {
