@@ -49,7 +49,7 @@ var templateFuncs = template.FuncMap{
 			return "text-emerald-400"
 		case "down":
 			return "text-red-400"
-		case "degraded":
+		case "degraded", "paused":
 			return "text-yellow-400"
 		default:
 			return "text-gray-500"
@@ -61,7 +61,7 @@ var templateFuncs = template.FuncMap{
 			return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
 		case "down":
 			return "bg-red-500/10 text-red-400 border-red-500/20"
-		case "degraded":
+		case "degraded", "paused":
 			return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
 		case "open":
 			return "bg-red-500/10 text-red-400 border-red-500/20"
@@ -79,7 +79,7 @@ var templateFuncs = template.FuncMap{
 			return "bg-emerald-400"
 		case "down", "created":
 			return "bg-red-400"
-		case "degraded", "acknowledged":
+		case "degraded", "acknowledged", "paused":
 			return "bg-yellow-400"
 		default:
 			return "bg-gray-500"
