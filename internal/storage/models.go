@@ -244,6 +244,7 @@ type RequestLogFilter struct {
 	Path       string
 	StatusCode int
 	RouteGroup string
+	ClientIP   string
 	MonitorID  *int64
 	From       time.Time
 	To         time.Time

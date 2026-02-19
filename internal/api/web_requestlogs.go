@@ -15,6 +15,7 @@ func (s *Server) handleWebRequestLogs(w http.ResponseWriter, r *http.Request) {
 	f := storage.RequestLogFilter{
 		RouteGroup: q.Get("group"),
 		Method:     q.Get("method"),
+		ClientIP:   q.Get("ip"),
 	}
 
 	if sc := q.Get("status_code"); sc != "" {
@@ -58,6 +59,7 @@ func (s *Server) handleWebRequestLogs(w http.ResponseWriter, r *http.Request) {
 		"Filter":     f.RouteGroup,
 		"Method":     f.Method,
 		"StatusCode": f.StatusCode,
+		"ClientIP":   f.ClientIP,
 		"TimeRange":  timeRange,
 	}
 	s.render(w, "request_logs.html", pd)

@@ -1398,6 +1398,10 @@ func (s *SQLiteStore) ListRequestLogs(ctx context.Context, f RequestLogFilter, p
 		where += " AND route_group=?"
 		args = append(args, f.RouteGroup)
 	}
+	if f.ClientIP != "" {
+		where += " AND client_ip=?"
+		args = append(args, f.ClientIP)
+	}
 	if f.MonitorID != nil {
 		where += " AND monitor_id=?"
 		args = append(args, *f.MonitorID)

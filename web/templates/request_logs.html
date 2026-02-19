@@ -20,23 +20,33 @@
     </div>
     {{end}}
 
-    <div class="flex flex-wrap items-center gap-3 mb-4">
+    <div class="flex flex-wrap items-center gap-3 mb-3">
         <div class="flex gap-1.5">
-            <a href="{{.BasePath}}/logs?range=1h" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "1h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">1h</a>
-            <a href="{{.BasePath}}/logs?range=12h" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "12h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">12h</a>
-            <a href="{{.BasePath}}/logs?range=24h" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "24h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">24h</a>
-            <a href="{{.BasePath}}/logs?range=7d" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "7d"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">7d</a>
+            <a href="{{.BasePath}}/logs?range=1h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "1h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">1h</a>
+            <a href="{{.BasePath}}/logs?range=12h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "12h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">12h</a>
+            <a href="{{.BasePath}}/logs?range=24h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "24h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">24h</a>
+            <a href="{{.BasePath}}/logs?range=7d{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "7d"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">7d</a>
         </div>
         <div class="h-4 w-px bg-line"></div>
         <div class="flex gap-1.5">
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if not .Data.Filter}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=web" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "web"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Web</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=api" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "api"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">API</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=badge" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "badge"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Badge</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=auth" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "auth"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Auth</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=status" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "status"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Status</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if not .Data.Filter}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=web{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "web"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Web</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=api{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "api"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">API</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=badge{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "badge"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Badge</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=auth{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "auth"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Auth</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=status{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "status"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Status</a>
         </div>
     </div>
+
+    <form method="GET" action="{{.BasePath}}/logs" class="mb-4">
+        <input type="hidden" name="range" value="{{.Data.TimeRange}}">
+        {{if .Data.Filter}}<input type="hidden" name="group" value="{{.Data.Filter}}">{{end}}
+        <div class="relative max-w-xs">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <input type="text" name="ip" value="{{.Data.ClientIP}}" placeholder="Filter by IP..."
+                   class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-none focus:border-brand/40 transition-colors">
+        </div>
+    </form>
 
     <div class="border border-line rounded-lg overflow-hidden">
         {{if and .Data.Result .Data.Result.Data}}
@@ -61,7 +71,7 @@
                         <td class="px-4 py-2.5 text-[12px] text-muted-light font-mono truncate max-w-[250px]" title="{{.Path}}">{{.Path}}</td>
                         <td class="px-4 py-2.5 text-[12px] font-mono tabular-nums {{httpStatusColor .StatusCode}}">{{.StatusCode}}</td>
                         <td class="px-4 py-2.5 text-[12px] text-muted tabular-nums font-mono">{{formatMs .LatencyMs}}</td>
-                        <td class="px-4 py-2.5 text-[11px] text-muted font-mono">{{.ClientIP}}</td>
+                        <td class="px-4 py-2.5 text-[11px] font-mono"><a href="{{$.BasePath}}/logs?range={{$.Data.TimeRange}}{{if $.Data.Filter}}&group={{$.Data.Filter}}{{end}}&ip={{.ClientIP}}" class="text-muted hover:text-brand transition-colors">{{.ClientIP}}</a></td>
                         <td class="px-4 py-2.5"><span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border border-line text-muted">{{.RouteGroup}}</span></td>
                     </tr>
                     {{end}}
@@ -73,10 +83,10 @@
             <span class="text-[11px] text-muted tabular-nums">Page {{.Data.Result.Page}} / {{.Data.Result.TotalPages}} · {{.Data.Result.Total}} entries</span>
             <div class="flex gap-1">
                 {{if gt .Data.Result.Page 1}}
-                <a href="{{$.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}&page={{sub .Data.Result.Page 1}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+                <a href="{{$.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}&page={{sub .Data.Result.Page 1}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
                 {{end}}
                 {{if lt .Data.Result.Page .Data.Result.TotalPages}}
-                <a href="{{$.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}&page={{add .Data.Result.Page 1}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+                <a href="{{$.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}&page={{add .Data.Result.Page 1}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
                 {{end}}
             </div>
         </div>
