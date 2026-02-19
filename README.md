@@ -55,6 +55,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
 | **Web dashboard** | Built-in dark-mode UI -- manage everything from the browser |
 | **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
+| **Public status page** | Configurable hosted page with 90-day uptime bars, or build your own via API |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **Sub-path support** | Serve from `/asura` or any prefix behind a reverse proxy |
@@ -204,16 +205,6 @@ curl https://example.com/asura/api/v1/health
 # Web UI
 # Open https://example.com/asura/ in your browser
 ```
-
-### Security Checklist
-
-- [ ] **Bind to localhost** — `listen: "127.0.0.1:8090"`, never `0.0.0.0`
-- [ ] **Firewall** — Only ports 22, 80, 443 open (`ufw allow 22,80,443/tcp`)
-- [ ] **TLS via reverse proxy** — Let nginx/caddy handle certificates
-- [ ] **cookie_secure: true** — Session cookies require HTTPS
-- [ ] **trusted_proxies configured** — So rate limiting uses real IPs, not `127.0.0.1`
-- [ ] **API key saved securely** — Store it in a password manager, not a text file
-- [ ] **Systemd hardening** — The included `asura.service` uses `NoNewPrivileges`, `ProtectSystem`, `PrivateTmp`
 
 ### Alternative: Caddy
 
@@ -433,7 +424,7 @@ GET    /api/v1/monitors/{id}/changes   Content changes
 | `track_changes`    | bool     |          | Enable content change detection                    |
 | `failure_threshold`| int      |          | Failures before incident (default: 3)              |
 | `success_threshold`| int      |          | Successes before recovery (default: 1)             |
-| `public`           | bool     |          | Expose to badge endpoints (default: false)         |
+| `public`           | bool     |          | Expose to badges and public status page (default: false) |
 
 ### Heartbeat Monitoring
 
@@ -463,6 +454,25 @@ curl -X POST https://example.com/asura/api/v1/heartbeat/a1b2c3d4e5f6...
 ```
 
 If no ping arrives within `interval + grace` seconds, the monitor goes down and an incident is created.
+
+### Public Status Page *(no auth)*
+
+```
+GET  /api/v1/status          Public status overview (monitors, uptime, incidents)
+```
+
+Returns only safe fields (name, type, status, uptime) — no targets, settings, or credentials are exposed. Returns 404 if the status page is disabled in settings. Set `"public": true` on monitors to include them.
+
+### Status Page Config
+
+```
+GET  /api/v1/status/config   Get status page settings
+PUT  /api/v1/status/config   Update status page settings
+```
+
+Configure the public status page via API. Fields: `enabled` (bool), `title`, `description`, `show_incidents` (bool), `custom_css`.
+
+The built-in web UI also serves a hosted status page at `/status` with 90-day uptime bars. Configure it from the sidebar under **Status Page** — set the title, description, toggle incident history, and add custom CSS. Monitors with `public: true` appear automatically.
 
 ### Status Badges *(no auth, public monitors only)*
 

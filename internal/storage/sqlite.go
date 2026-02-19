@@ -1537,6 +1537,89 @@ func (s *SQLiteStore) PurgeOldRequestLogs(ctx context.Context, before time.Time)
 	return n + n2, nil
 }
 
+func (s *SQLiteStore) GetStatusPageConfig(ctx context.Context) (*StatusPageConfig, error) {
+	var cfg StatusPageConfig
+	var updatedAt string
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT enabled, title, description, show_incidents, custom_css, updated_at
+		 FROM status_page_config WHERE id=1`).
+		Scan(&cfg.Enabled, &cfg.Title, &cfg.Description, &cfg.ShowIncidents, &cfg.CustomCSS, &updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get status page config: %w", err)
+	}
+	cfg.UpdatedAt = parseTime(updatedAt)
+	return &cfg, nil
+}
+
+func (s *SQLiteStore) UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error {
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE status_page_config SET enabled=?, title=?, description=?, show_incidents=?, custom_css=?, updated_at=? WHERE id=1`,
+		boolToInt(cfg.Enabled), cfg.Title, cfg.Description, boolToInt(cfg.ShowIncidents), cfg.CustomCSS, formatTime(time.Now()))
+	if err != nil {
+		return fmt.Errorf("upsert status page config: %w", err)
+	}
+	return nil
+}
+
+func (s *SQLiteStore) ListPublicMonitors(ctx context.Context) ([]*Monitor, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT m.id, m.name, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
+		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
+		        m.public, m.created_at, m.updated_at,
+		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
+		 FROM monitors m
+		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
+		 WHERE m.public=1 AND m.enabled=1
+		 ORDER BY m.name COLLATE NOCASE ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("list public monitors: %w", err)
+	}
+	defer rows.Close()
+
+	var monitors []*Monitor
+	for rows.Next() {
+		m, err := scanMonitor(rows)
+		if err != nil {
+			return nil, err
+		}
+		monitors = append(monitors, m)
+	}
+	if monitors == nil {
+		monitors = []*Monitor{}
+	}
+	return monitors, rows.Err()
+}
+
+func (s *SQLiteStore) GetDailyUptime(ctx context.Context, monitorID int64, from, to time.Time) ([]*DailyUptime, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT DATE(created_at) as day,
+		        COUNT(*) as total,
+		        COALESCE(SUM(CASE WHEN status='up' THEN 1 ELSE 0 END), 0),
+		        COALESCE(SUM(CASE WHEN status='down' THEN 1 ELSE 0 END), 0)
+		 FROM check_results
+		 WHERE monitor_id=? AND created_at >= ? AND created_at < ?
+		 GROUP BY DATE(created_at)
+		 ORDER BY day ASC`,
+		monitorID, formatTime(from), formatTime(to))
+	if err != nil {
+		return nil, fmt.Errorf("get daily uptime: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*DailyUptime
+	for rows.Next() {
+		var d DailyUptime
+		if err := rows.Scan(&d.Date, &d.TotalChecks, &d.UpChecks, &d.DownChecks); err != nil {
+			return nil, err
+		}
+		if d.TotalChecks > 0 {
+			d.UptimePct = float64(d.UpChecks) / float64(d.TotalChecks) * 100
+		}
+		results = append(results, &d)
+	}
+	return results, rows.Err()
+}
+
 // --- Helpers ---
 
 func boolToInt(b bool) int {

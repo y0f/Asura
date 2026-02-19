@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 6
+const schemaVersion = 7
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -244,5 +244,19 @@ CREATE TABLE IF NOT EXISTS request_log_rollups (
 	avg_latency_ms  INTEGER NOT NULL DEFAULT 0,
 	UNIQUE(date, route_group, monitor_id)
 );`,
+	},
+	{
+		version: 7,
+		sql: `
+CREATE TABLE IF NOT EXISTS status_page_config (
+	id              INTEGER PRIMARY KEY DEFAULT 1,
+	enabled         INTEGER NOT NULL DEFAULT 0,
+	title           TEXT    NOT NULL DEFAULT 'Service Status',
+	description     TEXT    NOT NULL DEFAULT '',
+	show_incidents  INTEGER NOT NULL DEFAULT 1,
+	custom_css      TEXT    NOT NULL DEFAULT '',
+	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+INSERT OR IGNORE INTO status_page_config (id) VALUES (1);`,
 	},
 }

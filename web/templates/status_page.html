@@ -1,0 +1,132 @@
+{{define "status_page"}}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#0080ff',
+                        surface: { DEFAULT: '#09090b', 50: '#0e0e12', 100: '#131318', 200: '#1a1a22', 300: '#222230' },
+                        muted: { DEFAULT: '#434656', light: '#a7aabc' },
+                        line: { DEFAULT: '#1a1a22', light: '#222230' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script defer src="{{.BasePath}}/static/alpine.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::selection { background: rgba(0,128,255,.15); }
+        {{with .Data}}{{with index . "Config"}}{{if .CustomCSS}}{{safeCSS .CustomCSS}}{{end}}{{end}}{{end}}
+    </style>
+</head>
+<body class="bg-surface text-muted-light font-sans min-h-screen antialiased">
+    <div class="max-w-3xl mx-auto px-4 py-10 sm:px-6 sm:py-16">
+        {{with .Data}}
+        {{$cfg := index . "Config"}}
+        {{$overall := index . "Overall"}}
+        {{$monitors := index . "Monitors"}}
+        {{$incidents := index . "Incidents"}}
+        {{$hasIncidents := index . "HasIncidents"}}
+
+        <div class="mb-8">
+            <h1 class="text-xl font-semibold text-white">{{$cfg.Title}}</h1>
+            {{if $cfg.Description}}
+            <p class="mt-1.5 text-[13px] text-muted">{{$cfg.Description}}</p>
+            {{end}}
+        </div>
+
+        <div class="mb-8 rounded-lg border {{if eq $overall "operational"}}border-emerald-500/20 bg-emerald-500/5{{else if eq $overall "degraded"}}border-yellow-500/20 bg-yellow-500/5{{else}}border-red-500/20 bg-red-500/5{{end}} px-4 py-3 flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full {{if eq $overall "operational"}}bg-emerald-400 animate-pulse{{else if eq $overall "degraded"}}bg-yellow-400 animate-pulse{{else}}bg-red-400 animate-pulse{{end}}"></span>
+            <span class="text-[14px] font-medium {{if eq $overall "operational"}}text-emerald-400{{else if eq $overall "degraded"}}text-yellow-400{{else}}text-red-400{{end}}">
+                {{if eq $overall "operational"}}All Systems Operational{{else if eq $overall "degraded"}}Partial System Degradation{{else}}Major System Outage{{end}}
+            </span>
+        </div>
+
+        {{if $monitors}}
+        <div class="space-y-0 border border-line rounded-lg overflow-hidden divide-y divide-line">
+            {{range $monitors}}
+            <div class="px-4 py-4 bg-surface-50">
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[13px] font-medium text-white">{{.Monitor.Name}}</span>
+                        <span class="text-[10px] uppercase tracking-wider text-muted">{{typeLabel .Monitor.Type}}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full {{statusDot .Monitor.Status}}"></span>
+                        <span class="text-[12px] {{statusColor .Monitor.Status}}">{{.Monitor.Status}}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-[1px]" x-data="{tooltip: '', show: false}">
+                    {{range .DailyBars}}
+                    <div class="flex-1 h-8 rounded-[1px] {{uptimeBarColor .UptimePct .HasData}} opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+                         @mouseenter="tooltip = '{{uptimeBarTooltip .UptimePct .HasData .Label}}'; show = true"
+                         @mouseleave="show = false"></div>
+                    {{end}}
+
+                    <div x-show="show" x-cloak x-transition.opacity.duration.150ms
+                         class="fixed z-50 px-2.5 py-1.5 bg-surface-100 border border-line rounded text-[11px] text-muted-light shadow-lg pointer-events-none whitespace-nowrap"
+                         :style="'top: ' + ($event ? ($event.clientY - 40) + 'px' : '0') + '; left: ' + ($event ? $event.clientX + 'px' : '0')"
+                         x-text="tooltip"></div>
+                </div>
+
+                <div class="flex items-center justify-between mt-1.5">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[12px] font-medium {{uptimeColor .Uptime90d}}">{{.UptimeLabel}}</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="border border-line rounded-lg px-4 py-12 text-center">
+            <p class="text-muted text-[13px]">No monitors configured</p>
+        </div>
+        {{end}}
+
+        {{if and $cfg.ShowIncidents $hasIncidents}}
+        <div class="mt-8">
+            <h2 class="text-[14px] font-medium text-white mb-3">Recent Incidents</h2>
+            <div class="space-y-0 border border-line rounded-lg overflow-hidden divide-y divide-line">
+                {{range $incidents}}
+                <div class="px-4 py-3 bg-surface-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full {{statusDot .Status}}"></span>
+                            <span class="text-[13px] text-white">{{.MonitorName}}</span>
+                        </div>
+                        <span class="text-[11px] px-2 py-0.5 rounded border {{statusBg .Status}}">{{.Status}}</span>
+                    </div>
+                    <div class="mt-1 flex items-center gap-3 text-[11px] text-muted">
+                        <span>{{timeAgo .StartedAt}}</span>
+                        {{if .Cause}}<span>{{.Cause}}</span>{{end}}
+                        {{if .ResolvedAt}}<span>Resolved in {{incidentDuration .StartedAt .ResolvedAt}}</span>{{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <div class="mt-10 text-center">
+            <span class="text-[11px] text-muted/50">Powered by Asura</span>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>
+{{end}}

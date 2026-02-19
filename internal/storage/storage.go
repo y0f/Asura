@@ -93,6 +93,12 @@ type Store interface {
 	RollupRequestLogs(ctx context.Context, date string) error
 	PurgeOldRequestLogs(ctx context.Context, before time.Time) (int64, error)
 
+	// Status page
+	GetStatusPageConfig(ctx context.Context) (*StatusPageConfig, error)
+	UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error
+	ListPublicMonitors(ctx context.Context) ([]*Monitor, error)
+	GetDailyUptime(ctx context.Context, monitorID int64, from, to time.Time) ([]*DailyUptime, error)
+
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
 

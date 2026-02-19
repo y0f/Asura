@@ -135,8 +135,13 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/maintenance/{id}/delete"), webPerm("maintenance.write", s.handleWebMaintenanceDelete))
 
 		mux.Handle("GET "+s.p("/logs"), webAuth(http.HandlerFunc(s.handleWebRequestLogs)))
+
+		mux.HandleFunc("GET "+s.p("/status"), s.handleWebStatusPage)
+		mux.Handle("GET "+s.p("/status-settings"), webAuth(http.HandlerFunc(s.handleWebStatusSettings)))
+		mux.Handle("POST "+s.p("/status-settings"), webPerm("monitors.write", s.handleWebStatusSettingsUpdate))
 	}
 
+	mux.HandleFunc("GET "+s.p("/api/v1/status"), s.handlePublicStatus)
 	mux.HandleFunc("GET "+s.p("/api/v1/health"), s.handleHealth)
 	mux.Handle("GET "+s.p("/metrics"), metricsRead(http.HandlerFunc(s.handleMetrics)))
 	mux.HandleFunc("POST "+s.p("/api/v1/heartbeat/{token}"), s.handleHeartbeatPing)
@@ -177,6 +182,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("POST "+s.p("/api/v1/maintenance"), maintWrite(http.HandlerFunc(s.handleCreateMaintenance)))
 	mux.Handle("PUT "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleUpdateMaintenance)))
 	mux.Handle("DELETE "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleDeleteMaintenance)))
+
+	mux.Handle("GET "+s.p("/api/v1/status/config"), monRead(http.HandlerFunc(s.handleGetStatusConfig)))
+	mux.Handle("PUT "+s.p("/api/v1/status/config"), monWrite(http.HandlerFunc(s.handleUpdateStatusConfig)))
 
 	mux.Handle("GET "+s.p("/api/v1/request-logs"), metricsRead(http.HandlerFunc(s.handleListRequestLogs)))
 	mux.Handle("GET "+s.p("/api/v1/request-logs/stats"), metricsRead(http.HandlerFunc(s.handleRequestLogStats)))

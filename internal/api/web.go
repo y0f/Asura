@@ -224,7 +224,29 @@ var templateFuncs = template.FuncMap{
 		}
 		return fmt.Sprintf("%.1fs", f/1000)
 	},
-	"add": func(a, b int) int { return a + b },
+	"uptimeBarColor": func(pct float64, hasData bool) string {
+		if !hasData {
+			return "bg-surface-300"
+		}
+		if pct >= 99 {
+			return "bg-emerald-500"
+		}
+		if pct >= 95 {
+			return "bg-yellow-500"
+		}
+		return "bg-red-500"
+	},
+	"uptimeBarTooltip": func(pct float64, hasData bool, label string) string {
+		if !hasData {
+			return label + " — No data"
+		}
+		if pct >= 99.995 {
+			return label + " — 100% uptime"
+		}
+		return fmt.Sprintf("%s — %.2f%% uptime", label, pct)
+	},
+	"safeCSS": func(s string) template.CSS { return template.CSS(s) },
+	"add":     func(a, b int) int { return a + b },
 	"sub": func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {
 		if s == "" {
@@ -252,6 +274,7 @@ func (s *Server) loadTemplates() {
 		"notifications.html",
 		"maintenance.html",
 		"request_logs.html",
+		"status_settings.html",
 	}
 
 	for _, page := range pages {
@@ -260,6 +283,7 @@ func (s *Server) loadTemplates() {
 	}
 
 	s.templates["login.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "login.html"))
+	s.templates["status_page.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "status_page.html"))
 }
 
 func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
