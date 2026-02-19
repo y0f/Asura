@@ -18,7 +18,11 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	// Fetch all monitors for accurate stat card counts
+	typeFilter := r.URL.Query().Get("type")
+	if !validMonitorTypes[typeFilter] {
+		typeFilter = ""
+	}
+
 	allResult, err := s.store.ListMonitors(ctx, storage.Pagination{Page: 1, PerPage: 1000})
 	if err != nil {
 		s.logger.Error("web: list monitors", "error", err)
@@ -49,8 +53,17 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Paginate display list
-	total := len(allMonitors)
+	filtered := allMonitors
+	if typeFilter != "" {
+		filtered = make([]*storage.Monitor, 0)
+		for _, m := range allMonitors {
+			if m.Type == typeFilter {
+				filtered = append(filtered, m)
+			}
+		}
+	}
+
+	total := len(filtered)
 	totalPages := (total + perPage - 1) / perPage
 	if totalPages < 1 {
 		totalPages = 1
@@ -63,7 +76,7 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	if end > total {
 		end = total
 	}
-	displayMonitors := allMonitors[start:end]
+	displayMonitors := filtered[start:end]
 
 	incidents, err := s.store.ListIncidents(ctx, 0, "open", storage.Pagination{Page: 1, PerPage: 10})
 	if err != nil {
@@ -97,7 +110,7 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	pd.Data = map[string]interface{}{
 		"Monitors":      displayMonitors,
 		"Incidents":     incidentList,
-		"Total":         total,
+		"Total":         len(allMonitors),
 		"Up":            up,
 		"Down":          down,
 		"Degraded":      degraded,
@@ -108,6 +121,8 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 		"Visitors24h":   visitors24h,
 		"Page":          page,
 		"TotalPages":    totalPages,
+		"Filter":        typeFilter,
+		"FilteredTotal": total,
 	}
 	s.render(w, "dashboard.html", pd)
 }
