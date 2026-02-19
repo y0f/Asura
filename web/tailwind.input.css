@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Theme variables ──────────────────────────────────────────────────────── */
+/* Light mode — pastel blue palette */
+:root {
+  --brand-rgb: 0 128 255;
+  --text-primary-rgb: 20 20 43;
+  --surface-rgb: 248 249 255;
+  --surface-50-rgb: 240 242 255;
+  --surface-100-rgb: 234 236 248;
+  --surface-200-rgb: 226 228 240;
+  --surface-300-rgb: 216 218 234;
+  --muted-rgb: 107 111 138;
+  --muted-light-rgb: 45 48 88;
+  --line-rgb: 224 226 240;
+  --line-light-rgb: 208 210 228;
+}
+
+/* Dark mode */
+.dark {
+  --brand-rgb: 0 128 255;
+  --text-primary-rgb: 255 255 255;
+  --surface-rgb: 9 9 11;
+  --surface-50-rgb: 14 14 18;
+  --surface-100-rgb: 19 19 24;
+  --surface-200-rgb: 26 26 34;
+  --surface-300-rgb: 34 34 48;
+  --muted-rgb: 67 70 86;
+  --muted-light-rgb: 167 170 188;
+  --line-rgb: 26 26 34;
+  --line-light-rgb: 34 34 48;
+}
+
+/* ── Light mode: status text colours for contrast on pastel bg ───────────── */
+:root:not(.dark) .text-emerald-400 { color: rgb(4 120 87); }
+:root:not(.dark) .text-red-400     { color: rgb(185 28 28); }
+:root:not(.dark) .text-yellow-400  { color: rgb(161 98 7); }
+:root:not(.dark) .text-gray-400    { color: rgb(75 85 99); }
+:root:not(.dark) .text-gray-500    { color: rgb(55 65 81); }
+:root:not(.dark) .text-blue-400    { color: rgb(29 78 216); }

@@ -112,6 +112,10 @@
             const tipVal = tip ? tip.querySelector('.tip-value') : null;
             const tipSt = tip ? tip.querySelector('.tip-status') : null;
 
+            const cs = getComputedStyle(document.documentElement);
+            const axisColor = `rgb(${cs.getPropertyValue('--muted-rgb').trim()})`;
+            const gridColor = `rgb(${cs.getPropertyValue('--line-rgb').trim()})`;
+
             const opts = {
                 width: el.clientWidth,
                 height: 200,
@@ -121,16 +125,16 @@
                 padding: [12, 8, 0, 0],
                 axes: [
                     {
-                        stroke: '#434656',
-                        grid: { stroke: '#1a1a22', width: 1 },
-                        ticks: { stroke: '#1a1a22', width: 1 },
+                        stroke: axisColor,
+                        grid: { stroke: gridColor, width: 1 },
+                        ticks: { stroke: gridColor, width: 1 },
                         font: '10px Inter, system-ui, sans-serif',
                         gap: 6
                     },
                     {
-                        stroke: '#434656',
-                        grid: { stroke: '#1a1a22', width: 1 },
-                        ticks: { stroke: '#1a1a22', width: 1 },
+                        stroke: axisColor,
+                        grid: { stroke: gridColor, width: 1 },
+                        ticks: { stroke: gridColor, width: 1 },
                         font: '10px Inter, system-ui, sans-serif',
                         gap: 6,
                         values: (u, vals) => vals.map(v => v + 'ms')

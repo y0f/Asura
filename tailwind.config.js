@@ -21,21 +21,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: '#0080ff',
+        // Override white to follow theme (dark navy in light mode, white in dark mode)
+        white: 'rgb(var(--text-primary-rgb) / <alpha-value>)',
+        brand: 'rgb(var(--brand-rgb) / <alpha-value>)',
         surface: {
-          DEFAULT: '#09090b',
-          50:  '#0e0e12',
-          100: '#131318',
-          200: '#1a1a22',
-          300: '#222230',
+          DEFAULT: 'rgb(var(--surface-rgb) / <alpha-value>)',
+          50:  'rgb(var(--surface-50-rgb) / <alpha-value>)',
+          100: 'rgb(var(--surface-100-rgb) / <alpha-value>)',
+          200: 'rgb(var(--surface-200-rgb) / <alpha-value>)',
+          300: 'rgb(var(--surface-300-rgb) / <alpha-value>)',
         },
         muted: {
-          DEFAULT: '#434656',
-          light:   '#a7aabc',
+          DEFAULT: 'rgb(var(--muted-rgb) / <alpha-value>)',
+          light:   'rgb(var(--muted-light-rgb) / <alpha-value>)',
         },
         line: {
-          DEFAULT: '#1a1a22',
-          light:   '#222230',
+          DEFAULT: 'rgb(var(--line-rgb) / <alpha-value>)',
+          light:   'rgb(var(--line-light-rgb) / <alpha-value>)',
         },
       },
       fontFamily: {
