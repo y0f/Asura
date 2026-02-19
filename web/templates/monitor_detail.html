@@ -282,8 +282,9 @@
     </div>
 
     <div class="border border-line rounded-lg mb-5 overflow-hidden">
-        <div class="px-4 py-2.5 border-b border-line">
+        <div class="px-4 py-2.5 border-b border-line flex items-center justify-between">
             <h2 class="text-[11px] text-muted uppercase tracking-widest">Recent Checks</h2>
+            {{if and $.Data.Checks (gt $.Data.Checks.Total 0)}}<span class="text-[10px] text-muted/50 tabular-nums">{{$.Data.Checks.Total}} total</span>{{end}}
         </div>
         {{if and $.Data.Checks $.Data.Checks.Data}}
         <div class="overflow-x-auto">
@@ -321,6 +322,19 @@
                 </tbody>
             </table>
         </div>
+        {{if gt $.Data.Checks.TotalPages 1}}
+        <div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+            <span class="text-[11px] text-muted tabular-nums">Page {{$.Data.Checks.Page}} / {{$.Data.Checks.TotalPages}}</span>
+            <div class="flex gap-1">
+                {{if gt $.Data.Checks.Page 1}}
+                <a href="{{$.BasePath}}/monitors/{{$mon.ID}}?checks_page={{sub $.Data.Checks.Page 1}}{{if gt $.Data.ChangesPage 1}}&changes_page={{$.Data.ChangesPage}}{{end}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+                {{end}}
+                {{if lt $.Data.Checks.Page $.Data.Checks.TotalPages}}
+                <a href="{{$.BasePath}}/monitors/{{$mon.ID}}?checks_page={{add $.Data.Checks.Page 1}}{{if gt $.Data.ChangesPage 1}}&changes_page={{$.Data.ChangesPage}}{{end}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
         {{else}}
         <div class="px-4 py-10 text-center text-muted text-[12px]">No check results yet</div>
         {{end}}
@@ -328,17 +342,31 @@
 
     {{if and $.Data.Changes $.Data.Changes.Data}}
     <div class="border border-line rounded-lg overflow-hidden">
-        <div class="px-4 py-2.5 border-b border-line">
+        <div class="px-4 py-2.5 border-b border-line flex items-center justify-between">
             <h2 class="text-[11px] text-muted uppercase tracking-widest">Content Changes</h2>
+            {{if gt $.Data.Changes.Total 0}}<span class="text-[10px] text-muted/50 tabular-nums">{{$.Data.Changes.Total}} total</span>{{end}}
         </div>
         <div class="divide-y divide-line">
             {{range $.Data.Changes.Data}}
-            <div class="px-4 py-3">
-                <div class="text-[10px] text-muted/60 mb-1.5">{{timeAgo .CreatedAt}}</div>
-                {{if .Diff}}<pre class="text-[11px] text-muted-light bg-surface rounded p-3 overflow-x-auto font-mono">{{.Diff}}</pre>{{end}}
+            <div class="px-4 py-2.5 flex items-center gap-3 min-w-0">
+                <span class="text-[10px] text-muted/60 whitespace-nowrap flex-shrink-0 w-16">{{timeAgo .CreatedAt}}</span>
+                {{if .Diff}}<code class="text-[11px] text-muted-light font-mono truncate">{{.Diff}}</code>{{else}}<span class="text-[11px] text-muted/40">—</span>{{end}}
             </div>
             {{end}}
         </div>
+        {{if gt $.Data.Changes.TotalPages 1}}
+        <div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+            <span class="text-[11px] text-muted tabular-nums">Page {{$.Data.Changes.Page}} / {{$.Data.Changes.TotalPages}}</span>
+            <div class="flex gap-1">
+                {{if gt $.Data.Changes.Page 1}}
+                <a href="{{$.BasePath}}/monitors/{{$mon.ID}}?changes_page={{sub $.Data.Changes.Page 1}}{{if gt $.Data.ChecksPage 1}}&checks_page={{$.Data.ChecksPage}}{{end}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a>
+                {{end}}
+                {{if lt $.Data.Changes.Page $.Data.Changes.TotalPages}}
+                <a href="{{$.BasePath}}/monitors/{{$mon.ID}}?changes_page={{add $.Data.Changes.Page 1}}{{if gt $.Data.ChecksPage 1}}&checks_page={{$.Data.ChecksPage}}{{end}}" class="inline-flex items-center justify-center w-6 h-6 text-muted-light hover:text-white border border-line rounded hover:border-line-light transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
     </div>
     {{end}}
 </div>

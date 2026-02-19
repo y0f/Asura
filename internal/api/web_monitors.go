@@ -267,6 +267,9 @@ func assembleAssertions(r *http.Request) json.RawMessage {
 
 func (s *Server) handleWebMonitors(w http.ResponseWriter, r *http.Request) {
 	p := parsePagination(r)
+	if p.PerPage == 20 {
+		p.PerPage = 15
+	}
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	typeFilter := r.URL.Query().Get("type")
 	if !validMonitorTypes[typeFilter] {
@@ -302,12 +305,21 @@ func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	checksPage, _ := strconv.Atoi(r.URL.Query().Get("checks_page"))
+	if checksPage < 1 {
+		checksPage = 1
+	}
+	changesPage, _ := strconv.Atoi(r.URL.Query().Get("changes_page"))
+	if changesPage < 1 {
+		changesPage = 1
+	}
+
 	now := time.Now().UTC()
-	checks, _ := s.store.ListCheckResults(ctx, id, storage.Pagination{Page: 1, PerPage: 50})
+	checks, _ := s.store.ListCheckResults(ctx, id, storage.Pagination{Page: checksPage, PerPage: 10})
 	if checks == nil {
 		checks = &storage.PaginatedResult{}
 	}
-	changes, _ := s.store.ListContentChanges(ctx, id, storage.Pagination{Page: 1, PerPage: 10})
+	changes, _ := s.store.ListContentChanges(ctx, id, storage.Pagination{Page: changesPage, PerPage: 10})
 	if changes == nil {
 		changes = &storage.PaginatedResult{}
 	}
@@ -325,6 +337,8 @@ func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) 
 		"Monitor":      mon,
 		"Checks":       checks,
 		"Changes":      changes,
+		"ChecksPage":   checksPage,
+		"ChangesPage":  changesPage,
 		"Uptime24h":    uptime24h,
 		"Uptime7d":     uptime7d,
 		"Uptime30d":    uptime30d,
