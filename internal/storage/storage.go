@@ -30,6 +30,7 @@ type Store interface {
 	GetIncident(ctx context.Context, id int64) (*Incident, error)
 	ListIncidents(ctx context.Context, monitorID int64, status string, p Pagination) (*PaginatedResult, error)
 	UpdateIncident(ctx context.Context, inc *Incident) error
+	DeleteIncident(ctx context.Context, id int64) error
 	GetOpenIncident(ctx context.Context, monitorID int64) (*Incident, error)
 
 	// Incident events

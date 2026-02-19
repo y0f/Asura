@@ -130,6 +130,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("GET "+s.p("/incidents/{id}"), webAuth(http.HandlerFunc(s.handleWebIncidentDetail)))
 		mux.Handle("POST "+s.p("/incidents/{id}/ack"), webPerm("incidents.write", s.handleWebIncidentAck))
 		mux.Handle("POST "+s.p("/incidents/{id}/resolve"), webPerm("incidents.write", s.handleWebIncidentResolve))
+		mux.Handle("POST "+s.p("/incidents/{id}/delete"), webPerm("incidents.write", s.handleWebIncidentDelete))
 
 		mux.Handle("GET "+s.p("/notifications"), webAuth(http.HandlerFunc(s.handleWebNotifications)))
 		mux.Handle("POST "+s.p("/notifications"), webPerm("notifications.write", s.handleWebNotificationCreate))
@@ -180,6 +181,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	mux.Handle("POST "+s.p("/api/v1/incidents/{id}/ack"), incWrite(http.HandlerFunc(s.handleAckIncident)))
 	mux.Handle("POST "+s.p("/api/v1/incidents/{id}/resolve"), incWrite(http.HandlerFunc(s.handleResolveIncident)))
+	mux.Handle("DELETE "+s.p("/api/v1/incidents/{id}"), incWrite(http.HandlerFunc(s.handleDeleteIncident)))
 
 	mux.Handle("POST "+s.p("/api/v1/notifications"), notifWrite(http.HandlerFunc(s.handleCreateNotification)))
 	mux.Handle("PUT "+s.p("/api/v1/notifications/{id}"), notifWrite(http.HandlerFunc(s.handleUpdateNotification)))

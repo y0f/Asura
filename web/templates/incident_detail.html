@@ -23,6 +23,10 @@
                 <button type="submit" class="px-3 py-1.5 text-[12px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">Resolve</button>
             </form>
             {{end}}
+            <form method="POST" action="{{$.BasePath}}/incidents/{{$inc.ID}}/delete"
+                  x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
+                <button type="submit" class="px-3 py-1.5 text-[12px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+            </form>
         </div>
         {{end}}
     </div>

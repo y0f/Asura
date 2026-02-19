@@ -522,6 +522,11 @@ func (s *SQLiteStore) UpdateIncident(ctx context.Context, inc *Incident) error {
 	return err
 }
 
+func (s *SQLiteStore) DeleteIncident(ctx context.Context, id int64) error {
+	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM incidents WHERE id=?", id)
+	return err
+}
+
 func (s *SQLiteStore) GetOpenIncident(ctx context.Context, monitorID int64) (*Incident, error) {
 	var inc Incident
 	var startedAt string

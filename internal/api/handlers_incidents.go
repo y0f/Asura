@@ -152,6 +152,33 @@ func (s *Server) handleResolveIncident(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, inc)
 }
 
+func (s *Server) handleDeleteIncident(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if _, err := s.store.GetIncident(r.Context(), id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "incident not found")
+			return
+		}
+		s.logger.Error("get incident for delete", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to get incident")
+		return
+	}
+
+	if err := s.store.DeleteIncident(r.Context(), id); err != nil {
+		s.logger.Error("delete incident", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to delete incident")
+		return
+	}
+
+	s.audit(r, "delete", "incident", id, "")
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func newIncidentEvent(incidentID int64, eventType, message string) *storage.IncidentEvent {
 	return &storage.IncidentEvent{
 		IncidentID: incidentID,

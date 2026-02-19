@@ -116,3 +116,12 @@ func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request
 	s.setFlash(w, "Incident resolved")
 	s.redirect(w, r, "/incidents/"+r.PathValue("id"))
 }
+
+func (s *Server) handleWebIncidentDelete(w http.ResponseWriter, r *http.Request) {
+	id, _ := parseID(r)
+	if err := s.store.DeleteIncident(r.Context(), id); err != nil {
+		s.logger.Error("web: delete incident", "error", err)
+	}
+	s.setFlash(w, "Incident deleted")
+	s.redirect(w, r, "/incidents")
+}
