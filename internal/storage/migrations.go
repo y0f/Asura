@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 9
+const schemaVersion = 10
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -271,5 +271,10 @@ INSERT OR IGNORE INTO status_page_config (id) VALUES (1);`,
 		sql: `ALTER TABLE monitors ADD COLUMN description TEXT NOT NULL DEFAULT '';
 ALTER TABLE monitors ADD COLUMN upside_down INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE monitors ADD COLUMN resend_interval INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version: 10,
+		sql: `CREATE INDEX IF NOT EXISTS idx_request_logs_client_ip ON request_logs(client_ip, created_at);
+CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(monitor_id, id DESC);`,
 	},
 }

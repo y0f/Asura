@@ -777,13 +777,28 @@ func (s *SQLiteStore) DeleteMaintenanceWindow(ctx context.Context, id int64) err
 }
 
 func (s *SQLiteStore) IsMonitorInMaintenance(ctx context.Context, monitorID int64, at time.Time) (bool, error) {
-	windows, err := s.ListMaintenanceWindows(ctx)
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT id, name, monitor_ids, start_time, end_time, recurring, created_at, updated_at
+		 FROM maintenance_windows
+		 WHERE recurring != '' OR end_time > ?`,
+		formatTime(at))
 	if err != nil {
 		return false, err
 	}
+	defer rows.Close()
 
-	for _, mw := range windows {
-		// Check if monitor is covered
+	for rows.Next() {
+		var mw MaintenanceWindow
+		var monitorIDsStr, startTime, endTime, createdAt, updatedAt string
+		if err := rows.Scan(&mw.ID, &mw.Name, &monitorIDsStr, &startTime, &endTime, &mw.Recurring, &createdAt, &updatedAt); err != nil {
+			return false, err
+		}
+		mw.StartTime = parseTime(startTime)
+		mw.EndTime = parseTime(endTime)
+		mw.CreatedAt = parseTime(createdAt)
+		mw.UpdatedAt = parseTime(updatedAt)
+		json.Unmarshal([]byte(monitorIDsStr), &mw.MonitorIDs)
+
 		if len(mw.MonitorIDs) > 0 {
 			found := false
 			for _, id := range mw.MonitorIDs {
@@ -796,10 +811,12 @@ func (s *SQLiteStore) IsMonitorInMaintenance(ctx context.Context, monitorID int6
 				continue
 			}
 		}
-
-		if isInWindow(mw, at) {
+		if isInWindow(&mw, at) {
 			return true, nil
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return false, err
 	}
 	return false, nil
 }
@@ -985,37 +1002,21 @@ func (s *SQLiteStore) GetUptimePercent(ctx context.Context, monitorID int64, fro
 }
 
 func (s *SQLiteStore) GetResponseTimePercentiles(ctx context.Context, monitorID int64, from, to time.Time) (p50, p95, p99 float64, err error) {
-	rows, err := s.readDB.QueryContext(ctx,
-		`SELECT response_time FROM check_results
-		 WHERE monitor_id=? AND created_at >= ? AND created_at < ? AND status='up'
-		 ORDER BY response_time`,
-		monitorID, formatTime(from), formatTime(to))
-	if err != nil {
-		return 0, 0, 0, err
-	}
-	defer rows.Close()
-
-	var times []float64
-	for rows.Next() {
-		var rt float64
-		if err := rows.Scan(&rt); err != nil {
-			return 0, 0, 0, err
-		}
-		times = append(times, rt)
-	}
-	if err := rows.Err(); err != nil {
-		return 0, 0, 0, err
-	}
-
-	if len(times) == 0 {
-		return 0, 0, 0, nil
-	}
-
-	sort.Float64s(times)
-	p50 = percentile(times, 0.50)
-	p95 = percentile(times, 0.95)
-	p99 = percentile(times, 0.99)
-	return p50, p95, p99, nil
+	err = s.readDB.QueryRowContext(ctx,
+		`WITH s AS (
+		   SELECT response_time,
+		          ROW_NUMBER() OVER (ORDER BY response_time) AS rn,
+		          COUNT(*) OVER ()                           AS n
+		   FROM check_results
+		   WHERE monitor_id=? AND created_at >= ? AND created_at < ? AND status='up'
+		 )
+		 SELECT
+		   COALESCE(MIN(CASE WHEN rn >= n * 0.50 THEN response_time END), 0),
+		   COALESCE(MIN(CASE WHEN rn >= n * 0.95 THEN response_time END), 0),
+		   COALESCE(MIN(CASE WHEN rn >= n * 0.99 THEN response_time END), 0)
+		 FROM s`,
+		monitorID, formatTime(from), formatTime(to)).Scan(&p50, &p95, &p99)
+	return
 }
 
 func (s *SQLiteStore) GetLatestResponseTimes(ctx context.Context) (map[int64]int64, error) {
@@ -1043,19 +1044,6 @@ func (s *SQLiteStore) GetLatestResponseTimes(ctx context.Context) (map[int64]int
 	return result, nil
 }
 
-func percentile(sorted []float64, p float64) float64 {
-	if len(sorted) == 0 {
-		return 0
-	}
-	idx := p * float64(len(sorted)-1)
-	lower := int(math.Floor(idx))
-	upper := int(math.Ceil(idx))
-	if lower == upper {
-		return sorted[lower]
-	}
-	frac := idx - float64(lower)
-	return sorted[lower]*(1-frac) + sorted[upper]*frac
-}
 
 func (s *SQLiteStore) GetCheckCounts(ctx context.Context, monitorID int64, from, to time.Time) (total, up, down, degraded int64, err error) {
 	err = s.readDB.QueryRowContext(ctx,
