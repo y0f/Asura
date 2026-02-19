@@ -1467,6 +1467,28 @@ func (s *SQLiteStore) ListRequestLogs(ctx context.Context, f RequestLogFilter, p
 	}, nil
 }
 
+func (s *SQLiteStore) ListTopClientIPs(ctx context.Context, from, to time.Time, limit int) ([]string, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT client_ip FROM request_logs
+		 WHERE created_at >= ? AND created_at < ? AND client_ip != ''
+		 GROUP BY client_ip ORDER BY COUNT(*) DESC LIMIT ?`,
+		formatTime(from), formatTime(to), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ips []string
+	for rows.Next() {
+		var ip string
+		if err := rows.Scan(&ip); err != nil {
+			return nil, err
+		}
+		ips = append(ips, ip)
+	}
+	return ips, rows.Err()
+}
+
 func (s *SQLiteStore) GetRequestLogStats(ctx context.Context, from, to time.Time) (*RequestLogStats, error) {
 	fromStr := formatTime(from)
 	toStr := formatTime(to)

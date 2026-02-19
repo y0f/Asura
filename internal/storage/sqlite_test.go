@@ -671,6 +671,54 @@ func TestRequestLogPurge(t *testing.T) {
 	}
 }
 
+func TestListTopClientIPs(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC()
+	logs := []*RequestLog{
+		{Method: "GET", Path: "/", StatusCode: 200, LatencyMs: 5, ClientIP: "1.1.1.1", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/a", StatusCode: 200, LatencyMs: 5, ClientIP: "1.1.1.1", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/b", StatusCode: 200, LatencyMs: 5, ClientIP: "1.1.1.1", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/c", StatusCode: 200, LatencyMs: 5, ClientIP: "2.2.2.2", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/d", StatusCode: 200, LatencyMs: 5, ClientIP: "2.2.2.2", RouteGroup: "web", CreatedAt: now},
+		{Method: "GET", Path: "/e", StatusCode: 200, LatencyMs: 5, ClientIP: "3.3.3.3", RouteGroup: "web", CreatedAt: now},
+	}
+	if err := store.InsertRequestLogBatch(ctx, logs); err != nil {
+		t.Fatal(err)
+	}
+
+	ips, err := store.ListTopClientIPs(ctx, now.Add(-time.Hour), now.Add(time.Hour), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ips) != 3 {
+		t.Fatalf("expected 3 IPs, got %d", len(ips))
+	}
+	// First entry must be the most frequent IP
+	if ips[0] != "1.1.1.1" {
+		t.Fatalf("expected 1.1.1.1 first, got %s", ips[0])
+	}
+
+	// Respect limit
+	ips, err = store.ListTopClientIPs(ctx, now.Add(-time.Hour), now.Add(time.Hour), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ips) != 1 {
+		t.Fatalf("expected 1 IP with limit=1, got %d", len(ips))
+	}
+
+	// Empty range returns nothing
+	ips, err = store.ListTopClientIPs(ctx, now.Add(-2*time.Hour), now.Add(-time.Hour), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ips) != 0 {
+		t.Fatalf("expected 0 IPs outside range, got %d", len(ips))
+	}
+}
+
 func TestInsertRequestLogBatchEmpty(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

@@ -47,6 +47,11 @@ func (s *Server) handleWebRequestLogs(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("web: get request log stats", "error", err)
 	}
 
+	topIPs, err := s.store.ListTopClientIPs(r.Context(), f.From, f.To, 50)
+	if err != nil {
+		s.logger.Error("web: list top client IPs", "error", err)
+	}
+
 	timeRange := q.Get("range")
 	if timeRange == "" {
 		timeRange = "24h"
@@ -61,6 +66,7 @@ func (s *Server) handleWebRequestLogs(w http.ResponseWriter, r *http.Request) {
 		"StatusCode": f.StatusCode,
 		"ClientIP":   f.ClientIP,
 		"TimeRange":  timeRange,
+		"TopIPs":     topIPs,
 	}
 	s.render(w, "request_logs.html", pd)
 }

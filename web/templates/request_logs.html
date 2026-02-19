@@ -44,8 +44,14 @@
         <div class="relative max-w-xs">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <input type="text" name="ip" value="{{.Data.ClientIP}}" placeholder="Filter by IP..."
+                   list="ip-suggestions"
                    class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-none focus:border-brand/40 transition-colors">
         </div>
+        {{if .Data.TopIPs}}
+        <datalist id="ip-suggestions">
+            {{range .Data.TopIPs}}<option value="{{.}}">{{end}}
+        </datalist>
+        {{end}}
     </form>
 
     <div class="border border-line rounded-lg overflow-hidden">

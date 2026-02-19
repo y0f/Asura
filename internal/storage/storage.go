@@ -90,6 +90,7 @@ type Store interface {
 	// Request logs
 	InsertRequestLogBatch(ctx context.Context, logs []*RequestLog) error
 	ListRequestLogs(ctx context.Context, f RequestLogFilter, p Pagination) (*PaginatedResult, error)
+	ListTopClientIPs(ctx context.Context, from, to time.Time, limit int) ([]string, error)
 	GetRequestLogStats(ctx context.Context, from, to time.Time) (*RequestLogStats, error)
 	RollupRequestLogs(ctx context.Context, date string) error
 	PurgeOldRequestLogs(ctx context.Context, before time.Time) (int64, error)
