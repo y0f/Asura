@@ -14,7 +14,7 @@
         ::selection { background: rgba(0,128,255,.15); }
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #222230; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgb(var(--line-light-rgb)); border-radius: 3px; }
         .noise-bg {
             position: fixed;
             inset: 0;
@@ -48,16 +48,6 @@
         {{$incidents := index . "Incidents"}}
         {{$hasIncidents := index . "HasIncidents"}}
 
-        <div class="mb-10">
-            <div class="mb-6">
-                <img src="{{$.BasePath}}/static/logo.gif" alt="Asura" class="h-4 opacity-60">
-            </div>
-            <h1 class="text-2xl font-semibold text-white tracking-tight">{{$cfg.Title}}</h1>
-            {{if $cfg.Description}}
-            <p class="mt-2 text-[13px] text-muted leading-relaxed">{{$cfg.Description}}</p>
-            {{end}}
-        </div>
-
         <div class="mb-8 rounded-lg border {{if eq $overall "operational"}}border-emerald-500/20 bg-emerald-500/[0.04]{{else if eq $overall "degraded"}}border-yellow-500/20 bg-yellow-500/[0.04]{{else}}border-red-500/20 bg-red-500/[0.04]{{end}} px-4 py-3.5 flex items-center gap-3">
             <span class="relative flex h-2 w-2 flex-shrink-0">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{if eq $overall "operational"}}bg-emerald-400{{else if eq $overall "degraded"}}bg-yellow-400{{else}}bg-red-400{{end}} opacity-50"></span>
@@ -71,7 +61,7 @@
         {{if $monitors}}
         <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
             {{range $monitors}}
-            <div class="px-4 py-4 bg-surface-50">
+            <div class="px-4 py-4" style="background: rgb(var(--surface-50-rgb) / 0.35)">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-[13px] font-medium text-white">{{.Monitor.Name}}</span>
                     <div class="flex items-center gap-1.5">
@@ -82,7 +72,7 @@
 
                 <div class="flex items-center gap-[2px]" x-data="{tooltip: '', show: false, mx: 0, my: 0}">
                     {{range .DailyBars}}
-                    <div class="flex-1 h-7 rounded-[2px] {{uptimeBarColor .UptimePct .HasData}} opacity-70 hover:opacity-100 transition-opacity cursor-default"
+                    <div class="flex-1 h-7 rounded-[2px] {{uptimeBarColor .UptimePct .HasData}} opacity-80 hover:opacity-100 transition-opacity cursor-default"
                          @mouseenter="tooltip = '{{uptimeBarTooltip .UptimePct .HasData .Label}}'; show = true; mx = $event.clientX; my = $event.clientY"
                          @mousemove="mx = $event.clientX; my = $event.clientY"
                          @mouseleave="show = false"></div>
@@ -112,7 +102,7 @@
             <h2 class="text-[10px] font-medium text-muted uppercase tracking-widest mb-3">Recent Incidents</h2>
             <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
                 {{range $incidents}}
-                <div class="px-4 py-3 bg-surface-50">
+                <div class="px-4 py-3" style="background: rgb(var(--surface-50-rgb) / 0.35)">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-1.5 h-1.5 rounded-full {{statusDot .Status}}"></span>
@@ -131,8 +121,12 @@
         </div>
         {{end}}
 
-        <div class="mt-12 pt-5 border-t border-line flex items-center justify-between">
-            <span class="text-[11px] text-muted">Powered by <a href="https://github.com/y0f/Asura" target="_blank" rel="noopener" class="text-muted-light hover:text-white transition-colors">Asura</a></span>
+        <div class="mt-12 pt-5 border-t border-line text-center">
+            <span class="text-[11px] text-muted">Powered by </span>
+            <a href="https://github.com/y0f/Asura" target="_blank" rel="noopener"
+               class="inline-block transition-transform duration-150 hover:scale-110 align-middle">
+                <img src="{{$.BasePath}}/static/logo.gif" alt="Asura" class="h-3 inline-block">
+            </a>
         </div>
         {{end}}
     </div>
