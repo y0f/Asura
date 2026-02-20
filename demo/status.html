@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status — Acme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        extend: {
+          colors: {
+            brand: '#0080ff',
+            surface: {
+              DEFAULT: '#09090b',
+              50:  '#0e0e12',
+              100: '#131318',
+              200: '#1a1a22',
+              300: '#222230',
+            },
+            muted: {
+              DEFAULT: '#434656',
+              light: '#a7aabb',
+            },
+            line: {
+              DEFAULT: '#1a1a22',
+              light:   '#222230',
+            },
+          },
+        },
+      },
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        ::selection { background: rgba(0,128,255,.15); }
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #222230; border-radius: 3px; }
+        .noise-bg {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700' width='700' height='700'%3E%3Cdefs%3E%3Cfilter id='nnnoise-filter' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' seed='15' stitchTiles='stitch' x='0%25' y='0%25' width='100%25' height='100%25' result='turbulence'/%3E%3CfeSpecularLighting surfaceScale='5' specularConstant='0.8' specularExponent='20' lighting-color='white' x='0%25' y='0%25' width='100%25' height='100%25' in='turbulence' result='specularLighting'%3E%3CfeDistantLight azimuth='3' elevation='96'/%3E%3C/feSpecularLighting%3E%3CfeColorMatrix type='saturate' values='0' x='0%25' y='0%25' width='100%25' height='100%25' in='specularLighting' result='colormatrix'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='700' height='700' fill='black'/%3E%3Crect width='700' height='700' fill='white' filter='url(%23nnnoise-filter)'/%3E%3C/svg%3E");
+            background-size: 400px; opacity: 0.045;
+        }
+        .glow-bg {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse 90% 45% at 50% -5%, rgba(0,128,255,0.08) 0%, transparent 70%);
+        }
+        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+        .animate-ping { animation: ping 1.5s cubic-bezier(0,0,.2,1) infinite; }
+        #bar-tooltip {
+            position: fixed; z-index: 50; display: none;
+            padding: 6px 10px; border-radius: 4px;
+            background: #131318; border: 1px solid #1a1a22;
+            font-size: 11px; color: #a7aabb;
+            box-shadow: 0 4px 16px rgba(0,0,0,.5);
+            pointer-events: none; white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-surface text-muted-light font-sans min-h-screen antialiased">
+    <div class="noise-bg"></div>
+    <div class="glow-bg"></div>
+    <div id="bar-tooltip"></div>
+
+    <!-- Demo banner -->
+    <div class="relative z-10 border-b border-line px-4 py-2 text-center">
+        <span class="text-[11px] text-muted">Demo — <a href="https://github.com/y0f/Asura" target="_blank" rel="noopener" class="text-brand hover:text-white transition-colors">Asura</a> is a self-hosted uptime monitor you can run on your own server</span>
+    </div>
+
+    <div class="relative z-10 max-w-2xl mx-auto px-4 py-14 sm:px-6 sm:py-20">
+
+        <!-- Overall status: partial degradation -->
+        <div class="mb-8 rounded-lg border border-yellow-500/20 bg-yellow-500/[0.04] px-4 py-3.5 flex items-center gap-3">
+            <span class="relative flex h-2 w-2 flex-shrink-0">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-50"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
+            </span>
+            <span class="text-[13px] font-medium text-yellow-400">Partial System Degradation</span>
+        </div>
+
+        <!-- Monitor list -->
+        <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+
+            <!-- Website -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">Website</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                    </div>
+                </div>
+                <div id="bars-website" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-emerald-400">99.97%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+            <!-- Production API -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">Production API</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                    </div>
+                </div>
+                <div id="bars-api" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-emerald-400">99.94%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+            <!-- Auth Service -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">Auth Service</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                    </div>
+                </div>
+                <div id="bars-auth" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-emerald-400">100%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+            <!-- CDN Edge -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">CDN Edge</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                    </div>
+                </div>
+                <div id="bars-cdn" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-emerald-400">99.99%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+            <!-- Payment Gateway - DOWN -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">Payment Gateway</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="relative flex h-1.5 w-1.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-50"></span>
+                            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-400"></span>
+                        </span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-red-500/10 text-red-400 border-red-500/20">down</span>
+                    </div>
+                </div>
+                <div id="bars-payment" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-red-400">98.12%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+            <!-- Mail Server - DEGRADED -->
+            <div class="px-4 py-4" style="background:rgb(14 14 18/0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">Mail Server</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/20">degraded</span>
+                    </div>
+                </div>
+                <div id="bars-mail" class="flex items-center gap-[2px]"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums text-yellow-400">97.40%</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Recent Incidents -->
+        <div class="mt-8">
+            <h2 class="text-[10px] font-medium text-muted uppercase tracking-widest mb-3">Recent Incidents</h2>
+            <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+
+                <!-- Incident 1: Payment Gateway - open -->
+                <div class="px-4 py-3" style="background:rgb(14 14 18/0.35)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                            <span class="text-[13px] text-white">Payment Gateway</span>
+                        </div>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-red-500/10 text-red-400 border-red-500/20">open</span>
+                    </div>
+                    <div class="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+                        <span>34 minutes ago</span>
+                        <span>HTTP 502: upstream connection refused</span>
+                    </div>
+                </div>
+
+                <!-- Incident 2: Mail Server - acknowledged -->
+                <div class="px-4 py-3" style="background:rgb(14 14 18/0.35)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                            <span class="text-[13px] text-white">Mail Server</span>
+                        </div>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/20">acknowledged</span>
+                    </div>
+                    <div class="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+                        <span>2 hours ago</span>
+                        <span>Response time 2,847ms exceeded threshold</span>
+                    </div>
+                </div>
+
+                <!-- Incident 3: Website - resolved -->
+                <div class="px-4 py-3" style="background:rgb(14 14 18/0.35)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span class="text-[13px] text-white">Website</span>
+                        </div>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">resolved</span>
+                    </div>
+                    <div class="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+                        <span>12 days ago</span>
+                        <span>TLS handshake timeout</span>
+                        <span class="text-emerald-400">Resolved in 4m 12s</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 pt-5 border-t border-line flex items-center justify-center gap-1.5">
+            <span class="text-[11px] text-muted">Powered by</span>
+            <a href="https://github.com/y0f/Asura" target="_blank" rel="noopener" class="flex items-center">
+                <img src="../web/static/logo.gif" alt="Asura" class="h-2" style="margin-top:2px">
+            </a>
+        </div>
+
+    </div>
+
+<script>
+const tooltip = document.getElementById('bar-tooltip');
+
+function bar(status, label) {
+    const d = document.createElement('div');
+    d.style.cssText = 'flex:1;height:28px;border-radius:2px;cursor:default;transition:opacity .15s;opacity:.8;';
+    if (status === 'down')     d.style.background = 'rgba(239,68,68,0.75)';
+    else if (status === 'deg') d.style.background = 'rgba(234,179,8,0.75)';
+    else if (status === 'none')d.style.background = '#1a1a22';
+    else                       d.style.background = 'rgba(16,185,129,0.75)';
+    d.addEventListener('mouseenter', e => { d.style.opacity='1'; tooltip.textContent=label; tooltip.style.display='block'; });
+    d.addEventListener('mousemove',  e => { tooltip.style.top=(e.clientY-40)+'px'; tooltip.style.left=e.clientX+'px'; });
+    d.addEventListener('mouseleave', () => { d.style.opacity='.8'; tooltip.style.display='none'; });
+    return d;
+}
+
+function render(id, days) {
+    const el = document.getElementById(id);
+    const today = new Date();
+    days.forEach((s, i) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - (89 - i));
+        const lbl = d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+        const desc = s==='down' ? 'Outage' : s==='deg' ? 'Elevated latency' : s==='none' ? 'No data' : '100% uptime';
+        el.appendChild(bar(s, `${lbl} — ${desc}`));
+    });
+}
+
+// Helper: 90 days mostly up with sparse overrides {index: 'down'|'deg'|'none'}
+function gen(ov={}) {
+    return Array.from({length:90}, (_,i) => ov[i] || 'up');
+}
+
+render('bars-website',  gen({ 12:'down', 13:'down' }));
+render('bars-api',      gen({ 34:'down', 55:'deg' }));
+render('bars-auth',     gen());
+render('bars-cdn',      gen({ 71:'deg' }));
+render('bars-payment',  gen({ 18:'down', 19:'down', 47:'deg', 88:'down', 89:'down' }));
+render('bars-mail',     gen({ 7:'deg', 8:'deg', 31:'down', 32:'deg', 60:'deg', 61:'deg', 88:'deg', 89:'deg' }));
+</script>
+</body>
+</html>

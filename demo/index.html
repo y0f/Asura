@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Asura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        extend: {
+          colors: {
+            brand: '#0080ff',
+            surface: {
+              DEFAULT: '#09090b',
+              50: '#0e0e12',
+              100: '#131318',
+              200: '#1a1a22',
+              300: '#222230',
+            },
+            muted: {
+              DEFAULT: '#434656',
+              light: '#a7aabb',
+            },
+            line: {
+              DEFAULT: '#1a1a22',
+              light: '#222230',
+            },
+          },
+        },
+      },
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+        .animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+        ::selection { background: rgba(0,128,255,.15); }
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #222230; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-surface text-muted-light font-sans min-h-screen antialiased">
+<div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 h-full w-48 bg-surface-50 border-r border-line flex flex-col z-40">
+        <div class="px-5 py-5">
+            <a href="#">
+                <img src="../web/static/logo.gif" alt="Asura" class="h-4">
+            </a>
+        </div>
+
+        <nav class="flex-1 px-2.5 space-y-px">
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-brand bg-brand/[0.06]">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Monitors
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Incidents
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                Notifications
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                Maintenance
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Logs
+            </a>
+            <a href="#" class="flex items-center gap-2.5 px-3 py-[7px] rounded text-[13px] text-muted-light hover:text-white hover:bg-surface-200/40">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Status Page
+            </a>
+        </nav>
+
+        <div class="px-5 py-3 border-t border-line flex items-center justify-between">
+            <span class="text-[10px] text-muted-light">v1.0.2</span>
+            <div class="flex items-center gap-3">
+                <a href="#" class="text-muted-light hover:text-white transition-colors" title="GitHub">
+                    <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                </a>
+                <button class="text-muted-light hover:text-white transition-colors" title="Toggle theme">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                </button>
+                <button class="text-muted-light hover:text-white transition-colors" title="Logout">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 ml-48 min-w-0">
+        <div class="px-5 py-6 md:px-8 md:py-8 max-w-6xl">
+
+            <!-- Stat cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Monitors</div>
+                    <div class="text-2xl font-semibold text-white tabular-nums">14</div>
+                </div>
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Up</div>
+                    <div class="text-2xl font-semibold text-emerald-400 tabular-nums">12</div>
+                </div>
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Down</div>
+                    <div class="text-2xl font-semibold text-red-400 tabular-nums">1</div>
+                </div>
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Incidents</div>
+                    <div class="text-2xl font-semibold text-yellow-400 tabular-nums">2</div>
+                </div>
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Requests 24h</div>
+                    <div class="text-2xl font-semibold text-muted-light tabular-nums">14,823</div>
+                </div>
+                <div class="border border-line rounded-lg px-4 py-3">
+                    <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Visitors 24h</div>
+                    <div class="text-2xl font-semibold text-muted-light tabular-nums">892</div>
+                </div>
+            </div>
+
+            <!-- Content grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Monitor list -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-[11px] text-muted uppercase tracking-widest">Monitors</h2>
+                        <a href="#" class="text-[11px] text-brand hover:text-brand/80">+ Add</a>
+                    </div>
+                    <div>
+                        <!-- Filter tabs -->
+                        <div class="px-4 py-2 border-b border-line flex gap-1.5 overflow-x-auto rounded-t-lg border-x border-t">
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-brand border-brand/30 bg-brand/[0.04]">All</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">HTTP</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">TCP</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">DNS</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">ICMP</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">TLS</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">WS</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">HB</a>
+                            <a href="#" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded whitespace-nowrap text-muted border-line hover:text-muted-light">CMD</a>
+                        </div>
+
+                        <!-- Monitor rows -->
+                        <div class="border border-line border-t-0 rounded-b-lg overflow-hidden">
+                            <div class="divide-y divide-line">
+
+                                <!-- Auth Service - up (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Auth Service</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · http://127.0.0.1:4000/health</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">4ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Blog — CMS - up (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Blog — CMS</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · http://127.0.0.1:2368</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">31ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- CDN Edge - up (public) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">CDN Edge</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · https://cdn.acme.io</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">18ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- DNS Resolver - up -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">DNS Resolver</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">DNS · ns1.acme.io</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">6ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Gitea - up (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Gitea</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · http://10.0.1.5:3000</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">9ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Mail Server - DEGRADED (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-yellow-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Mail Server</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">TCP · 127.0.0.1:25</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">2,847ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/20">degraded</span>
+                                    </div>
+                                </a>
+
+                                <!-- Nightly Backup - up (heartbeat) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Nightly Backup</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HB · heartbeat token</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Payment Gateway - DOWN (public) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-400 animate-pulse-dot"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Payment Gateway</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · https://pay.acme.io/health</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-red-500/10 text-red-400 border-red-500/20">down</span>
+                                    </div>
+                                </a>
+
+                                <!-- PostgreSQL - up (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">PostgreSQL</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">TCP · 127.0.0.1:5432</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">1ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Production API - up (public) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Production API</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · https://api.acme.io/health</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">43ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Redis - up (internal) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Redis</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">TCP · 127.0.0.1:6379</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">1ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- TLS Certificate - up (public) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">TLS Certificate</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">TLS · acme.io:443</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">45ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Website - up (public) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Website</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HTTP · https://acme.io</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[11px] text-muted tabular-nums font-mono">127ms</span>
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                                <!-- Worker — Job Queue - up (internal heartbeat) -->
+                                <a href="#" class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 group">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-[13px] text-muted-light group-hover:text-white truncate">Worker — Job Queue</div>
+                                            <div class="text-[11px] text-muted truncate font-mono">HB · heartbeat token</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">up</span>
+                                    </div>
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Incidents -->
+                <div>
+                    <h2 class="text-[11px] text-muted uppercase tracking-widest mb-3">Active Incidents</h2>
+                    <div class="border border-line rounded-lg overflow-hidden">
+                        <div class="divide-y divide-line">
+
+                            <!-- Incident 1 - open -->
+                            <a href="#" class="block px-4 py-3 hover:bg-surface-200/20">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[13px] text-muted-light">Payment Gateway</span>
+                                    <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-red-500/10 text-red-400 border-red-500/20">open</span>
+                                </div>
+                                <div class="text-[11px] text-muted truncate">HTTP 502: upstream connection refused</div>
+                                <div class="text-[10px] text-muted mt-0.5">34 minutes ago</div>
+                            </a>
+
+                            <!-- Incident 2 - acknowledged -->
+                            <a href="#" class="block px-4 py-3 hover:bg-surface-200/20">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[13px] text-muted-light">Mail Server</span>
+                                    <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border bg-yellow-500/10 text-yellow-400 border-yellow-500/20">acknowledged</span>
+                                </div>
+                                <div class="text-[11px] text-muted truncate">Response time 2,847ms exceeded threshold</div>
+                                <div class="text-[10px] text-muted mt-0.5">2 hours ago</div>
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <!-- Recent activity hint -->
+                    <h2 class="text-[11px] text-muted uppercase tracking-widest mb-3 mt-6">Recent Activity</h2>
+                    <div class="border border-line rounded-lg overflow-hidden">
+                        <div class="divide-y divide-line">
+                            <div class="px-4 py-3">
+                                <div class="flex items-center justify-between mb-0.5">
+                                    <span class="text-[12px] text-muted-light">Production API</span>
+                                    <span class="text-[10px] text-muted">2m ago</span>
+                                </div>
+                                <div class="text-[11px] text-muted">Check passed · 43ms</div>
+                            </div>
+                            <div class="px-4 py-3">
+                                <div class="flex items-center justify-between mb-0.5">
+                                    <span class="text-[12px] text-muted-light">Website</span>
+                                    <span class="text-[10px] text-muted">3m ago</span>
+                                </div>
+                                <div class="text-[11px] text-muted">Check passed · 127ms</div>
+                            </div>
+                            <div class="px-4 py-3">
+                                <div class="flex items-center justify-between mb-0.5">
+                                    <span class="text-[12px] text-muted-light">Payment Gateway</span>
+                                    <span class="text-[10px] text-muted">34m ago</span>
+                                </div>
+                                <div class="text-[11px] text-red-400">Incident created</div>
+                            </div>
+                            <div class="px-4 py-3">
+                                <div class="flex items-center justify-between mb-0.5">
+                                    <span class="text-[12px] text-muted-light">Nightly Backup</span>
+                                    <span class="text-[10px] text-muted">1h ago</span>
+                                </div>
+                                <div class="text-[11px] text-muted">Heartbeat received</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</div>
+</body>
+</html>
