@@ -401,7 +401,6 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 		"success_threshold":    {"1"},
 		"tags":                 {"prod, api"},
 		"track_changes":        {"on"},
-		"public":               {"on"},
 		"upside_down":          {"on"},
 		"resend_interval":      {"60"},
 		"settings_mode":        {"form"},

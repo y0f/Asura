@@ -84,17 +84,25 @@ func (s *Server) handleUpdateStatusConfig(w http.ResponseWriter, r *http.Request
 func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	cfg, err := s.store.GetStatusPageConfig(ctx)
+	pages, err := s.store.ListStatusPages(ctx)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to load status page config")
+		writeError(w, http.StatusInternalServerError, "failed to load status pages")
 		return
 	}
-	if !cfg.Enabled && !cfg.PublicAPIEnabled {
+
+	var sp *storage.StatusPage
+	for _, p := range pages {
+		if p.Enabled {
+			sp = p
+			break
+		}
+	}
+	if sp == nil {
 		writeError(w, http.StatusNotFound, "status page is not enabled")
 		return
 	}
 
-	monitors, err := s.store.ListPublicMonitors(ctx)
+	monitors, _, err := s.store.ListStatusPageMonitorsWithStatus(ctx, sp.ID)
 	if err != nil {
 		s.logger.Error("public status: list monitors", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to load monitors")
@@ -138,13 +146,13 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	overall := overallStatus(monitors)
-	incidents := s.publicIncidents(ctx, cfg, monitors, now)
+	incidents := s.publicIncidentsForPage(ctx, sp, monitors, now)
 
 	w.Header().Set("Cache-Control", "public, max-age=30")
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"page": map[string]string{
-			"title":       cfg.Title,
-			"description": cfg.Description,
+			"title":       sp.Title,
+			"description": sp.Description,
 		},
 		"overall_status": overall,
 		"monitors":       result,

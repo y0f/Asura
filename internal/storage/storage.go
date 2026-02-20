@@ -109,8 +109,8 @@ type Store interface {
 	// Status page (legacy single-page)
 	GetStatusPageConfig(ctx context.Context) (*StatusPageConfig, error)
 	UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error
-	ListPublicMonitors(ctx context.Context) ([]*Monitor, error)
 	GetDailyUptime(ctx context.Context, monitorID int64, from, to time.Time) ([]*DailyUptime, error)
+	IsMonitorOnStatusPage(ctx context.Context, monitorID int64) (bool, error)
 
 	// Status pages (multi-page)
 	CreateStatusPage(ctx context.Context, sp *StatusPage) error

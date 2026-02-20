@@ -567,7 +567,6 @@ func (s *Server) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) {
 		Timeout:          timeout,
 		Enabled:          true,
 		TrackChanges:     r.FormValue("track_changes") == "on",
-		Public:           r.FormValue("public") == "on",
 		UpsideDown:       r.FormValue("upside_down") == "on",
 		FailureThreshold: failThreshold,
 		SuccessThreshold: successThreshold,

@@ -301,33 +301,49 @@ func TestHeartbeatCRUD(t *testing.T) {
 	})
 }
 
-func TestMonitorPublicFlag(t *testing.T) {
+func TestIsMonitorOnStatusPage(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()
 
-	m := &Monitor{Name: "Public", Type: "http", Target: "https://example.com", Interval: 60, Timeout: 10, Enabled: true, Tags: []string{}, FailureThreshold: 3, SuccessThreshold: 1, Public: true}
-	err := store.CreateMonitor(ctx, m)
-	if err != nil {
+	m := &Monitor{Name: "Test", Type: "http", Target: "https://example.com", Interval: 60, Timeout: 10, Enabled: true, Tags: []string{}, FailureThreshold: 3, SuccessThreshold: 1}
+	if err := store.CreateMonitor(ctx, m); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := store.GetMonitor(ctx, m.ID)
+	// Not on any status page yet
+	visible, err := store.IsMonitorOnStatusPage(ctx, m.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !got.Public {
-		t.Fatal("expected public=true")
+	if visible {
+		t.Fatal("expected not visible before assignment")
 	}
 
-	// Update to private
-	m.Public = false
-	err = store.UpdateMonitor(ctx, m)
+	// Create an enabled status page and assign the monitor
+	sp := &StatusPage{Title: "Test Page", Slug: "test", Enabled: true}
+	if err := store.CreateStatusPage(ctx, sp); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetStatusPageMonitors(ctx, sp.ID, []StatusPageMonitor{{PageID: sp.ID, MonitorID: m.ID}}); err != nil {
+		t.Fatal(err)
+	}
+
+	visible, err = store.IsMonitorOnStatusPage(ctx, m.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, _ = store.GetMonitor(ctx, m.ID)
-	if got.Public {
-		t.Fatal("expected public=false after update")
+	if !visible {
+		t.Fatal("expected visible after assignment to enabled page")
+	}
+
+	// Disable the page — monitor should no longer be visible
+	sp.Enabled = false
+	if err := store.UpdateStatusPage(ctx, sp); err != nil {
+		t.Fatal(err)
+	}
+	visible, _ = store.IsMonitorOnStatusPage(ctx, m.ID)
+	if visible {
+		t.Fatal("expected not visible when page disabled")
 	}
 }
 

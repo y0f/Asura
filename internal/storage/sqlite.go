@@ -1744,33 +1744,18 @@ func (s *SQLiteStore) UpsertStatusPageConfig(ctx context.Context, cfg *StatusPag
 	return nil
 }
 
-func (s *SQLiteStore) ListPublicMonitors(ctx context.Context) ([]*Monitor, error) {
-	rows, err := s.readDB.QueryContext(ctx,
-		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
-		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
-		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
-		 FROM monitors m
-		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
-		 WHERE m.public=1 AND m.enabled=1
-		 ORDER BY m.name COLLATE NOCASE ASC`)
+func (s *SQLiteStore) IsMonitorOnStatusPage(ctx context.Context, monitorID int64) (bool, error) {
+	var exists int
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT EXISTS(
+			SELECT 1 FROM status_page_monitors spm
+			JOIN status_pages sp ON sp.id = spm.page_id
+			WHERE spm.monitor_id = ? AND sp.enabled = 1
+		)`, monitorID).Scan(&exists)
 	if err != nil {
-		return nil, fmt.Errorf("list public monitors: %w", err)
+		return false, fmt.Errorf("is monitor on status page: %w", err)
 	}
-	defer rows.Close()
-
-	var monitors []*Monitor
-	for rows.Next() {
-		m, err := scanMonitor(rows)
-		if err != nil {
-			return nil, err
-		}
-		monitors = append(monitors, m)
-	}
-	if monitors == nil {
-		monitors = []*Monitor{}
-	}
-	return monitors, rows.Err()
+	return exists == 1, nil
 }
 
 func (s *SQLiteStore) GetDailyUptime(ctx context.Context, monitorID int64, from, to time.Time) ([]*DailyUptime, error) {

@@ -155,53 +155,19 @@ func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fallback to legacy single-page
-	cfg, err := s.store.GetStatusPageConfig(ctx)
-	if err != nil || !cfg.Enabled {
+	// Fallback: find first enabled status page
+	pages, err := s.store.ListStatusPages(ctx)
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
-	monitors, err := s.store.ListPublicMonitors(ctx)
-	if err != nil {
-		s.logger.Error("web: status page monitors", "error", err)
-		monitors = []*storage.Monitor{}
-	}
-
-	now := time.Now().UTC()
-	from := now.AddDate(0, 0, -90)
-
-	var monitorData []monitorWithUptime
-	for _, m := range monitors {
-		bars := s.buildDailyBars(ctx, m.ID, from, now)
-		uptime, err := s.store.GetUptimePercent(ctx, m.ID, from, now)
-		if err != nil {
-			s.logger.Error("web: status uptime percent", "monitor_id", m.ID, "error", err)
-			uptime = 100
+	for _, p := range pages {
+		if p.Enabled {
+			s.handleWebStatusPageByID(w, r, p.ID)
+			return
 		}
-		monitorData = append(monitorData, monitorWithUptime{
-			Monitor:     m,
-			DailyBars:   bars,
-			Uptime90d:   uptime,
-			UptimeLabel: formatPct(uptime),
-		})
 	}
-
-	overall := overallStatus(monitors)
-	incidents := s.publicIncidents(ctx, cfg, monitors, now)
-
-	pd := pageData{
-		Title:    cfg.Title,
-		BasePath: s.cfg.Server.BasePath,
-		Data: map[string]interface{}{
-			"Config":       cfg,
-			"Monitors":     monitorData,
-			"Overall":      overall,
-			"Incidents":    incidents,
-			"HasIncidents": len(incidents) > 0,
-		},
-	}
-	s.renderStatusPage(w, pd)
+	http.NotFound(w, r)
 }
 
 func (s *Server) renderStatusPage(w http.ResponseWriter, data pageData) {

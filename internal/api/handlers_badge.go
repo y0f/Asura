@@ -1,8 +1,6 @@
 package api
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"html"
 	"net/http"
@@ -16,13 +14,16 @@ func (s *Server) handleBadgeStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m, err := s.store.GetMonitor(r.Context(), id)
-	if err != nil || !m.Public {
-		if errors.Is(err, sql.ErrNoRows) || (err == nil && !m.Public) {
-			writeBadgeSVG(w, "status", "not found", colorGrey)
-			return
-		}
-		writeBadgeSVG(w, "status", "error", colorGrey)
+	ctx := r.Context()
+	m, err := s.store.GetMonitor(ctx, id)
+	if err != nil {
+		writeBadgeSVG(w, "status", "not found", colorGrey)
+		return
+	}
+
+	visible, err := s.store.IsMonitorOnStatusPage(ctx, m.ID)
+	if err != nil || !visible {
+		writeBadgeSVG(w, "status", "not found", colorGrey)
 		return
 	}
 
@@ -38,15 +39,22 @@ func (s *Server) handleBadgeUptime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m, err := s.store.GetMonitor(r.Context(), id)
-	if err != nil || !m.Public {
+	ctx := r.Context()
+	m, err := s.store.GetMonitor(ctx, id)
+	if err != nil {
+		writeBadgeSVG(w, "uptime", "not found", colorGrey)
+		return
+	}
+
+	visible, err := s.store.IsMonitorOnStatusPage(ctx, m.ID)
+	if err != nil || !visible {
 		writeBadgeSVG(w, "uptime", "not found", colorGrey)
 		return
 	}
 
 	now := time.Now().UTC()
 	from := now.Add(-30 * 24 * time.Hour)
-	pct, err := s.store.GetUptimePercent(r.Context(), id, from, now)
+	pct, err := s.store.GetUptimePercent(ctx, id, from, now)
 	if err != nil {
 		writeBadgeSVG(w, "uptime", "error", colorGrey)
 		return
@@ -70,15 +78,22 @@ func (s *Server) handleBadgeResponseTime(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	m, err := s.store.GetMonitor(r.Context(), id)
-	if err != nil || !m.Public {
+	ctx := r.Context()
+	m, err := s.store.GetMonitor(ctx, id)
+	if err != nil {
+		writeBadgeSVG(w, "response", "not found", colorGrey)
+		return
+	}
+
+	visible, err := s.store.IsMonitorOnStatusPage(ctx, m.ID)
+	if err != nil || !visible {
 		writeBadgeSVG(w, "response", "not found", colorGrey)
 		return
 	}
 
 	now := time.Now().UTC()
 	from := now.Add(-24 * time.Hour)
-	p50, _, _, err := s.store.GetResponseTimePercentiles(r.Context(), id, from, now)
+	p50, _, _, err := s.store.GetResponseTimePercentiles(ctx, id, from, now)
 	if err != nil {
 		writeBadgeSVG(w, "response", "error", colorGrey)
 		return
