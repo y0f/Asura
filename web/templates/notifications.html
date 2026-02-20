@@ -11,7 +11,7 @@
     discord: {webhook_url:''},
     slack: {webhook_url:'', channel:''},
     email: {host:'', port:587, username:'', password:'', from:'', to:''},
-    ntfy: {server_url:'', topic:'', priority:3, tags:'', click_url:''},
+    ntfy: {server_url:'', topic:'', priority:'3', tags:'', click_url:''},
     resetForm() {
         this.editId = 0;
         this.advancedNotifSettings = false;
@@ -47,7 +47,7 @@
             case 'discord': this.discord = {webhook_url: s.webhook_url||''}; break;
             case 'slack': this.slack = {webhook_url: s.webhook_url||'', channel: s.channel||''}; break;
             case 'email': this.email = {host: s.host||'', port: s.port||587, username: s.username||'', password: s.password||'', from: s.from||'', to: (s.to||[]).join(', ')}; break;
-            case 'ntfy': this.ntfy = {server_url: s.server_url||'', topic: s.topic||'', priority: s.priority||3, tags: s.tags||'', click_url: s.click_url||''}; break;
+            case 'ntfy': this.ntfy = {server_url: s.server_url||'', topic: s.topic||'', priority: String(s.priority||3), tags: s.tags||'', click_url: s.click_url||''}; break;
         }
         this.showForm = true;
     }

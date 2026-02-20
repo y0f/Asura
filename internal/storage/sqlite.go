@@ -1197,13 +1197,19 @@ func (s *SQLiteStore) UpdateMonitorGroup(ctx context.Context, g *MonitorGroup) e
 }
 
 func (s *SQLiteStore) DeleteMonitorGroup(ctx context.Context, id int64) error {
-	_, err := s.writeDB.ExecContext(ctx,
-		`UPDATE monitors SET group_id=NULL WHERE group_id=?`, id)
+	tx, err := s.writeDB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	_, err = s.writeDB.ExecContext(ctx, "DELETE FROM monitor_groups WHERE id=?", id)
-	return err
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, `UPDATE monitors SET group_id=NULL WHERE group_id=?`, id); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM monitor_groups WHERE id=?", id); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // --- Tags ---
