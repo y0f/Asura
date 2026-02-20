@@ -35,10 +35,10 @@ git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh
 | **Runtime** | Single static binary | Node.js / Java / Python runtime |
 | **Database** | SQLite compiled in | Requires Postgres, MySQL, or Redis |
 | **Binary size** | ~15 MB | 100-500 MB installed |
-| **Concurrency** | Goroutine worker pool with channel backpressure | Single-threaded or thread-per-request |
+| **Concurrency** | Goroutine worker pool with channel backpressure | Event loop or thread pool |
 | **Deploy** | `scp` binary + run | Package manager, runtime install, migrations |
 | **Config** | One YAML file | Multiple config files, env vars, database setup |
-| **RAM** | Runs on a $5 VPS | Often needs 512 MB+ |
+| **RAM** | ~20 MB idle | Varies — runtime + database overhead |
 
 No runtime. No external database. No container required. Build, copy, run.
 
@@ -67,7 +67,7 @@ No runtime. No external database. No container required. Build, copy, run.
 
 ## Web UI
 
-Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindCSS, and Alpine.js. No Node.js runtime required — the CSS is pre-built and committed.
+Built with HTMX, Tailwind, and Alpine.js. No Node.js — CSS is pre-built and committed.
 
 ![Web UI](assets/webpanel.png)
 
@@ -79,12 +79,10 @@ Asura includes a lightweight built-in dashboard implemented with HTMX, TailwindC
 - **Advanced JSON mode** — toggle on any form to drop into a raw JSON textarea for power users or API parity.
 - **Dashboard** — live status overview with response time sparklines, tag filters, and bulk actions.
 - **Incident timeline** — per-incident event history with ack/resolve actions.
-- **Content change diffs** — line-by-line comparison of body changes.
+- **Content change diffs** — line-level diffs on response bodies.
 - **Request log viewer** — filter by route group, method, status code with visitor analytics.
 - **Public status page** — configurable from the sidebar with 90-day uptime bars and custom CSS.
 - **Sub-path aware** — all links, forms, and assets respect `base_path` configuration.
-
-The web UI and REST API are fully equivalent — every monitor, notification, and setting configurable via API can also be managed through the dashboard.
 
 The UI is enabled by default and can be disabled for API-only deployments:
 
@@ -354,9 +352,7 @@ Available permissions: `monitors.read`, `monitors.write`, `incidents.read`, `inc
 curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitors
 ```
 
-**Web UI**: Enter the raw key on the login page. A server-side session is created with a secure random token stored in a cookie (24h expiry by default, HttpOnly, Secure). The raw API key is never stored in the cookie. Login attempts are rate-limited per IP.
-
-You can configure multiple keys with different names and permissions. Each key's name appears in the audit log. Login successes and failures are also recorded.
+**Web UI**: Enter the key on the login page. A session cookie is created (24h, HttpOnly, Secure). Login attempts are rate-limited per IP. Multiple keys with different roles are supported — key names appear in the audit log.
 
 ---
 
@@ -445,7 +441,7 @@ If no ping arrives within `interval + grace` seconds, the monitor goes down and 
 GET  /api/v1/status          Public status overview (monitors, uptime, incidents)
 ```
 
-Returns only safe fields (name, type, status, uptime) — no targets, settings, or credentials are exposed. Set `"public": true` on monitors to include them.
+Returns public fields only (name, status, uptime). Set `"public": true` on monitors to include them.
 
 The API and hosted UI are toggled separately:
 - `enabled: true` — web page + API both on
@@ -459,9 +455,7 @@ GET  /api/v1/status/config   Get status page settings
 PUT  /api/v1/status/config   Update status page settings
 ```
 
-Configure the public status page via API. Fields: `enabled` (bool), `title`, `description`, `show_incidents` (bool), `custom_css`, `slug` (URL path, e.g. `"status"` serves at `/{slug}`).
-
-The built-in web UI also serves a hosted status page at `/{slug}` with 90-day uptime bars. Configure it from the sidebar under **Status Page** — set the title, description, URL slug, toggle incident history, and add custom CSS. Monitors with `public: true` appear automatically.
+Fields: `enabled`, `title`, `description`, `show_incidents`, `custom_css`, `slug` (URL path). Configure from the sidebar or via API. Monitors with `public: true` appear automatically.
 
 ### Status Badges *(no auth, public monitors only)*
 
@@ -677,11 +671,11 @@ Channel-based pipeline with backpressure. SQLite WAL mode with separate read/wri
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports, feature requests, and pull requests are welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+See [SECURITY.md](SECURITY.md).
 
 ## License
 
