@@ -183,45 +183,16 @@ auth:
 
 ### 3. Set up nginx reverse proxy
 
-Create `/etc/nginx/sites-available/asura`:
-
-```nginx
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    server_name example.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name example.com;
-
-    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
-
-    # Redirect /asura to /asura/ (trailing slash required)
-    location = /asura {
-        return 301 /asura/;
-    }
-
-    # Proxy /asura/ to Asura (base_path handles the prefix natively)
-    location /asura/ {
-        proxy_pass http://127.0.0.1:8090;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable and reload:
+Copy the example config and replace `example.com` with your domain:
 
 ```bash
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/asura
+sudo sed -i 's/example.com/yourdomain.com/g' /etc/nginx/sites-available/asura
 sudo ln -s /etc/nginx/sites-available/asura /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+The example config ([`deploy/nginx.conf`](deploy/nginx.conf)) includes both a sub-path variant (`example.com/asura/`) and a commented-out root variant (`monitor.example.com/`).
 
 ### 4. Verify
 
@@ -249,28 +220,7 @@ example.com {
 
 ### Serving from Root (no base_path)
 
-If you want Asura at `https://monitor.example.com/` instead of a sub-path, omit `base_path` and proxy the entire domain:
-
-```yaml
-server:
-  listen: "127.0.0.1:8090"
-  # base_path is empty — serves from root
-```
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name monitor.example.com;
-    # ...TLS config...
-    location / {
-        proxy_pass http://127.0.0.1:8090;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
+If you want Asura at `https://monitor.example.com/` instead of a sub-path, omit `base_path` and uncomment the root variant in [`deploy/nginx.conf`](deploy/nginx.conf).
 
 ---
 
