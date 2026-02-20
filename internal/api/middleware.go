@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -318,18 +317,6 @@ func auth(cfg *config.Config, perm string) func(http.Handler) http.Handler {
 
 			ctx := context.WithValue(r.Context(), ctxKeyAPIKey, apiKey)
 			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func noBody() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Body != nil {
-				io.Copy(io.Discard, r.Body)
-				r.Body.Close()
-			}
-			next.ServeHTTP(w, r)
 		})
 	}
 }

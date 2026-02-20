@@ -266,7 +266,7 @@ var templateFuncs = template.FuncMap{
 		return false
 	},
 	"add": func(a, b int) int { return a + b },
-	"sub":     func(a, b int) int { return a - b },
+	"sub": func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {
 		if s == "" {
 			return nil

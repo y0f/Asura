@@ -1056,7 +1056,6 @@ func (s *SQLiteStore) GetLatestResponseTimes(ctx context.Context) (map[int64]int
 	return result, nil
 }
 
-
 func (s *SQLiteStore) GetCheckCounts(ctx context.Context, monitorID int64, from, to time.Time) (total, up, down, degraded int64, err error) {
 	err = s.readDB.QueryRowContext(ctx,
 		`SELECT COUNT(*),

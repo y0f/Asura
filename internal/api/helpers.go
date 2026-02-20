@@ -11,13 +11,6 @@ import (
 	"github.com/y0f/Asura/internal/storage"
 )
 
-type apiError struct {
-	Status  int    `json:"-"`
-	Message string `json:"error"`
-}
-
-func (e *apiError) Error() string { return e.Message }
-
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

@@ -68,7 +68,7 @@ func (c *TCPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 			return &Result{
 				Status:       "down",
 				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("expected data not found in response"),
+				Message:      "expected data not found in response",
 			}, nil
 		}
 	}

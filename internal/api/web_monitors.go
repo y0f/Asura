@@ -584,36 +584,47 @@ func (s *Server) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) {
 		}
 	}
 
-	if tags := strings.TrimSpace(r.FormValue("tags")); tags != "" {
-		for _, t := range strings.Split(tags, ",") {
-			if trimmed := strings.TrimSpace(t); trimmed != "" {
-				mon.Tags = append(mon.Tags, trimmed)
-			}
+	mon.Tags = parseCSV(r.FormValue("tags"))
+	mon.Settings = parseJSONOrForm(r, "settings", func(r *http.Request) json.RawMessage {
+		return assembleSettings(r, mon.Type)
+	})
+	mon.Assertions = parseJSONOrForm(r, "assertions", func(r *http.Request) json.RawMessage {
+		return assembleAssertions(r)
+	})
+
+	return mon, parseIDList(r.Form["notification_channel_ids[]"])
+}
+
+func parseCSV(s string) []string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	var result []string
+	for _, t := range strings.Split(s, ",") {
+		if trimmed := strings.TrimSpace(t); trimmed != "" {
+			result = append(result, trimmed)
 		}
 	}
+	return result
+}
 
-	if r.FormValue("settings_mode") == "json" {
-		if raw := strings.TrimSpace(r.FormValue("settings_json")); raw != "" && json.Valid([]byte(raw)) {
-			mon.Settings = json.RawMessage(raw)
+func parseJSONOrForm(r *http.Request, prefix string, formFn func(*http.Request) json.RawMessage) json.RawMessage {
+	if r.FormValue(prefix+"_mode") == "json" {
+		if raw := strings.TrimSpace(r.FormValue(prefix + "_json")); raw != "" && json.Valid([]byte(raw)) {
+			return json.RawMessage(raw)
 		}
-	} else {
-		mon.Settings = assembleSettings(r, mon.Type)
+		return nil
 	}
+	return formFn(r)
+}
 
-	if r.FormValue("assertions_mode") == "json" {
-		if raw := strings.TrimSpace(r.FormValue("assertions_json")); raw != "" && json.Valid([]byte(raw)) {
-			mon.Assertions = json.RawMessage(raw)
-		}
-	} else {
-		mon.Assertions = assembleAssertions(r)
-	}
-
-	var channelIDs []int64
-	for _, v := range r.Form["notification_channel_ids[]"] {
+func parseIDList(values []string) []int64 {
+	var ids []int64
+	for _, v := range values {
 		if id, err := strconv.ParseInt(v, 10, 64); err == nil {
-			channelIDs = append(channelIDs, id)
+			ids = append(ids, id)
 		}
 	}
-
-	return mon, channelIDs
+	return ids
 }
