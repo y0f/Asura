@@ -146,11 +146,11 @@ func (s *SQLiteStore) CreateMonitor(ctx context.Context, m *Monitor) error {
 		groupID = *m.GroupID
 	}
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, public, upside_down, resend_interval, group_id, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, upside_down, resend_interval, group_id, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, now,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, now,
 	)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func (s *SQLiteStore) GetMonitor(ctx context.Context, id int64) (*Monitor, error
 	row := s.readDB.QueryRowContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -218,7 +218,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -264,11 +264,11 @@ func (s *SQLiteStore) UpdateMonitor(ctx context.Context, m *Monitor) error {
 	_, err := s.writeDB.ExecContext(ctx,
 		`UPDATE monitors SET name=?, description=?, type=?, target=?, interval_secs=?, timeout_secs=?, enabled=?,
 		 tags=?, settings=?, assertions=?, track_changes=?, failure_threshold=?, success_threshold=?,
-		 public=?, upside_down=?, resend_interval=?, group_id=?, updated_at=?
+		 upside_down=?, resend_interval=?, group_id=?, updated_at=?
 		 WHERE id=?`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, m.ID,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, m.ID,
 	)
 	return err
 }
@@ -290,7 +290,7 @@ func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, er
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -1720,30 +1720,6 @@ func (s *SQLiteStore) PurgeOldRequestLogs(ctx context.Context, before time.Time)
 	return n + n2, nil
 }
 
-func (s *SQLiteStore) GetStatusPageConfig(ctx context.Context) (*StatusPageConfig, error) {
-	var cfg StatusPageConfig
-	var updatedAt string
-	err := s.readDB.QueryRowContext(ctx,
-		`SELECT enabled, api_enabled, title, description, show_incidents, custom_css, slug, updated_at
-		 FROM status_page_config WHERE id=1`).
-		Scan(&cfg.Enabled, &cfg.PublicAPIEnabled, &cfg.Title, &cfg.Description, &cfg.ShowIncidents, &cfg.CustomCSS, &cfg.Slug, &updatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("get status page config: %w", err)
-	}
-	cfg.UpdatedAt = parseTime(updatedAt)
-	return &cfg, nil
-}
-
-func (s *SQLiteStore) UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error {
-	_, err := s.writeDB.ExecContext(ctx,
-		`UPDATE status_page_config SET enabled=?, api_enabled=?, title=?, description=?, show_incidents=?, custom_css=?, slug=?, updated_at=? WHERE id=1`,
-		boolToInt(cfg.Enabled), boolToInt(cfg.PublicAPIEnabled), cfg.Title, cfg.Description, boolToInt(cfg.ShowIncidents), cfg.CustomCSS, cfg.Slug, formatTime(time.Now()))
-	if err != nil {
-		return fmt.Errorf("upsert status page config: %w", err)
-	}
-	return nil
-}
-
 func (s *SQLiteStore) IsMonitorOnStatusPage(ctx context.Context, monitorID int64) (bool, error) {
 	var exists int
 	err := s.readDB.QueryRowContext(ctx,
@@ -1945,7 +1921,7 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0),
 		        spm.sort_order, spm.group_name
 		 FROM status_page_monitors spm
@@ -1970,7 +1946,7 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 		var spmGroupName string
 		err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 			&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-			&m.Public, &m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
+			&m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
 			&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses,
 			&spmSortOrder, &spmGroupName)
 		if err != nil {
@@ -2044,7 +2020,7 @@ func scanMonitor(row scanner) (*Monitor, error) {
 	var groupID sql.NullInt64
 	err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 		&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-		&m.Public, &m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
+		&m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
 		&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses)
 	if err != nil {
 		return nil, err

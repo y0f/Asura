@@ -87,11 +87,7 @@ func (s *Server) handleWebStatusPageByID(w http.ResponseWriter, r *http.Request,
 
 	overall := overallStatus(monitors)
 
-	cfg := &storage.StatusPageConfig{
-		ShowIncidents: sp.ShowIncidents,
-		CustomCSS:     sp.CustomCSS,
-	}
-	incidents := s.publicIncidents(ctx, cfg, monitors, now)
+	incidents := s.publicIncidentsForPage(ctx, sp, monitors, now)
 
 	pd := pageData{
 		Title:    sp.Title,
@@ -143,33 +139,6 @@ func (s *Server) buildDailyBars(ctx context.Context, monitorID int64, from, now 
 	return bars
 }
 
-// handleWebStatusPage handles legacy slug-based routing (backward compat)
-func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Try multi-page first: look up by slug
-	slug := s.getStatusSlug()
-	sp, err := s.store.GetStatusPageBySlug(ctx, slug)
-	if err == nil && sp != nil && sp.Enabled {
-		s.handleWebStatusPageByID(w, r, sp.ID)
-		return
-	}
-
-	// Fallback: find first enabled status page
-	pages, err := s.store.ListStatusPages(ctx)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	for _, p := range pages {
-		if p.Enabled {
-			s.handleWebStatusPageByID(w, r, p.ID)
-			return
-		}
-	}
-	http.NotFound(w, r)
-}
-
 func (s *Server) renderStatusPage(w http.ResponseWriter, data pageData) {
 	t, ok := s.templates["status_page.html"]
 	if !ok {
@@ -197,14 +166,14 @@ func overallStatus(monitors []*storage.Monitor) string {
 	return overall
 }
 
-func (s *Server) publicIncidents(ctx context.Context, cfg *storage.StatusPageConfig, monitors []*storage.Monitor, now time.Time) []*storage.Incident {
-	if !cfg.ShowIncidents {
+func (s *Server) publicIncidentsForPage(ctx context.Context, sp *storage.StatusPage, monitors []*storage.Monitor, now time.Time) []*storage.Incident {
+	if !sp.ShowIncidents {
 		return []*storage.Incident{}
 	}
 
-	publicIDs := make(map[int64]bool, len(monitors))
+	monitorIDs := make(map[int64]bool, len(monitors))
 	for _, m := range monitors {
-		publicIDs[m.ID] = true
+		monitorIDs[m.ID] = true
 	}
 
 	incResult, err := s.store.ListIncidents(ctx, 0, "", "", storage.Pagination{Page: 1, PerPage: 20})
@@ -220,7 +189,7 @@ func (s *Server) publicIncidents(ctx context.Context, cfg *storage.StatusPageCon
 	cutoff := now.AddDate(0, 0, -7)
 	var filtered []*storage.Incident
 	for _, inc := range all {
-		if !publicIDs[inc.MonitorID] {
+		if !monitorIDs[inc.MonitorID] {
 			continue
 		}
 		if inc.Status == "resolved" && inc.ResolvedAt != nil && inc.ResolvedAt.Before(cutoff) {
@@ -235,14 +204,6 @@ func (s *Server) publicIncidents(ctx context.Context, cfg *storage.StatusPageCon
 		filtered = []*storage.Incident{}
 	}
 	return filtered
-}
-
-func (s *Server) publicIncidentsForPage(ctx context.Context, sp *storage.StatusPage, monitors []*storage.Monitor, now time.Time) []*storage.Incident {
-	if !sp.ShowIncidents {
-		return []*storage.Incident{}
-	}
-	cfg := &storage.StatusPageConfig{ShowIncidents: true}
-	return s.publicIncidents(ctx, cfg, monitors, now)
 }
 
 func formatPct(pct float64) string {

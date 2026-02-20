@@ -106,13 +106,9 @@ type Store interface {
 	RollupRequestLogs(ctx context.Context, date string) error
 	PurgeOldRequestLogs(ctx context.Context, before time.Time) (int64, error)
 
-	// Status page (legacy single-page)
-	GetStatusPageConfig(ctx context.Context) (*StatusPageConfig, error)
-	UpsertStatusPageConfig(ctx context.Context, cfg *StatusPageConfig) error
+	// Status pages
 	GetDailyUptime(ctx context.Context, monitorID int64, from, to time.Time) ([]*DailyUptime, error)
 	IsMonitorOnStatusPage(ctx context.Context, monitorID int64) (bool, error)
-
-	// Status pages (multi-page)
 	CreateStatusPage(ctx context.Context, sp *StatusPage) error
 	GetStatusPage(ctx context.Context, id int64) (*StatusPage, error)
 	GetStatusPageBySlug(ctx context.Context, slug string) (*StatusPage, error)

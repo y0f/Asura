@@ -21,7 +21,6 @@ type Monitor struct {
 	TrackChanges     bool            `json:"track_changes"`
 	FailureThreshold int             `json:"failure_threshold"`
 	SuccessThreshold int             `json:"success_threshold"`
-	Public           bool            `json:"public"`
 	UpsideDown       bool            `json:"upside_down"`
 	ResendInterval   int             `json:"resend_interval"`
 	GroupID          *int64          `json:"group_id,omitempty"`
@@ -269,18 +268,6 @@ type TimeSeriesPoint struct {
 	Timestamp    int64  `json:"ts"`
 	ResponseTime int64  `json:"rt"`
 	Status       string `json:"s"`
-}
-
-// StatusPageConfig holds the configuration for the public status page.
-type StatusPageConfig struct {
-	Enabled          bool      `json:"enabled"`
-	PublicAPIEnabled bool      `json:"public_api_enabled"`
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	ShowIncidents    bool      `json:"show_incidents"`
-	CustomCSS        string    `json:"custom_css"`
-	Slug             string    `json:"slug"`
-	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 // StatusPage represents a public status page with its own slug and monitor set.

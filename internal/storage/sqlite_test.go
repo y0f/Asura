@@ -901,7 +901,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 	}
 
 	// Verify new tables exist
-	tables := []string{"heartbeats", "sessions", "request_logs", "request_log_rollups", "status_page_config", "monitor_groups", "monitor_notifications"}
+	tables := []string{"heartbeats", "sessions", "request_logs", "request_log_rollups", "monitor_groups", "monitor_notifications", "status_pages", "status_page_monitors"}
 	for _, tbl := range tables {
 		var n int
 		if err := store.readDB.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", tbl).Scan(&n); err != nil {
@@ -922,11 +922,6 @@ CREATE TABLE IF NOT EXISTS audit_log (
 		t.Fatalf("expected monitor name 'Test', got %q", mon.Name)
 	}
 
-	// Verify status_page_config seed row exists
-	var spcID int
-	if err := store.readDB.QueryRow("SELECT id FROM status_page_config WHERE id=1").Scan(&spcID); err != nil {
-		t.Fatalf("status_page_config seed row missing: %v", err)
-	}
 }
 
 func TestMigrationFreshDB(t *testing.T) {
@@ -940,10 +935,13 @@ func TestMigrationFreshDB(t *testing.T) {
 		t.Fatalf("fresh DB: expected version %d, got %d", schemaVersion, version)
 	}
 
-	// Verify status_page_config exists with seed row
-	var spcID int
-	if err := store.readDB.QueryRow("SELECT id FROM status_page_config WHERE id=1").Scan(&spcID); err != nil {
-		t.Fatalf("fresh DB: status_page_config seed row missing: %v", err)
+	// Verify status_pages table exists
+	var spCount int
+	if err := store.readDB.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='status_pages'").Scan(&spCount); err != nil {
+		t.Fatal(err)
+	}
+	if spCount != 1 {
+		t.Fatal("fresh DB: status_pages table missing")
 	}
 }
 

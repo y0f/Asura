@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 14
+const schemaVersion = 15
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -30,7 +30,6 @@ CREATE TABLE IF NOT EXISTS monitors (
 	track_changes   INTEGER NOT NULL DEFAULT 0,
 	failure_threshold INTEGER NOT NULL DEFAULT 3,
 	success_threshold INTEGER NOT NULL DEFAULT 1,
-	public          INTEGER NOT NULL DEFAULT 0,
 	upside_down     INTEGER NOT NULL DEFAULT 0,
 	resend_interval INTEGER NOT NULL DEFAULT 0,
 	group_id        INTEGER DEFAULT NULL,
@@ -192,20 +191,6 @@ CREATE TABLE IF NOT EXISTS request_log_rollups (
 	avg_latency_ms  INTEGER NOT NULL DEFAULT 0,
 	UNIQUE(date, route_group, monitor_id)
 );
-
-CREATE TABLE IF NOT EXISTS status_page_config (
-	id              INTEGER PRIMARY KEY DEFAULT 1,
-	enabled         INTEGER NOT NULL DEFAULT 0,
-	title           TEXT    NOT NULL DEFAULT 'Service Status',
-	description     TEXT    NOT NULL DEFAULT '',
-	show_incidents  INTEGER NOT NULL DEFAULT 1,
-	custom_css      TEXT    NOT NULL DEFAULT '',
-	slug            TEXT    NOT NULL DEFAULT 'status',
-	api_enabled     INTEGER NOT NULL DEFAULT 0,
-	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-);
-
-INSERT OR IGNORE INTO status_page_config (id) VALUES (1);
 
 CREATE TABLE IF NOT EXISTS status_pages (
 	id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -395,5 +380,10 @@ INSERT OR IGNORE INTO status_page_monitors (page_id, monitor_id, sort_order, gro
 SELECT sp.id, m.id, 0, ''
 FROM monitors m, status_pages sp
 WHERE m.public=1 AND sp.id = (SELECT MIN(id) FROM status_pages);`,
+	},
+	{
+		version: 15,
+		sql: `ALTER TABLE monitors DROP COLUMN public;
+DROP TABLE IF EXISTS status_page_config;`,
 	},
 }
