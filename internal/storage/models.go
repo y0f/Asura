@@ -24,6 +24,7 @@ type Monitor struct {
 	Public           bool            `json:"public"`
 	UpsideDown       bool            `json:"upside_down"`
 	ResendInterval   int             `json:"resend_interval"`
+	GroupID          *int64          `json:"group_id,omitempty"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 
@@ -232,10 +233,20 @@ type PathCount struct {
 	Count int64  `json:"count"`
 }
 
+// MonitorGroup organizes monitors into logical groups.
+type MonitorGroup struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	SortOrder int       `json:"sort_order"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // MonitorListFilter holds filter parameters for listing monitors.
 type MonitorListFilter struct {
-	Type   string
-	Search string
+	Type    string
+	Search  string
+	GroupID *int64
 }
 
 // RequestLogFilter holds filter parameters for listing request logs.

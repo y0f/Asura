@@ -73,6 +73,13 @@ type Store interface {
 	CountMonitorsByStatus(ctx context.Context) (up, down, degraded, paused int64, err error)
 	GetLatestResponseTimes(ctx context.Context) (map[int64]int64, error)
 
+	// Monitor groups
+	CreateMonitorGroup(ctx context.Context, g *MonitorGroup) error
+	GetMonitorGroup(ctx context.Context, id int64) (*MonitorGroup, error)
+	ListMonitorGroups(ctx context.Context) ([]*MonitorGroup, error)
+	UpdateMonitorGroup(ctx context.Context, g *MonitorGroup) error
+	DeleteMonitorGroup(ctx context.Context, id int64) error
+
 	// Tags
 	ListTags(ctx context.Context) ([]string, error)
 

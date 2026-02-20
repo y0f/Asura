@@ -141,12 +141,16 @@ func (s *SQLiteStore) CreateMonitor(ctx context.Context, m *Monitor) error {
 	}
 	defer tx.Rollback()
 
+	var groupID interface{}
+	if m.GroupID != nil {
+		groupID = *m.GroupID
+	}
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, public, upside_down, resend_interval, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, public, upside_down, resend_interval, group_id, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, now, now,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, now,
 	)
 	if err != nil {
 		return err
@@ -175,7 +179,7 @@ func (s *SQLiteStore) GetMonitor(ctx context.Context, id int64) (*Monitor, error
 	row := s.readDB.QueryRowContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.created_at, m.updated_at,
+		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -195,6 +199,10 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 		where += " AND (m.name LIKE '%' || ? || '%' OR m.target LIKE '%' || ? || '%')"
 		args = append(args, f.Search, f.Search)
 	}
+	if f.GroupID != nil {
+		where += " AND m.group_id=?"
+		args = append(args, *f.GroupID)
+	}
 
 	var total int64
 	countArgs := make([]interface{}, len(args))
@@ -210,7 +218,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.created_at, m.updated_at,
+		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -249,14 +257,18 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 func (s *SQLiteStore) UpdateMonitor(ctx context.Context, m *Monitor) error {
 	tags, _ := json.Marshal(m.Tags)
 	now := formatTime(time.Now())
+	var groupID interface{}
+	if m.GroupID != nil {
+		groupID = *m.GroupID
+	}
 	_, err := s.writeDB.ExecContext(ctx,
 		`UPDATE monitors SET name=?, description=?, type=?, target=?, interval_secs=?, timeout_secs=?, enabled=?,
 		 tags=?, settings=?, assertions=?, track_changes=?, failure_threshold=?, success_threshold=?,
-		 public=?, upside_down=?, resend_interval=?, updated_at=?
+		 public=?, upside_down=?, resend_interval=?, group_id=?, updated_at=?
 		 WHERE id=?`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, now, m.ID,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.Public), boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, m.ID,
 	)
 	return err
 }
@@ -278,7 +290,7 @@ func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, er
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.created_at, m.updated_at,
+		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -1069,6 +1081,83 @@ func (s *SQLiteStore) CountMonitorsByStatus(ctx context.Context) (up, down, degr
 	return
 }
 
+// --- Monitor Groups ---
+
+func (s *SQLiteStore) CreateMonitorGroup(ctx context.Context, g *MonitorGroup) error {
+	now := formatTime(time.Now())
+	res, err := s.writeDB.ExecContext(ctx,
+		`INSERT INTO monitor_groups (name, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+		g.Name, g.SortOrder, now, now)
+	if err != nil {
+		return err
+	}
+	id, _ := res.LastInsertId()
+	g.ID = id
+	g.CreatedAt = parseTime(now)
+	g.UpdatedAt = parseTime(now)
+	return nil
+}
+
+func (s *SQLiteStore) GetMonitorGroup(ctx context.Context, id int64) (*MonitorGroup, error) {
+	var g MonitorGroup
+	var createdAt, updatedAt string
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, name, sort_order, created_at, updated_at FROM monitor_groups WHERE id=?`, id).
+		Scan(&g.ID, &g.Name, &g.SortOrder, &createdAt, &updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	g.CreatedAt = parseTime(createdAt)
+	g.UpdatedAt = parseTime(updatedAt)
+	return &g, nil
+}
+
+func (s *SQLiteStore) ListMonitorGroups(ctx context.Context) ([]*MonitorGroup, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT id, name, sort_order, created_at, updated_at FROM monitor_groups ORDER BY sort_order, name COLLATE NOCASE`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var groups []*MonitorGroup
+	for rows.Next() {
+		var g MonitorGroup
+		var createdAt, updatedAt string
+		if err := rows.Scan(&g.ID, &g.Name, &g.SortOrder, &createdAt, &updatedAt); err != nil {
+			return nil, err
+		}
+		g.CreatedAt = parseTime(createdAt)
+		g.UpdatedAt = parseTime(updatedAt)
+		groups = append(groups, &g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if groups == nil {
+		groups = []*MonitorGroup{}
+	}
+	return groups, nil
+}
+
+func (s *SQLiteStore) UpdateMonitorGroup(ctx context.Context, g *MonitorGroup) error {
+	now := formatTime(time.Now())
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE monitor_groups SET name=?, sort_order=?, updated_at=? WHERE id=?`,
+		g.Name, g.SortOrder, now, g.ID)
+	return err
+}
+
+func (s *SQLiteStore) DeleteMonitorGroup(ctx context.Context, id int64) error {
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE monitors SET group_id=NULL WHERE group_id=?`, id)
+	if err != nil {
+		return err
+	}
+	_, err = s.writeDB.ExecContext(ctx, "DELETE FROM monitor_groups WHERE id=?", id)
+	return err
+}
+
 // --- Tags ---
 
 func (s *SQLiteStore) ListTags(ctx context.Context) ([]string, error) {
@@ -1606,7 +1695,7 @@ func (s *SQLiteStore) ListPublicMonitors(ctx context.Context) ([]*Monitor, error
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.public, m.upside_down, m.resend_interval, m.created_at, m.updated_at,
+		        m.public, m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -1686,12 +1775,17 @@ func scanMonitor(row scanner) (*Monitor, error) {
 	var tagsStr, settingsStr, assertionsStr string
 	var createdAt, updatedAt string
 	var lastCheck sql.NullString
+	var groupID sql.NullInt64
 	err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 		&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-		&m.Public, &m.UpsideDown, &m.ResendInterval, &createdAt, &updatedAt,
+		&m.Public, &m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
 		&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses)
 	if err != nil {
 		return nil, err
+	}
+	if groupID.Valid {
+		gid := groupID.Int64
+		m.GroupID = &gid
 	}
 	m.CreatedAt = parseTime(createdAt)
 	m.UpdatedAt = parseTime(updatedAt)

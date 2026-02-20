@@ -251,6 +251,12 @@ var templateFuncs = template.FuncMap{
 	},
 	"safeCSS": func(s string) template.CSS { return template.CSS(s) },
 	"list":    func(args ...string) []string { return args },
+	"deref": func(p *int64) int64 {
+		if p == nil {
+			return 0
+		}
+		return *p
+	},
 	"add":     func(a, b int) int { return a + b },
 	"sub":     func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {
@@ -274,6 +280,7 @@ func (s *Server) loadTemplates() {
 		"monitors.html",
 		"monitor_detail.html",
 		"monitor_form.html",
+		"groups.html",
 		"incidents.html",
 		"incident_detail.html",
 		"notifications.html",

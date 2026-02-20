@@ -119,6 +119,16 @@ func validateNotificationChannel(ch *storage.NotificationChannel) error {
 	return nil
 }
 
+func validateMonitorGroup(g *storage.MonitorGroup) error {
+	if strings.TrimSpace(g.Name) == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(g.Name) > 255 {
+		return fmt.Errorf("name must be at most 255 characters")
+	}
+	return nil
+}
+
 func validateMaintenanceWindow(mw *storage.MaintenanceWindow) error {
 	if strings.TrimSpace(mw.Name) == "" {
 		return fmt.Errorf("name is required")

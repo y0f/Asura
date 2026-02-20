@@ -32,6 +32,7 @@ type monitorFormData struct {
 	AssertionsJSON  template.JS
 	SettingsJSON    string
 	AssertionsRaw   string
+	Groups          []*storage.MonitorGroup
 }
 
 func monitorToFormData(mon *storage.Monitor) *monitorFormData {
@@ -357,6 +358,8 @@ func (s *Server) handleWebMonitorDetail(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 	pd := s.newPageData(r, "New Monitor", "monitors")
 
+	groups, _ := s.store.ListMonitorGroups(r.Context())
+
 	idStr := r.PathValue("id")
 	if idStr != "" {
 		id, err := strconv.ParseInt(idStr, 10, 64)
@@ -370,9 +373,13 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pd.Title = "Edit " + mon.Name
-		pd.Data = monitorToFormData(mon)
+		fd := monitorToFormData(mon)
+		fd.Groups = groups
+		pd.Data = fd
 	} else {
-		pd.Data = monitorToFormData(nil)
+		fd := monitorToFormData(nil)
+		fd.Groups = groups
+		pd.Data = fd
 	}
 
 	s.render(w, "monitor_form.html", pd)
@@ -384,18 +391,24 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 	s.applyMonitorDefaults(mon)
 
 	if err := validateMonitor(mon); err != nil {
+		groups, _ := s.store.ListMonitorGroups(r.Context())
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = err.Error()
-		pd.Data = monitorToFormData(mon)
+		fd := monitorToFormData(mon)
+		fd.Groups = groups
+		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
 
 	if err := s.store.CreateMonitor(r.Context(), mon); err != nil {
+		groups, _ := s.store.ListMonitorGroups(r.Context())
 		s.logger.Error("web: create monitor", "error", err)
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = "Failed to create monitor"
-		pd.Data = monitorToFormData(mon)
+		fd := monitorToFormData(mon)
+		fd.Groups = groups
+		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -419,18 +432,24 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 	mon.ID = id
 
 	if err := validateMonitor(mon); err != nil {
+		groups, _ := s.store.ListMonitorGroups(r.Context())
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = err.Error()
-		pd.Data = monitorToFormData(mon)
+		fd := monitorToFormData(mon)
+		fd.Groups = groups
+		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
 
 	if err := s.store.UpdateMonitor(r.Context(), mon); err != nil {
+		groups, _ := s.store.ListMonitorGroups(r.Context())
 		s.logger.Error("web: update monitor", "error", err)
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = "Failed to update monitor"
-		pd.Data = monitorToFormData(mon)
+		fd := monitorToFormData(mon)
+		fd.Groups = groups
+		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
 	}
@@ -528,6 +547,13 @@ func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
 
 	if v := r.FormValue("resend_interval"); v != "" {
 		mon.ResendInterval, _ = strconv.Atoi(v)
+	}
+
+	if v := r.FormValue("group_id"); v != "" {
+		gid, err := strconv.ParseInt(v, 10, 64)
+		if err == nil && gid > 0 {
+			mon.GroupID = &gid
+		}
 	}
 
 	if tags := strings.TrimSpace(r.FormValue("tags")); tags != "" {

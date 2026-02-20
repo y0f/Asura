@@ -132,6 +132,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/incidents/{id}/resolve"), webPerm("incidents.write", s.handleWebIncidentResolve))
 		mux.Handle("POST "+s.p("/incidents/{id}/delete"), webPerm("incidents.write", s.handleWebIncidentDelete))
 
+		mux.Handle("GET "+s.p("/groups"), webAuth(http.HandlerFunc(s.handleWebGroups)))
+		mux.Handle("POST "+s.p("/groups"), webPerm("monitors.write", s.handleWebGroupCreate))
+		mux.Handle("POST "+s.p("/groups/{id}"), webPerm("monitors.write", s.handleWebGroupUpdate))
+		mux.Handle("POST "+s.p("/groups/{id}/delete"), webPerm("monitors.write", s.handleWebGroupDelete))
+
 		mux.Handle("GET "+s.p("/notifications"), webAuth(http.HandlerFunc(s.handleWebNotifications)))
 		mux.Handle("POST "+s.p("/notifications"), webPerm("notifications.write", s.handleWebNotificationCreate))
 		mux.Handle("POST "+s.p("/notifications/{id}"), webPerm("notifications.write", s.handleWebNotificationUpdate))
@@ -170,6 +175,10 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	mux.Handle("GET "+s.p("/api/v1/notifications"), notifRead(http.HandlerFunc(s.handleListNotifications)))
 	mux.Handle("GET "+s.p("/api/v1/maintenance"), maintRead(http.HandlerFunc(s.handleListMaintenance)))
+	mux.Handle("GET "+s.p("/api/v1/groups"), monRead(http.HandlerFunc(s.handleListGroups)))
+	mux.Handle("POST "+s.p("/api/v1/groups"), monWrite(http.HandlerFunc(s.handleCreateGroup)))
+	mux.Handle("PUT "+s.p("/api/v1/groups/{id}"), monWrite(http.HandlerFunc(s.handleUpdateGroup)))
+	mux.Handle("DELETE "+s.p("/api/v1/groups/{id}"), monWrite(http.HandlerFunc(s.handleDeleteGroup)))
 	mux.Handle("GET "+s.p("/api/v1/overview"), monRead(http.HandlerFunc(s.handleOverview)))
 	mux.Handle("GET "+s.p("/api/v1/tags"), monRead(http.HandlerFunc(s.handleListTags)))
 

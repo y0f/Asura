@@ -105,6 +105,19 @@
                        class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
             </div>
 
+            {{if $fd.Groups}}
+            <div>
+                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Group</label>
+                <select name="group_id"
+                        class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                    <option value="">No group</option>
+                    {{range $fd.Groups}}
+                    <option value="{{.ID}}" {{if and $mon.GroupID (eq (deref $mon.GroupID) .ID)}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            {{end}}
+
             <div class="flex items-center flex-wrap gap-5">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" name="track_changes" {{if $mon.TrackChanges}}checked{{end}}

@@ -1,10 +1,18 @@
 package storage
 
-const schemaVersion = 11
+const schemaVersion = 12
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
 	version INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS monitor_groups (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL,
+	sort_order INTEGER NOT NULL DEFAULT 0,
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
 
 CREATE TABLE IF NOT EXISTS monitors (
@@ -25,9 +33,12 @@ CREATE TABLE IF NOT EXISTS monitors (
 	public          INTEGER NOT NULL DEFAULT 0,
 	upside_down     INTEGER NOT NULL DEFAULT 0,
 	resend_interval INTEGER NOT NULL DEFAULT 0,
+	group_id        INTEGER DEFAULT NULL,
 	created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
 	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_monitors_group_id ON monitors(group_id);
 
 CREATE TABLE IF NOT EXISTS monitor_status (
 	monitor_id       INTEGER PRIMARY KEY REFERENCES monitors(id) ON DELETE CASCADE,
@@ -280,5 +291,17 @@ CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(mon
 	{
 		version: 11,
 		sql:     `ALTER TABLE status_page_config ADD COLUMN api_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version: 12,
+		sql: `CREATE TABLE IF NOT EXISTS monitor_groups (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL,
+	sort_order INTEGER NOT NULL DEFAULT 0,
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+ALTER TABLE monitors ADD COLUMN group_id INTEGER DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_monitors_group_id ON monitors(group_id);`,
 	},
 }

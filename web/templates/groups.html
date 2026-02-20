@@ -1,0 +1,97 @@
+{{define "title"}}Groups{{end}}
+{{define "content"}}
+<div x-data="{
+    showForm: false,
+    editId: 0,
+    formData: {name:'', sort_order:0},
+    resetForm() {
+        this.editId = 0;
+        this.formData = {name:'', sort_order:0};
+    },
+    editGroup(g) {
+        this.resetForm();
+        this.editId = g.id;
+        this.formData.name = g.name;
+        this.formData.sort_order = g.sort_order;
+        this.showForm = true;
+    }
+}">
+    <div class="flex items-center justify-between mb-5">
+        <h1 class="text-[15px] font-medium text-white">Monitor Groups</h1>
+        {{if index .Perms "monitors.write"}}
+        <button @click="resetForm(); showForm = true"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m7-7H5"/></svg>
+            New Group
+        </button>
+        {{end}}
+    </div>
+
+    {{if .Data}}
+    <div class="border border-line rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-line text-left">
+                    <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Name</th>
+                    <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Sort Order</th>
+                    <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+                {{range .Data}}
+                <tr class="hover:bg-surface-200/20 transition-colors">
+                    <td class="px-4 py-3">
+                        <span class="text-[13px] text-white font-medium">{{.Name}}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-[12px] text-muted tabular-nums">{{.SortOrder}}</span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        {{if index $.Perms "monitors.write"}}
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button type="button" @click="editGroup({{toJSON .}})"
+                                    class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Edit</button>
+                            <form method="POST" action="{{$.BasePath}}/groups/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this group? Monitors will be unassigned.')) $el.submit()" class="contents">
+                                <button type="submit" class="px-2 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+                            </form>
+                        </div>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="border border-line rounded-lg px-4 py-16 text-center">
+        <p class="text-muted text-[13px] mb-2">No groups configured</p>
+        <button @click="resetForm(); showForm = true" class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create one</button>
+    </div>
+    {{end}}
+
+    <!-- Modal -->
+    <div x-show="showForm" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" @click.self="showForm = false">
+        <div class="bg-surface-100 border border-line rounded-lg p-5 w-full max-w-sm" x-show="showForm" x-transition @click.stop>
+            <h3 class="text-[15px] font-medium text-white mb-4" x-text="editId ? 'Edit Group' : 'New Group'"></h3>
+            <form method="POST" action="{{$.BasePath}}/groups" @submit="if(editId) $el.action = '{{$.BasePath}}/groups/' + editId" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Name</label>
+                    <input type="text" name="name" x-model="formData.name" required
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Sort Order</label>
+                    <input type="number" name="sort_order" x-model="formData.sort_order" min="0"
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                    <p class="text-[10px] text-muted mt-1">Lower numbers appear first</p>
+                </div>
+                <div class="flex items-center gap-3 pt-1">
+                    <button type="submit" class="px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors"
+                            x-text="editId ? 'Update' : 'Create'"></button>
+                    <button type="button" @click="showForm = false" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
