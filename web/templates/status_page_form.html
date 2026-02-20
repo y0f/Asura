@@ -3,6 +3,7 @@
 {{$sp := .Data.StatusPage}}
 {{$monitors := .Data.Monitors}}
 {{$assigned := .Data.Assigned}}
+{{$assignedData := .Data.AssignedData}}
 <div>
     <div class="flex items-center justify-between mb-5">
         <h1 class="text-[15px] font-medium text-white">{{if $sp}}Edit Status Page{{else}}New Status Page{{end}}</h1>
@@ -86,11 +87,11 @@
                         <span class="text-[10px] text-muted">{{typeLabel .Type}}</span>
                     </div>
                     <input type="number" name="monitor_{{.ID}}_sort" placeholder="0"
-                           value="{{with index $assigned .ID}}{{.SortOrder}}{{end}}"
+                           value="{{with index $assignedData .ID}}{{.SortOrder}}{{end}}"
                            class="w-16 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-none focus:border-brand/30 text-center"
                            title="Sort order">
                     <input type="text" name="monitor_{{.ID}}_group" placeholder="Group"
-                           value="{{with index $assigned .ID}}{{.GroupName}}{{end}}"
+                           value="{{with index $assignedData .ID}}{{.GroupName}}{{end}}"
                            class="w-28 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-none focus:border-brand/30"
                            title="Group name">
                 </div>

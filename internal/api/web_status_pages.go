@@ -67,17 +67,20 @@ func (s *Server) handleWebStatusPageForm(w http.ResponseWriter, r *http.Request)
 		monitors = []*storage.Monitor{}
 	}
 
-	// Build lookup for assigned monitors
-	assigned := make(map[int64]storage.StatusPageMonitor, len(pageMonitors))
+	// Build lookups for assigned monitors
+	assignedSet := make(map[int64]bool, len(pageMonitors))
+	assignedData := make(map[int64]storage.StatusPageMonitor, len(pageMonitors))
 	for _, pm := range pageMonitors {
-		assigned[pm.MonitorID] = pm
+		assignedSet[pm.MonitorID] = true
+		assignedData[pm.MonitorID] = pm
 	}
 
 	pd := s.newPageData(r, "Status Page", "status-pages")
 	pd.Data = map[string]interface{}{
-		"StatusPage": sp,
-		"Monitors":   monitors,
-		"Assigned":   assigned,
+		"StatusPage":   sp,
+		"Monitors":     monitors,
+		"Assigned":     assignedSet,
+		"AssignedData": assignedData,
 	}
 	s.render(w, "status_page_form.html", pd)
 }
