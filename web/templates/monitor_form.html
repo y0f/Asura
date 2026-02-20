@@ -118,6 +118,22 @@
             </div>
             {{end}}
 
+            {{if $fd.NotificationChannels}}
+            <div>
+                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Notification Channels</label>
+                <p class="text-[10px] text-muted mb-2">Select which channels receive alerts for this monitor. Leave all unchecked to use all channels.</p>
+                <div class="space-y-1.5">
+                    {{range $fd.NotificationChannels}}
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="notification_channel_ids[]" value="{{.ID}}" {{if inSlice .ID $fd.SelectedChannelIDs}}checked{{end}}
+                               class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                        <span class="text-[12px] text-muted-light">{{.Name}} <span class="text-muted">({{.Type}})</span></span>
+                    </label>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+
             <div class="flex items-center flex-wrap gap-5">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" name="track_changes" {{if $mon.TrackChanges}}checked{{end}}

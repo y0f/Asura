@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 12
+const schemaVersion = 13
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -39,6 +39,14 @@ CREATE TABLE IF NOT EXISTS monitors (
 );
 
 CREATE INDEX IF NOT EXISTS idx_monitors_group_id ON monitors(group_id);
+
+CREATE TABLE IF NOT EXISTS monitor_notifications (
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	channel_id INTEGER NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+	PRIMARY KEY (monitor_id, channel_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_monitor_notif_channel ON monitor_notifications(channel_id);
 
 CREATE TABLE IF NOT EXISTS monitor_status (
 	monitor_id       INTEGER PRIMARY KEY REFERENCES monitors(id) ON DELETE CASCADE,
@@ -303,5 +311,14 @@ CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(mon
 );
 ALTER TABLE monitors ADD COLUMN group_id INTEGER DEFAULT NULL;
 CREATE INDEX IF NOT EXISTS idx_monitors_group_id ON monitors(group_id);`,
+	},
+	{
+		version: 13,
+		sql: `CREATE TABLE IF NOT EXISTS monitor_notifications (
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	channel_id INTEGER NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+	PRIMARY KEY (monitor_id, channel_id)
+);
+CREATE INDEX IF NOT EXISTS idx_monitor_notif_channel ON monitor_notifications(channel_id);`,
 	},
 }

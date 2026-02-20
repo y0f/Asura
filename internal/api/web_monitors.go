@@ -18,21 +18,23 @@ type headerPair struct {
 }
 
 type monitorFormData struct {
-	Monitor         *storage.Monitor
-	HTTP            storage.HTTPSettings
-	TCP             storage.TCPSettings
-	DNS             storage.DNSSettings
-	TLS             storage.TLSSettings
-	WS              storage.WebSocketSettings
-	Cmd             storage.CommandSettings
-	FollowRedirects bool
-	MaxRedirects    int
-	HeadersJSON     template.JS
-	WsHeadersJSON   template.JS
-	AssertionsJSON  template.JS
-	SettingsJSON    string
-	AssertionsRaw   string
-	Groups          []*storage.MonitorGroup
+	Monitor              *storage.Monitor
+	HTTP                 storage.HTTPSettings
+	TCP                  storage.TCPSettings
+	DNS                  storage.DNSSettings
+	TLS                  storage.TLSSettings
+	WS                   storage.WebSocketSettings
+	Cmd                  storage.CommandSettings
+	FollowRedirects      bool
+	MaxRedirects         int
+	HeadersJSON          template.JS
+	WsHeadersJSON        template.JS
+	AssertionsJSON       template.JS
+	SettingsJSON         string
+	AssertionsRaw        string
+	Groups               []*storage.MonitorGroup
+	NotificationChannels []*storage.NotificationChannel
+	SelectedChannelIDs   []int64
 }
 
 func monitorToFormData(mon *storage.Monitor) *monitorFormData {
@@ -359,6 +361,7 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 	pd := s.newPageData(r, "New Monitor", "monitors")
 
 	groups, _ := s.store.ListMonitorGroups(r.Context())
+	channels, _ := s.store.ListNotificationChannels(r.Context())
 
 	idStr := r.PathValue("id")
 	if idStr != "" {
@@ -375,10 +378,13 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 		pd.Title = "Edit " + mon.Name
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
+		fd.SelectedChannelIDs, _ = s.store.GetMonitorNotificationChannelIDs(r.Context(), id)
 		pd.Data = fd
 	} else {
 		fd := monitorToFormData(nil)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
 		pd.Data = fd
 	}
 
@@ -386,16 +392,19 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) {
-	mon := s.parseMonitorForm(r)
+	mon, channelIDs := s.parseMonitorForm(r)
 
 	s.applyMonitorDefaults(mon)
 
 	if err := validateMonitor(mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
+		channels, _ := s.store.ListNotificationChannels(r.Context())
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
+		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
@@ -403,14 +412,23 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 
 	if err := s.store.CreateMonitor(r.Context(), mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
+		channels, _ := s.store.ListNotificationChannels(r.Context())
 		s.logger.Error("web: create monitor", "error", err)
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = "Failed to create monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
+		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
+	}
+
+	if len(channelIDs) > 0 {
+		if err := s.store.SetMonitorNotificationChannels(r.Context(), mon.ID, channelIDs); err != nil {
+			s.logger.Error("web: set monitor notification channels", "error", err)
+		}
 	}
 
 	if s.pipeline != nil {
@@ -428,15 +446,18 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	mon := s.parseMonitorForm(r)
+	mon, channelIDs := s.parseMonitorForm(r)
 	mon.ID = id
 
 	if err := validateMonitor(mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
+		channels, _ := s.store.ListNotificationChannels(r.Context())
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
+		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
@@ -444,14 +465,21 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 
 	if err := s.store.UpdateMonitor(r.Context(), mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
+		channels, _ := s.store.ListNotificationChannels(r.Context())
 		s.logger.Error("web: update monitor", "error", err)
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = "Failed to update monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
+		fd.NotificationChannels = channels
+		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
 		return
+	}
+
+	if err := s.store.SetMonitorNotificationChannels(r.Context(), id, channelIDs); err != nil {
+		s.logger.Error("web: set monitor notification channels", "error", err)
 	}
 
 	if s.pipeline != nil {
@@ -522,7 +550,7 @@ func (s *Server) applyMonitorDefaults(m *storage.Monitor) {
 	}
 }
 
-func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
+func (s *Server) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) {
 	r.ParseForm()
 
 	interval, _ := strconv.Atoi(r.FormValue("interval"))
@@ -580,5 +608,12 @@ func (s *Server) parseMonitorForm(r *http.Request) *storage.Monitor {
 		mon.Assertions = assembleAssertions(r)
 	}
 
-	return mon
+	var channelIDs []int64
+	for _, v := range r.Form["notification_channel_ids[]"] {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+			channelIDs = append(channelIDs, id)
+		}
+	}
+
+	return mon, channelIDs
 }

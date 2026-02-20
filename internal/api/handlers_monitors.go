@@ -42,6 +42,11 @@ func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	channelIDs, _ := s.store.GetMonitorNotificationChannelIDs(r.Context(), m.ID)
+	if channelIDs != nil {
+		m.NotificationChannelIDs = channelIDs
+	}
+
 	if m.Type == "heartbeat" {
 		hb, err := s.store.GetHeartbeatByMonitorID(r.Context(), m.ID)
 		if err == nil && hb != nil {
@@ -74,6 +79,12 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("create monitor", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to create monitor")
 		return
+	}
+
+	if len(m.NotificationChannelIDs) > 0 {
+		if err := s.store.SetMonitorNotificationChannels(r.Context(), m.ID, m.NotificationChannelIDs); err != nil {
+			s.logger.Error("set monitor notification channels", "error", err)
+		}
 	}
 
 	var heartbeat *storage.Heartbeat
@@ -202,6 +213,10 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("update monitor", "error", err)
 		writeError(w, http.StatusInternalServerError, "failed to update monitor")
 		return
+	}
+
+	if err := s.store.SetMonitorNotificationChannels(r.Context(), m.ID, m.NotificationChannelIDs); err != nil {
+		s.logger.Error("set monitor notification channels", "error", err)
 	}
 
 	s.audit(r, "update", "monitor", m.ID, "")

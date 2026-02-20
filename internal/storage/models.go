@@ -28,6 +28,9 @@ type Monitor struct {
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 
+	// Transient fields (not stored in monitors table)
+	NotificationChannelIDs []int64 `json:"notification_channel_ids,omitempty"`
+
 	// Computed fields (not stored directly)
 	Status          string     `json:"status,omitempty"`
 	LastCheckAt     *time.Time `json:"last_check_at,omitempty"`

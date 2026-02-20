@@ -32,6 +32,7 @@ type Pipeline struct {
 // NotificationEvent is emitted when something noteworthy happens.
 type NotificationEvent struct {
 	EventType string
+	MonitorID int64
 	Incident  *storage.Incident
 	Monitor   *storage.Monitor
 	Change    *storage.ContentChange
@@ -243,9 +244,18 @@ func (p *Pipeline) handleContentChange(ctx context.Context, mon *storage.Monitor
 }
 
 func (p *Pipeline) emitNotification(eventType string, inc *storage.Incident, mon *storage.Monitor, change *storage.ContentChange) {
+	var monitorID int64
+	if mon != nil {
+		monitorID = mon.ID
+	} else if inc != nil {
+		monitorID = inc.MonitorID
+	} else if change != nil {
+		monitorID = change.MonitorID
+	}
 	select {
 	case p.notifyChan <- NotificationEvent{
 		EventType: eventType,
+		MonitorID: monitorID,
 		Incident:  inc,
 		Monitor:   mon,
 		Change:    change,

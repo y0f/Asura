@@ -129,7 +129,11 @@ func forwardNotifications(ctx context.Context, pipeline *monitor.Pipeline, dispa
 				Monitor:   event.Monitor,
 				Change:    event.Change,
 			}
-			dispatcher.NotifyWithPayload(payload)
+			if event.MonitorID > 0 {
+				dispatcher.NotifyForMonitor(event.MonitorID, payload)
+			} else {
+				dispatcher.NotifyWithPayload(payload)
+			}
 		}
 	}
 }

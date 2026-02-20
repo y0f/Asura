@@ -74,6 +74,43 @@ func (d *Dispatcher) NotifyWithPayload(payload *Payload) {
 	}
 }
 
+func (d *Dispatcher) NotifyForMonitor(monitorID int64, payload *Payload) {
+	channels, err := d.store.ListNotificationChannels(context.Background())
+	if err != nil {
+		d.logger.Error("list notification channels", "error", err)
+		return
+	}
+
+	assignedIDs, err := d.store.GetMonitorNotificationChannelIDs(context.Background(), monitorID)
+	if err != nil {
+		d.logger.Error("get monitor notification channels", "error", err)
+		return
+	}
+
+	var allowed map[int64]bool
+	if len(assignedIDs) > 0 {
+		allowed = make(map[int64]bool, len(assignedIDs))
+		for _, id := range assignedIDs {
+			allowed[id] = true
+		}
+	}
+
+	for _, ch := range channels {
+		if !ch.Enabled || !matchesEvent(ch.Events, payload.EventType) {
+			continue
+		}
+		if allowed != nil && !allowed[ch.ID] {
+			continue
+		}
+		sender, ok := d.senders[ch.Type]
+		if !ok {
+			d.logger.Warn("no sender for channel type", "type", ch.Type)
+			continue
+		}
+		go d.sendWithRetry(sender, ch, payload)
+	}
+}
+
 func (d *Dispatcher) SendTest(ch *storage.NotificationChannel, inc *storage.Incident) error {
 	sender, ok := d.senders[ch.Type]
 	if !ok {

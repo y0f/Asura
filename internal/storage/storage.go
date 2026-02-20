@@ -73,6 +73,10 @@ type Store interface {
 	CountMonitorsByStatus(ctx context.Context) (up, down, degraded, paused int64, err error)
 	GetLatestResponseTimes(ctx context.Context) (map[int64]int64, error)
 
+	// Monitor notification routing
+	GetMonitorNotificationChannelIDs(ctx context.Context, monitorID int64) ([]int64, error)
+	SetMonitorNotificationChannels(ctx context.Context, monitorID int64, channelIDs []int64) error
+
 	// Monitor groups
 	CreateMonitorGroup(ctx context.Context, g *MonitorGroup) error
 	GetMonitorGroup(ctx context.Context, id int64) (*MonitorGroup, error)

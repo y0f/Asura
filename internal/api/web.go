@@ -257,7 +257,15 @@ var templateFuncs = template.FuncMap{
 		}
 		return *p
 	},
-	"add":     func(a, b int) int { return a + b },
+	"inSlice": func(needle int64, haystack []int64) bool {
+		for _, v := range haystack {
+			if v == needle {
+				return true
+			}
+		}
+		return false
+	},
+	"add": func(a, b int) int { return a + b },
 	"sub":     func(a, b int) int { return a - b },
 	"parseDNS": func(s string) []string {
 		if s == "" {

@@ -416,7 +416,7 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 
 	srv, _ := testServer(t)
 	r := buildFormRequest(form)
-	mon := srv.parseMonitorForm(r)
+	mon, _ := srv.parseMonitorForm(r)
 
 	if mon.Name != "My Monitor" {
 		t.Errorf("Name = %q", mon.Name)
@@ -458,7 +458,7 @@ func TestParseMonitorFormJSONMode(t *testing.T) {
 
 	srv, _ := testServer(t)
 	r := buildFormRequest(form)
-	mon := srv.parseMonitorForm(r)
+	mon, _ := srv.parseMonitorForm(r)
 
 	var s storage.HTTPSettings
 	json.Unmarshal(mon.Settings, &s)
@@ -490,7 +490,7 @@ func TestParseMonitorFormJSONModeInvalidJSON(t *testing.T) {
 
 	srv, _ := testServer(t)
 	r := buildFormRequest(form)
-	mon := srv.parseMonitorForm(r)
+	mon, _ := srv.parseMonitorForm(r)
 
 	if mon.Settings != nil {
 		t.Errorf("invalid JSON settings should be nil, got %s", mon.Settings)

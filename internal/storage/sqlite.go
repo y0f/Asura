@@ -1081,6 +1081,54 @@ func (s *SQLiteStore) CountMonitorsByStatus(ctx context.Context) (up, down, degr
 	return
 }
 
+// --- Monitor Notification Routing ---
+
+func (s *SQLiteStore) GetMonitorNotificationChannelIDs(ctx context.Context, monitorID int64) ([]int64, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT channel_id FROM monitor_notifications WHERE monitor_id=? ORDER BY channel_id`, monitorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+func (s *SQLiteStore) SetMonitorNotificationChannels(ctx context.Context, monitorID int64, channelIDs []int64) error {
+	tx, err := s.writeDB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("set monitor notifications begin: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM monitor_notifications WHERE monitor_id=?`, monitorID); err != nil {
+		return err
+	}
+
+	if len(channelIDs) > 0 {
+		stmt, err := tx.PrepareContext(ctx, `INSERT INTO monitor_notifications (monitor_id, channel_id) VALUES (?, ?)`)
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+		for _, cid := range channelIDs {
+			if _, err := stmt.ExecContext(ctx, monitorID, cid); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
 // --- Monitor Groups ---
 
 func (s *SQLiteStore) CreateMonitorGroup(ctx context.Context, g *MonitorGroup) error {
