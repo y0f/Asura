@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"testing"
 	"time"
@@ -728,6 +729,235 @@ func TestInsertRequestLogBatchEmpty(t *testing.T) {
 	}
 	if err := store.InsertRequestLogBatch(ctx, []*RequestLog{}); err != nil {
 		t.Fatal("empty slice should not error:", err)
+	}
+}
+
+func TestMigrationFromV1(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "asura-migrate-*.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpFile.Close()
+	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
+
+	db, err := sql.Open("sqlite", tmpFile.Name()+"?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL&_foreign_keys=ON")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Simulate a v1 database: no heartbeats, no public column, no sessions, etc.
+	v1Schema := `
+CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
+INSERT INTO schema_version (version) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS monitors (
+	id              INTEGER PRIMARY KEY AUTOINCREMENT,
+	name            TEXT    NOT NULL,
+	type            TEXT    NOT NULL,
+	target          TEXT    NOT NULL,
+	interval_secs   INTEGER NOT NULL DEFAULT 60,
+	timeout_secs    INTEGER NOT NULL DEFAULT 10,
+	enabled         INTEGER NOT NULL DEFAULT 1,
+	tags            TEXT    NOT NULL DEFAULT '[]',
+	settings        TEXT    NOT NULL DEFAULT '{}',
+	assertions      TEXT    NOT NULL DEFAULT '[]',
+	track_changes   INTEGER NOT NULL DEFAULT 0,
+	failure_threshold INTEGER NOT NULL DEFAULT 3,
+	success_threshold INTEGER NOT NULL DEFAULT 1,
+	created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS monitor_status (
+	monitor_id       INTEGER PRIMARY KEY REFERENCES monitors(id) ON DELETE CASCADE,
+	status           TEXT    NOT NULL DEFAULT 'pending',
+	last_check_at    TEXT,
+	consec_fails     INTEGER NOT NULL DEFAULT 0,
+	consec_successes INTEGER NOT NULL DEFAULT 0,
+	last_body_hash   TEXT    NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS check_results (
+	id            INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id    INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	status        TEXT    NOT NULL,
+	response_time INTEGER NOT NULL DEFAULT 0,
+	status_code   INTEGER NOT NULL DEFAULT 0,
+	message       TEXT    NOT NULL DEFAULT '',
+	headers       TEXT    NOT NULL DEFAULT '',
+	body          TEXT    NOT NULL DEFAULT '',
+	body_hash     TEXT    NOT NULL DEFAULT '',
+	cert_expiry   TEXT,
+	dns_records   TEXT    NOT NULL DEFAULT '',
+	created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_check_results_monitor_id ON check_results(monitor_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS incidents (
+	id              INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id      INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	status          TEXT    NOT NULL DEFAULT 'open',
+	cause           TEXT    NOT NULL DEFAULT '',
+	started_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	acknowledged_at TEXT,
+	acknowledged_by TEXT    NOT NULL DEFAULT '',
+	resolved_at     TEXT,
+	resolved_by     TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_incidents_monitor_id ON incidents(monitor_id, status);
+
+CREATE TABLE IF NOT EXISTS incident_events (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	incident_id INTEGER NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+	type        TEXT    NOT NULL,
+	message     TEXT    NOT NULL DEFAULT '',
+	created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_incident_events_incident_id ON incident_events(incident_id);
+
+CREATE TABLE IF NOT EXISTS notification_channels (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL,
+	type       TEXT    NOT NULL,
+	enabled    INTEGER NOT NULL DEFAULT 1,
+	settings   TEXT    NOT NULL DEFAULT '{}',
+	events     TEXT    NOT NULL DEFAULT '[]',
+	created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS maintenance_windows (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	name        TEXT    NOT NULL,
+	monitor_ids TEXT    NOT NULL DEFAULT '[]',
+	start_time  TEXT    NOT NULL,
+	end_time    TEXT    NOT NULL,
+	recurring   TEXT    NOT NULL DEFAULT '',
+	created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS content_changes (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	old_hash   TEXT    NOT NULL DEFAULT '',
+	new_hash   TEXT    NOT NULL,
+	diff       TEXT    NOT NULL DEFAULT '',
+	old_body   TEXT    NOT NULL DEFAULT '',
+	new_body   TEXT    NOT NULL DEFAULT '',
+	created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_content_changes_monitor_id ON content_changes(monitor_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	action       TEXT    NOT NULL,
+	entity       TEXT    NOT NULL,
+	entity_id    INTEGER NOT NULL DEFAULT 0,
+	api_key_name TEXT    NOT NULL DEFAULT '',
+	detail       TEXT    NOT NULL DEFAULT '',
+	created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);`
+	if _, err := db.Exec(v1Schema); err != nil {
+		t.Fatalf("create v1 schema: %v", err)
+	}
+
+	// Insert a monitor to make sure data survives migration
+	if _, err := db.Exec(`INSERT INTO monitors (name, type, target) VALUES ('Test', 'http', 'https://example.com')`); err != nil {
+		t.Fatalf("insert test monitor: %v", err)
+	}
+	db.Close()
+
+	// Open via NewSQLiteStore — this must run all migrations v2..v13
+	store, err := NewSQLiteStore(tmpFile.Name(), 2)
+	if err != nil {
+		t.Fatalf("NewSQLiteStore after v1: %v", err)
+	}
+	defer store.Close()
+
+	// Verify version is now current
+	var version int
+	if err := store.writeDB.QueryRow("SELECT version FROM schema_version").Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+	if version != schemaVersion {
+		t.Fatalf("expected schema version %d, got %d", schemaVersion, version)
+	}
+
+	// Verify new tables exist
+	tables := []string{"heartbeats", "sessions", "request_logs", "request_log_rollups", "status_page_config", "monitor_groups", "monitor_notifications"}
+	for _, tbl := range tables {
+		var n int
+		if err := store.readDB.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", tbl).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 1 {
+			t.Fatalf("expected table %s to exist after migration", tbl)
+		}
+	}
+
+	// Verify new columns on monitors
+	ctx := context.Background()
+	mon, err := store.GetMonitor(ctx, 1)
+	if err != nil {
+		t.Fatalf("get migrated monitor: %v", err)
+	}
+	if mon.Name != "Test" {
+		t.Fatalf("expected monitor name 'Test', got %q", mon.Name)
+	}
+
+	// Verify status_page_config seed row exists
+	var spcID int
+	if err := store.readDB.QueryRow("SELECT id FROM status_page_config WHERE id=1").Scan(&spcID); err != nil {
+		t.Fatalf("status_page_config seed row missing: %v", err)
+	}
+}
+
+func TestMigrationFreshDB(t *testing.T) {
+	store := testStore(t)
+
+	var version int
+	if err := store.writeDB.QueryRow("SELECT version FROM schema_version").Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+	if version != schemaVersion {
+		t.Fatalf("fresh DB: expected version %d, got %d", schemaVersion, version)
+	}
+
+	// Verify status_page_config exists with seed row
+	var spcID int
+	if err := store.readDB.QueryRow("SELECT id FROM status_page_config WHERE id=1").Scan(&spcID); err != nil {
+		t.Fatalf("fresh DB: status_page_config seed row missing: %v", err)
+	}
+}
+
+func TestMigrationIdempotent(t *testing.T) {
+	tmpFile, err := os.CreateTemp("", "asura-idem-*.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpFile.Close()
+	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
+
+	// Open twice — second open should be a no-op
+	s1, err := NewSQLiteStore(tmpFile.Name(), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s1.Close()
+
+	s2, err := NewSQLiteStore(tmpFile.Name(), 2)
+	if err != nil {
+		t.Fatalf("second open failed: %v", err)
+	}
+	defer s2.Close()
+
+	var version int
+	if err := s2.writeDB.QueryRow("SELECT version FROM schema_version").Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+	if version != schemaVersion {
+		t.Fatalf("expected version %d after re-open, got %d", schemaVersion, version)
 	}
 }
 

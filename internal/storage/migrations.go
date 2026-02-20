@@ -192,6 +192,26 @@ CREATE TABLE IF NOT EXISTS request_log_rollups (
 	avg_latency_ms  INTEGER NOT NULL DEFAULT 0,
 	UNIQUE(date, route_group, monitor_id)
 );
+
+CREATE TABLE IF NOT EXISTS status_page_config (
+	id              INTEGER PRIMARY KEY DEFAULT 1,
+	enabled         INTEGER NOT NULL DEFAULT 0,
+	title           TEXT    NOT NULL DEFAULT 'Service Status',
+	description     TEXT    NOT NULL DEFAULT '',
+	show_incidents  INTEGER NOT NULL DEFAULT 1,
+	custom_css      TEXT    NOT NULL DEFAULT '',
+	slug            TEXT    NOT NULL DEFAULT 'status',
+	api_enabled     INTEGER NOT NULL DEFAULT 0,
+	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+INSERT OR IGNORE INTO status_page_config (id) VALUES (1);
+
+CREATE INDEX IF NOT EXISTS idx_check_results_created_at ON check_results(created_at);
+CREATE INDEX IF NOT EXISTS idx_incidents_resolved_at ON incidents(status, resolved_at);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_request_logs_client_ip ON request_logs(client_ip, created_at);
+CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(monitor_id, id DESC);
 `
 
 // migrations holds incremental schema changes after the initial schema.

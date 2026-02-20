@@ -54,44 +54,44 @@ func NewSQLiteStore(path string, maxReadConns int) (*SQLiteStore, error) {
 }
 
 func runMigrations(db *sql.DB) error {
-	_, err := db.Exec(schema)
-	if err != nil {
-		return err
+	var hasSchemaTbl int
+	if err := db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type='table' AND name='schema_version'`).Scan(&hasSchemaTbl); err != nil {
+		return fmt.Errorf("check schema_version table: %w", err)
+	}
+
+	if hasSchemaTbl == 0 {
+		if _, err := db.Exec(schema); err != nil {
+			return fmt.Errorf("apply base schema: %w", err)
+		}
+		if _, err := db.Exec("INSERT INTO schema_version (version) VALUES (?)", schemaVersion); err != nil {
+			return fmt.Errorf("stamp schema version: %w", err)
+		}
+		return nil
 	}
 
 	var currentVersion int
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM schema_version").Scan(&count)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		_, err = db.Exec("INSERT INTO schema_version (version) VALUES (?)", schemaVersion)
-		return err
-	}
-
-	err = db.QueryRow("SELECT version FROM schema_version LIMIT 1").Scan(&currentVersion)
-	if err != nil {
-		return err
+	if err := db.QueryRow("SELECT COALESCE(MAX(version), 0) FROM schema_version").Scan(&currentVersion); err != nil {
+		return fmt.Errorf("read schema version: %w", err)
 	}
 
 	for _, m := range migrations {
-		if m.version > currentVersion {
-			tx, err := db.Begin()
-			if err != nil {
-				return fmt.Errorf("migration v%d begin: %w", m.version, err)
-			}
-			if _, err := tx.Exec(m.sql); err != nil {
-				tx.Rollback()
-				return fmt.Errorf("migration v%d: %w", m.version, err)
-			}
-			if _, err := tx.Exec("UPDATE schema_version SET version=?", m.version); err != nil {
-				tx.Rollback()
-				return fmt.Errorf("migration v%d version update: %w", m.version, err)
-			}
-			if err := tx.Commit(); err != nil {
-				return fmt.Errorf("migration v%d commit: %w", m.version, err)
-			}
+		if m.version <= currentVersion {
+			continue
+		}
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("migration v%d begin: %w", m.version, err)
+		}
+		if _, err := tx.Exec(m.sql); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("migration v%d: %w", m.version, err)
+		}
+		if _, err := tx.Exec("UPDATE schema_version SET version = ?", m.version); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("migration v%d version update: %w", m.version, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("migration v%d commit: %w", m.version, err)
 		}
 	}
 
