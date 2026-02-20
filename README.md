@@ -407,7 +407,6 @@ GET    /api/v1/monitors/{id}/chart     Response time chart data
 | `track_changes`    | bool     |          | Enable content change detection                    |
 | `failure_threshold`| int      |          | Failures before incident (default: 3)              |
 | `success_threshold`| int      |          | Successes before recovery (default: 1)             |
-| `public`           | bool     |          | Expose to badges and public status page (default: false) |
 | `upside_down`      | bool     |          | Inverted mode — "up" becomes "down" and vice versa |
 | `resend_interval`  | int      |          | Re-send notifications every N checks while down (0 = once) |
 
@@ -440,15 +439,6 @@ curl -X POST https://example.com/asura/api/v1/heartbeat/a1b2c3d4e5f6...
 
 If no ping arrives within `interval + grace` seconds, the monitor goes down and an incident is created.
 
-### Public Status Page *(no auth)*
-
-```
-GET  /api/v1/status                    Legacy public status overview (first enabled page)
-GET  /api/v1/status-pages/{id}/public  Public status for a specific page
-```
-
-Returns public fields only (name, status, uptime).
-
 ### Status Pages
 
 ```
@@ -461,9 +451,9 @@ DELETE /api/v1/status-pages/{id}  Delete a status page
 
 Each status page has its own `slug` (URL path), `title`, `description`, and monitor set. Monitors are assigned per-page with optional `sort_order` and `group_name` for display grouping. The page is served at `/{slug}`.
 
-Legacy endpoints `GET/PUT /api/v1/status/config` remain for backward compatibility.
+The public API for a specific page is available at `GET /api/v1/status-pages/{id}/public` (no auth required). Returns public fields only (name, status, uptime).
 
-### Status Badges *(no auth, public monitors only)*
+### Status Badges *(monitors on enabled status pages)*
 
 ```
 GET  /api/v1/badge/{id}/status     Status badge (up/down/degraded)
@@ -471,7 +461,7 @@ GET  /api/v1/badge/{id}/uptime     30-day uptime percentage
 GET  /api/v1/badge/{id}/response   24h median response time
 ```
 
-Set `"public": true` on a monitor to enable badges. Embed in a README:
+Badges are available for any monitor assigned to an enabled status page. Embed in a README:
 
 ```markdown
 ![Status](https://example.com/asura/api/v1/badge/1/status)
