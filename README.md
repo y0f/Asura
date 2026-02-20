@@ -67,7 +67,7 @@ No runtime. No external database. No container required. Build, copy, run.
 
 ## Web UI
 
-Built with HTMX, Tailwind, and Alpine.js. No Node.js — CSS is pre-built and committed.
+Built with HTMX, Tailwind, and Alpine.js.
 
 ![Web UI](assets/webpanel.png)
 
