@@ -50,7 +50,9 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
 | **Change detection** | Line-level diffs on response bodies |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
-| **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack |
+| **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy |
+| **Monitor groups** | Organize monitors into named groups with custom sort order |
+| **Per-monitor routing** | Route notifications to specific channels per monitor |
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
 | **Web dashboard** | Form-based monitor & notification config, assertion builder, dark/light mode |
@@ -75,8 +77,9 @@ Built with HTMX, Tailwind, and Alpine.js.
 
 - **Form-based monitor configuration** — per-protocol settings with dropdowns, toggles, and key-value builders. No JSON required.
 - **Assertion builder** — visual rule editor with type-aware operator dropdowns and soft/hard failure modes.
-- **Notification channel forms** — per-type fields for Webhook, Email, Telegram, Discord, and Slack. Event checkboxes instead of CSV.
+- **Notification channel forms** — per-type fields for Webhook, Email, Telegram, Discord, Slack, and ntfy. Event checkboxes instead of CSV.
 - **Advanced JSON mode** — toggle on any form to drop into a raw JSON textarea for power users or API parity.
+- **Monitor groups** — organize monitors into named groups with drag-to-reorder sorting.
 - **Dashboard** — live status overview with response time sparklines, tag filters, and bulk actions.
 - **Incident timeline** — per-incident event history with ack/resolve actions.
 - **Content change diffs** — line-level diffs on response bodies.
@@ -397,6 +400,8 @@ GET    /api/v1/monitors/{id}/chart     Response time chart data
 | `interval`         | int      |          | Seconds between checks (default: 60)               |
 | `timeout`          | int      |          | Timeout in seconds (default: 10)                   |
 | `tags`             | string[] |          | Grouping tags                                      |
+| `group_id`         | int      |          | Monitor group ID (null if ungrouped)               |
+| `notification_channel_ids` | int[] |   | Notification channels to route to (empty = all)    |
 | `settings`         | object   |          | Protocol-specific ([see below](#protocol-settings)) |
 | `assertions`       | array    |          | Assertion rules ([see below](#assertions))          |
 | `track_changes`    | bool     |          | Enable content change detection                    |
@@ -472,6 +477,22 @@ Set `"public": true` on a monitor to enable badges. Embed in a README:
 ![Uptime](https://example.com/asura/api/v1/badge/1/uptime)
 ```
 
+### Monitor Groups
+
+```
+GET    /api/v1/groups                  List
+POST   /api/v1/groups                  Create
+PUT    /api/v1/groups/{id}             Update
+DELETE /api/v1/groups/{id}             Delete
+```
+
+| Field        | Type   | Required | Description                    |
+|--------------|--------|----------|--------------------------------|
+| `name`       | string | yes      | Group name (max 255 chars)     |
+| `sort_order` | int    |          | Display order (default: 0)     |
+
+Assign monitors to a group by setting `group_id` on the monitor. Deleting a group ungroups its monitors (sets `group_id` to null).
+
 ### Incidents
 
 ```
@@ -492,7 +513,7 @@ DELETE /api/v1/notifications/{id}      Delete
 POST   /api/v1/notifications/{id}/test Test
 ```
 
-Types: `webhook` `email` `telegram` `discord` `slack`
+Types: `webhook` `email` `telegram` `discord` `slack` `ntfy`
 
 Events: `incident.created` `incident.acknowledged` `incident.resolved` `content.changed`
 
@@ -522,6 +543,12 @@ Events: `incident.created` `incident.acknowledged` `incident.resolved` `content.
 ```json
 {"host": "smtp.example.com", "port": 587, "username": "alerts@example.com", "password": "...", "from": "alerts@example.com", "to": ["ops@example.com", "oncall@example.com"]}
 ```
+
+**ntfy**
+```json
+{"topic": "my-alerts", "server_url": "https://ntfy.sh", "priority": 4, "tags": "warning"}
+```
+`server_url` defaults to `https://ntfy.sh` if omitted. `priority` (1-5), `tags`, and `click_url` are optional.
 </details>
 
 ### Maintenance Windows
@@ -663,8 +690,8 @@ Webhook notifications include an `X-Asura-Signature` header: `sha256=<hex HMAC-S
 ```
 Scheduler -> Worker Pool -> Result Processor -> Dispatcher
     |            |              |                |
-  Cron      Concurrent     Incidents +      Webhook/Email/
- Tickers     Checks       Change Diffs    Telegram/Discord/Slack
+  Cron      Concurrent     Incidents +      Webhook/Email/Telegram
+ Tickers     Checks       Change Diffs    Discord/Slack/ntfy
 ```
 
 Channel-based pipeline with backpressure. SQLite WAL mode with separate read/write pools.
