@@ -20,7 +20,7 @@ var validIncidentStatuses = map[string]bool{
 
 var validNotificationTypes = map[string]bool{
 	"webhook": true, "email": true, "telegram": true,
-	"discord": true, "slack": true,
+	"discord": true, "slack": true, "ntfy": true,
 }
 
 var validNotificationEvents = map[string]bool{
@@ -106,7 +106,7 @@ func validateNotificationChannel(ch *storage.NotificationChannel) error {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
 	if !validNotificationTypes[ch.Type] {
-		return fmt.Errorf("type must be one of: webhook, email, telegram, discord, slack")
+		return fmt.Errorf("type must be one of: webhook, email, telegram, discord, slack, ntfy")
 	}
 	if len(ch.Settings) == 0 {
 		return fmt.Errorf("settings is required")

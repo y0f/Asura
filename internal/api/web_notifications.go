@@ -198,6 +198,18 @@ func assembleNotificationSettings(r *http.Request, chType string) json.RawMessag
 		}
 		b, _ := json.Marshal(s)
 		return b
+	case "ntfy":
+		s := notifier.NtfySettings{
+			ServerURL: r.FormValue("notif_ntfy_server_url"),
+			Topic:     r.FormValue("notif_ntfy_topic"),
+			Tags:      r.FormValue("notif_ntfy_tags"),
+			ClickURL:  r.FormValue("notif_ntfy_click_url"),
+		}
+		if v := r.FormValue("notif_ntfy_priority"); v != "" {
+			s.Priority, _ = strconv.Atoi(v)
+		}
+		b, _ := json.Marshal(s)
+		return b
 	default:
 		return json.RawMessage("{}")
 	}

@@ -45,6 +45,7 @@ func NewDispatcher(store storage.Store, logger *slog.Logger, allowPrivateTargets
 	d.RegisterSender(&TelegramSender{})
 	d.RegisterSender(&DiscordSender{})
 	d.RegisterSender(&SlackSender{})
+	d.RegisterSender(&NtfySender{})
 	return d
 }
 
