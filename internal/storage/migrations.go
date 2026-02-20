@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 13
+const schemaVersion = 14
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -207,6 +207,28 @@ CREATE TABLE IF NOT EXISTS status_page_config (
 
 INSERT OR IGNORE INTO status_page_config (id) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS status_pages (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	slug         TEXT    NOT NULL UNIQUE,
+	title        TEXT    NOT NULL DEFAULT 'Service Status',
+	description  TEXT    NOT NULL DEFAULT '',
+	custom_css   TEXT    NOT NULL DEFAULT '',
+	show_incidents INTEGER NOT NULL DEFAULT 1,
+	enabled      INTEGER NOT NULL DEFAULT 0,
+	api_enabled  INTEGER NOT NULL DEFAULT 0,
+	sort_order   INTEGER NOT NULL DEFAULT 0,
+	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS status_page_monitors (
+	page_id    INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	sort_order INTEGER NOT NULL DEFAULT 0,
+	group_name TEXT    NOT NULL DEFAULT '',
+	PRIMARY KEY (page_id, monitor_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_check_results_created_at ON check_results(created_at);
 CREATE INDEX IF NOT EXISTS idx_incidents_resolved_at ON incidents(status, resolved_at);
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
@@ -340,5 +362,38 @@ CREATE INDEX IF NOT EXISTS idx_monitors_group_id ON monitors(group_id);`,
 	PRIMARY KEY (monitor_id, channel_id)
 );
 CREATE INDEX IF NOT EXISTS idx_monitor_notif_channel ON monitor_notifications(channel_id);`,
+	},
+	{
+		version: 14,
+		sql: `CREATE TABLE IF NOT EXISTS status_pages (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	slug         TEXT    NOT NULL UNIQUE,
+	title        TEXT    NOT NULL DEFAULT 'Service Status',
+	description  TEXT    NOT NULL DEFAULT '',
+	custom_css   TEXT    NOT NULL DEFAULT '',
+	show_incidents INTEGER NOT NULL DEFAULT 1,
+	enabled      INTEGER NOT NULL DEFAULT 0,
+	api_enabled  INTEGER NOT NULL DEFAULT 0,
+	sort_order   INTEGER NOT NULL DEFAULT 0,
+	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS status_page_monitors (
+	page_id    INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	sort_order INTEGER NOT NULL DEFAULT 0,
+	group_name TEXT    NOT NULL DEFAULT '',
+	PRIMARY KEY (page_id, monitor_id)
+);
+
+INSERT INTO status_pages (slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order)
+SELECT slug, title, description, custom_css, show_incidents, enabled, api_enabled, 0
+FROM status_page_config WHERE id=1;
+
+INSERT OR IGNORE INTO status_page_monitors (page_id, monitor_id, sort_order, group_name)
+SELECT sp.id, m.id, 0, ''
+FROM monitors m, status_pages sp
+WHERE m.public=1 AND sp.id = (SELECT MIN(id) FROM status_pages);`,
 	},
 }

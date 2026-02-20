@@ -129,6 +129,24 @@ func validateMonitorGroup(g *storage.MonitorGroup) error {
 	return nil
 }
 
+func validateStatusPage(sp *storage.StatusPage) error {
+	if strings.TrimSpace(sp.Title) == "" {
+		return fmt.Errorf("title is required")
+	}
+	if len(sp.Title) > 200 {
+		return fmt.Errorf("title must be at most 200 characters")
+	}
+	if strings.TrimSpace(sp.Slug) == "" {
+		return fmt.Errorf("slug is required")
+	}
+	sp.Slug = validateSlug(sp.Slug)
+	if len(sp.Description) > 1000 {
+		return fmt.Errorf("description must be at most 1000 characters")
+	}
+	sp.CustomCSS = sanitizeCSS(sp.CustomCSS)
+	return nil
+}
+
 func validateMaintenanceWindow(mw *storage.MaintenanceWindow) error {
 	if strings.TrimSpace(mw.Name) == "" {
 		return fmt.Errorf("name is required")

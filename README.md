@@ -57,7 +57,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
 | **Web dashboard** | Form-based monitor & notification config, assertion builder, dark/light mode |
 | **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
-| **Public status page** | Configurable hosted page with 90-day uptime bars, or build your own via API |
+| **Multiple status pages** | Create multiple public status pages, each with its own slug, monitors, and grouping |
 | **Analytics** | Uptime %, response time percentiles |
 | **Prometheus** | `/metrics` endpoint, ready to scrape |
 | **Sub-path support** | Serve from `/asura` or any prefix behind a reverse proxy |
@@ -84,7 +84,7 @@ Built with HTMX, Tailwind, and Alpine.js.
 - **Incident timeline** — per-incident event history with ack/resolve actions.
 - **Content change diffs** — line-level diffs on response bodies.
 - **Request log viewer** — filter by route group, method, status code with visitor analytics.
-- **Public status page** — configurable from the sidebar with 90-day uptime bars and custom CSS.
+- **Multiple status pages** — create multiple public status pages with per-page monitor selection, grouping, and custom CSS.
 - **Sub-path aware** — all links, forms, and assets respect `base_path` configuration.
 
 The UI is enabled by default and can be disabled for API-only deployments:
@@ -443,24 +443,25 @@ If no ping arrives within `interval + grace` seconds, the monitor goes down and 
 ### Public Status Page *(no auth)*
 
 ```
-GET  /api/v1/status          Public status overview (monitors, uptime, incidents)
+GET  /api/v1/status                    Legacy public status overview (first enabled page)
+GET  /api/v1/status-pages/{id}/public  Public status for a specific page
 ```
 
-Returns public fields only (name, status, uptime). Set `"public": true` on monitors to include them.
+Returns public fields only (name, status, uptime).
 
-The API and hosted UI are toggled separately:
-- `enabled: true` — web page + API both on
-- `public_api_enabled: true` — API only, no hosted page
-- both `false` — returns 404
-
-### Status Page Config
+### Status Pages
 
 ```
-GET  /api/v1/status/config   Get status page settings
-PUT  /api/v1/status/config   Update status page settings
+GET    /api/v1/status-pages       List all status pages
+GET    /api/v1/status-pages/{id}  Get status page with assigned monitors
+POST   /api/v1/status-pages       Create a new status page
+PUT    /api/v1/status-pages/{id}  Update a status page
+DELETE /api/v1/status-pages/{id}  Delete a status page
 ```
 
-Fields: `enabled`, `title`, `description`, `show_incidents`, `custom_css`, `slug` (URL path). Configure from the sidebar or via API. Monitors with `public: true` appear automatically.
+Each status page has its own `slug` (URL path), `title`, `description`, and monitor set. Monitors are assigned per-page with optional `sort_order` and `group_name` for display grouping. The page is served at `/{slug}`.
+
+Legacy endpoints `GET/PUT /api/v1/status/config` remain for backward compatibility.
 
 ### Status Badges *(no auth, public monitors only)*
 

@@ -283,6 +283,32 @@ type StatusPageConfig struct {
 	UpdatedAt        time.Time `json:"updated_at"`
 }
 
+// StatusPage represents a public status page with its own slug and monitor set.
+type StatusPage struct {
+	ID            int64     `json:"id"`
+	Slug          string    `json:"slug"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	CustomCSS     string    `json:"custom_css"`
+	ShowIncidents bool      `json:"show_incidents"`
+	Enabled       bool      `json:"enabled"`
+	APIEnabled    bool      `json:"api_enabled"`
+	SortOrder     int       `json:"sort_order"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+
+	// Transient fields
+	MonitorCount int `json:"monitor_count,omitempty"`
+}
+
+// StatusPageMonitor links a monitor to a status page with display options.
+type StatusPageMonitor struct {
+	PageID    int64  `json:"page_id"`
+	MonitorID int64  `json:"monitor_id"`
+	SortOrder int    `json:"sort_order"`
+	GroupName string `json:"group_name"`
+}
+
 // DailyUptime holds uptime statistics for a single day.
 type DailyUptime struct {
 	Date        string  `json:"date"`

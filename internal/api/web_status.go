@@ -11,15 +11,153 @@ import (
 	"github.com/y0f/Asura/internal/storage"
 )
 
-func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
+type dailyBar struct {
+	Date      string
+	UptimePct float64
+	HasData   bool
+	Label     string
+}
+
+type monitorWithUptime struct {
+	Monitor     *storage.Monitor
+	DailyBars   []dailyBar
+	Uptime90d   float64
+	UptimeLabel string
+	GroupName   string
+}
+
+func (s *Server) handleWebStatusPageByID(w http.ResponseWriter, r *http.Request, pageID int64) {
 	ctx := r.Context()
 
-	cfg, err := s.store.GetStatusPageConfig(ctx)
-	if err != nil {
+	sp, err := s.store.GetStatusPage(ctx, pageID)
+	if err != nil || sp == nil || !sp.Enabled {
 		http.NotFound(w, r)
 		return
 	}
-	if !cfg.Enabled {
+
+	monitors, spms, err := s.store.ListStatusPageMonitorsWithStatus(ctx, sp.ID)
+	if err != nil {
+		s.logger.Error("web: status page monitors", "error", err)
+		monitors = []*storage.Monitor{}
+		spms = []storage.StatusPageMonitor{}
+	}
+
+	now := time.Now().UTC()
+	from := now.AddDate(0, 0, -90)
+
+	groupNameMap := make(map[int64]string, len(spms))
+	for _, spm := range spms {
+		groupNameMap[spm.MonitorID] = spm.GroupName
+	}
+
+	var monitorData []monitorWithUptime
+	for _, m := range monitors {
+		bars := s.buildDailyBars(ctx, m.ID, from, now)
+		uptime, err := s.store.GetUptimePercent(ctx, m.ID, from, now)
+		if err != nil {
+			s.logger.Error("web: status uptime percent", "monitor_id", m.ID, "error", err)
+			uptime = 100
+		}
+
+		monitorData = append(monitorData, monitorWithUptime{
+			Monitor:     m,
+			DailyBars:   bars,
+			Uptime90d:   uptime,
+			UptimeLabel: formatPct(uptime),
+			GroupName:   groupNameMap[m.ID],
+		})
+	}
+
+	// Build grouped structure for template
+	type monitorGroup struct {
+		Name     string
+		Monitors []monitorWithUptime
+	}
+	var groups []monitorGroup
+	groupIdx := make(map[string]int)
+	for _, md := range monitorData {
+		gn := md.GroupName
+		if idx, ok := groupIdx[gn]; ok {
+			groups[idx].Monitors = append(groups[idx].Monitors, md)
+		} else {
+			groupIdx[gn] = len(groups)
+			groups = append(groups, monitorGroup{Name: gn, Monitors: []monitorWithUptime{md}})
+		}
+	}
+
+	overall := overallStatus(monitors)
+
+	cfg := &storage.StatusPageConfig{
+		ShowIncidents: sp.ShowIncidents,
+		CustomCSS:     sp.CustomCSS,
+	}
+	incidents := s.publicIncidents(ctx, cfg, monitors, now)
+
+	pd := pageData{
+		Title:    sp.Title,
+		BasePath: s.cfg.Server.BasePath,
+		Data: map[string]interface{}{
+			"Config":       sp,
+			"Monitors":     monitorData,
+			"Groups":       groups,
+			"HasGroups":    len(groups) > 1 || (len(groups) == 1 && groups[0].Name != ""),
+			"Overall":      overall,
+			"Incidents":    incidents,
+			"HasIncidents": len(incidents) > 0,
+		},
+	}
+	s.renderStatusPage(w, pd)
+}
+
+func (s *Server) buildDailyBars(ctx context.Context, monitorID int64, from, now time.Time) []dailyBar {
+	daily, err := s.store.GetDailyUptime(ctx, monitorID, from, now)
+	if err != nil {
+		s.logger.Error("web: status daily uptime", "monitor_id", monitorID, "error", err)
+	}
+
+	dayMap := make(map[string]*storage.DailyUptime)
+	for _, d := range daily {
+		dayMap[d.Date] = d
+	}
+
+	bars := make([]dailyBar, 0, 90)
+	for i := 89; i >= 0; i-- {
+		day := now.AddDate(0, 0, -i)
+		dateStr := day.Format("2006-01-02")
+		label := day.Format("Jan 2, 2006")
+		if d, ok := dayMap[dateStr]; ok {
+			bars = append(bars, dailyBar{
+				Date:      dateStr,
+				UptimePct: d.UptimePct,
+				HasData:   true,
+				Label:     label,
+			})
+		} else {
+			bars = append(bars, dailyBar{
+				Date:    dateStr,
+				HasData: false,
+				Label:   label,
+			})
+		}
+	}
+	return bars
+}
+
+// handleWebStatusPage handles legacy slug-based routing (backward compat)
+func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Try multi-page first: look up by slug
+	slug := s.getStatusSlug()
+	sp, err := s.store.GetStatusPageBySlug(ctx, slug)
+	if err == nil && sp != nil && sp.Enabled {
+		s.handleWebStatusPageByID(w, r, sp.ID)
+		return
+	}
+
+	// Fallback to legacy single-page
+	cfg, err := s.store.GetStatusPageConfig(ctx)
+	if err != nil || !cfg.Enabled {
 		http.NotFound(w, r)
 		return
 	}
@@ -33,59 +171,14 @@ func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 	from := now.AddDate(0, 0, -90)
 
-	type dailyBar struct {
-		Date      string
-		UptimePct float64
-		HasData   bool
-		Label     string
-	}
-
-	type monitorWithUptime struct {
-		Monitor     *storage.Monitor
-		DailyBars   []dailyBar
-		Uptime90d   float64
-		UptimeLabel string
-	}
-
 	var monitorData []monitorWithUptime
 	for _, m := range monitors {
-		daily, err := s.store.GetDailyUptime(ctx, m.ID, from, now)
-		if err != nil {
-			s.logger.Error("web: status daily uptime", "monitor_id", m.ID, "error", err)
-		}
-
-		dayMap := make(map[string]*storage.DailyUptime)
-		for _, d := range daily {
-			dayMap[d.Date] = d
-		}
-
-		bars := make([]dailyBar, 0, 90)
-		for i := 89; i >= 0; i-- {
-			day := now.AddDate(0, 0, -i)
-			dateStr := day.Format("2006-01-02")
-			label := day.Format("Jan 2, 2006")
-			if d, ok := dayMap[dateStr]; ok {
-				bars = append(bars, dailyBar{
-					Date:      dateStr,
-					UptimePct: d.UptimePct,
-					HasData:   true,
-					Label:     label,
-				})
-			} else {
-				bars = append(bars, dailyBar{
-					Date:    dateStr,
-					HasData: false,
-					Label:   label,
-				})
-			}
-		}
-
+		bars := s.buildDailyBars(ctx, m.ID, from, now)
 		uptime, err := s.store.GetUptimePercent(ctx, m.ID, from, now)
 		if err != nil {
 			s.logger.Error("web: status uptime percent", "monitor_id", m.ID, "error", err)
 			uptime = 100
 		}
-
 		monitorData = append(monitorData, monitorWithUptime{
 			Monitor:     m,
 			DailyBars:   bars,
@@ -109,58 +202,6 @@ func (s *Server) handleWebStatusPage(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	s.renderStatusPage(w, pd)
-}
-
-func (s *Server) handleWebStatusSettings(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.store.GetStatusPageConfig(r.Context())
-	if err != nil {
-		s.logger.Error("web: get status config", "error", err)
-		cfg = &storage.StatusPageConfig{Title: "Service Status"}
-	}
-
-	pd := s.newPageData(r, "Status Page Settings", "status-settings")
-	pd.Data = cfg
-	s.render(w, "status_settings.html", pd)
-}
-
-func (s *Server) handleWebStatusSettingsUpdate(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-
-	title := strings.TrimSpace(r.FormValue("title"))
-	if title == "" {
-		title = "Service Status"
-	}
-	if len(title) > 200 {
-		title = title[:200]
-	}
-
-	desc := strings.TrimSpace(r.FormValue("description"))
-	if len(desc) > 1000 {
-		desc = desc[:1000]
-	}
-
-	slug := validateSlug(r.FormValue("slug"))
-
-	cfg := &storage.StatusPageConfig{
-		Enabled:          r.FormValue("enabled") == "on",
-		PublicAPIEnabled: r.FormValue("api_enabled") == "on",
-		Title:            title,
-		Description:      desc,
-		ShowIncidents:    r.FormValue("show_incidents") == "on",
-		CustomCSS:        sanitizeCSS(r.FormValue("custom_css")),
-		Slug:             slug,
-	}
-
-	if err := s.store.UpsertStatusPageConfig(r.Context(), cfg); err != nil {
-		s.logger.Error("web: update status config", "error", err)
-		s.setFlash(w, "Failed to save settings")
-		s.redirect(w, r, "/status-settings")
-		return
-	}
-
-	s.setStatusSlug(slug)
-	s.setFlash(w, "Status page settings saved")
-	s.redirect(w, r, "/status-settings")
 }
 
 func (s *Server) renderStatusPage(w http.ResponseWriter, data pageData) {
@@ -230,6 +271,14 @@ func (s *Server) publicIncidents(ctx context.Context, cfg *storage.StatusPageCon
 	return filtered
 }
 
+func (s *Server) publicIncidentsForPage(ctx context.Context, sp *storage.StatusPage, monitors []*storage.Monitor, now time.Time) []*storage.Incident {
+	if !sp.ShowIncidents {
+		return []*storage.Incident{}
+	}
+	cfg := &storage.StatusPageConfig{ShowIncidents: true}
+	return s.publicIncidents(ctx, cfg, monitors, now)
+}
+
 func formatPct(pct float64) string {
 	if pct >= 99.995 {
 		return "100%"
@@ -242,7 +291,8 @@ var slugPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$`)
 var reservedSlugs = map[string]bool{
 	"login": true, "logout": true, "monitors": true, "incidents": true,
 	"notifications": true, "maintenance": true, "logs": true,
-	"status-settings": true, "static": true, "api": true,
+	"status-settings": true, "status-pages": true, "static": true, "api": true,
+	"groups": true,
 }
 
 func validateSlug(slug string) string {

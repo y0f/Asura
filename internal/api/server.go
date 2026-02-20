@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/y0f/Asura/internal/config"
@@ -29,6 +30,8 @@ type Server struct {
 	reqLogWriter      *RequestLogWriter
 	statusSlugMu      sync.RWMutex
 	statusSlug        string
+	statusSlugsMu     sync.RWMutex
+	statusSlugs       map[string]int64
 }
 
 func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeline, dispatcher *notifier.Dispatcher, logger *slog.Logger, version string) *Server {
@@ -42,10 +45,12 @@ func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeli
 		loginRL:           newRateLimiter(cfg.Auth.Login.RateLimitPerSec, cfg.Auth.Login.RateLimitBurst),
 		cspFrameDirective: buildFrameAncestorsDirective(cfg.Server.FrameAncestors),
 		reqLogWriter:      NewRequestLogWriter(store, logger),
+		statusSlugs:       make(map[string]int64),
 	}
 
 	s.loadTemplates()
 	s.loadStatusSlug()
+	s.refreshStatusSlugs()
 
 	mux := http.NewServeMux()
 	s.registerRoutes(mux)
@@ -150,8 +155,18 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 		mux.Handle("GET "+s.p("/logs"), webAuth(http.HandlerFunc(s.handleWebRequestLogs)))
 
-		mux.Handle("GET "+s.p("/status-settings"), webAuth(http.HandlerFunc(s.handleWebStatusSettings)))
-		mux.Handle("POST "+s.p("/status-settings"), webPerm("monitors.write", s.handleWebStatusSettingsUpdate))
+		// Status pages admin
+		mux.Handle("GET "+s.p("/status-pages"), webAuth(http.HandlerFunc(s.handleWebStatusPages)))
+		mux.Handle("GET "+s.p("/status-pages/new"), webAuth(http.HandlerFunc(s.handleWebStatusPageForm)))
+		mux.Handle("GET "+s.p("/status-pages/{id}/edit"), webAuth(http.HandlerFunc(s.handleWebStatusPageForm)))
+		mux.Handle("POST "+s.p("/status-pages"), webPerm("monitors.write", s.handleWebStatusPageCreate))
+		mux.Handle("POST "+s.p("/status-pages/{id}"), webPerm("monitors.write", s.handleWebStatusPageUpdate))
+		mux.Handle("POST "+s.p("/status-pages/{id}/delete"), webPerm("monitors.write", s.handleWebStatusPageDelete))
+
+		// Legacy status settings redirect
+		mux.Handle("GET "+s.p("/status-settings"), webAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s.redirect(w, r, "/status-pages")
+		})))
 	}
 
 	mux.HandleFunc("GET "+s.p("/api/v1/status"), s.handlePublicStatus)
@@ -201,8 +216,17 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("PUT "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleUpdateMaintenance)))
 	mux.Handle("DELETE "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleDeleteMaintenance)))
 
+	// Legacy status config API (backward compat)
 	mux.Handle("GET "+s.p("/api/v1/status/config"), monRead(http.HandlerFunc(s.handleGetStatusConfig)))
 	mux.Handle("PUT "+s.p("/api/v1/status/config"), monWrite(http.HandlerFunc(s.handleUpdateStatusConfig)))
+
+	// Status pages API
+	mux.Handle("GET "+s.p("/api/v1/status-pages"), monRead(http.HandlerFunc(s.handleListStatusPages)))
+	mux.Handle("GET "+s.p("/api/v1/status-pages/{id}"), monRead(http.HandlerFunc(s.handleGetStatusPage)))
+	mux.Handle("POST "+s.p("/api/v1/status-pages"), monWrite(http.HandlerFunc(s.handleCreateStatusPage)))
+	mux.Handle("PUT "+s.p("/api/v1/status-pages/{id}"), monWrite(http.HandlerFunc(s.handleUpdateStatusPage)))
+	mux.Handle("DELETE "+s.p("/api/v1/status-pages/{id}"), monWrite(http.HandlerFunc(s.handleDeleteStatusPage)))
+	mux.HandleFunc("GET "+s.p("/api/v1/status-pages/{id}/public"), s.handlePublicStatusPage)
 
 	mux.Handle("GET "+s.p("/api/v1/request-logs"), metricsRead(http.HandlerFunc(s.handleListRequestLogs)))
 	mux.Handle("GET "+s.p("/api/v1/request-logs/stats"), metricsRead(http.HandlerFunc(s.handleRequestLogStats)))
@@ -233,14 +257,50 @@ func (s *Server) setStatusSlug(slug string) {
 	s.statusSlug = slug
 }
 
+func (s *Server) refreshStatusSlugs() {
+	pages, err := s.store.ListStatusPages(context.Background())
+	if err != nil {
+		s.logger.Error("refresh status slugs", "error", err)
+		return
+	}
+	slugs := make(map[string]int64, len(pages))
+	for _, p := range pages {
+		if p.Enabled {
+			slugs[p.Slug] = p.ID
+		}
+	}
+	s.statusSlugsMu.Lock()
+	s.statusSlugs = slugs
+	s.statusSlugsMu.Unlock()
+}
+
+func (s *Server) getStatusPageIDBySlug(slug string) (int64, bool) {
+	s.statusSlugsMu.RLock()
+	defer s.statusSlugsMu.RUnlock()
+	id, ok := s.statusSlugs[slug]
+	return id, ok
+}
+
 func (s *Server) statusPageRouter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			slug := s.getStatusSlug()
-			expected := s.p("/" + slug)
-			if r.URL.Path == expected || r.URL.Path == expected+"/" {
-				s.handleWebStatusPage(w, r)
-				return
+			path := r.URL.Path
+			prefix := s.cfg.Server.BasePath + "/"
+			if strings.HasPrefix(path, prefix) {
+				slug := strings.TrimPrefix(path, prefix)
+				slug = strings.TrimSuffix(slug, "/")
+				// Only match single-segment slugs (no slashes)
+				if slug != "" && !strings.Contains(slug, "/") {
+					if pageID, ok := s.getStatusPageIDBySlug(slug); ok {
+						s.handleWebStatusPageByID(w, r, pageID)
+						return
+					}
+					// Fallback: legacy single slug
+					if slug == s.getStatusSlug() {
+						s.handleWebStatusPage(w, r)
+						return
+					}
+				}
 			}
 		}
 		next.ServeHTTP(w, r)

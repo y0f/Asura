@@ -294,7 +294,8 @@ func (s *Server) loadTemplates() {
 		"notifications.html",
 		"maintenance.html",
 		"request_logs.html",
-		"status_settings.html",
+		"status_pages.html",
+		"status_page_form.html",
 	}
 
 	for _, page := range pages {
