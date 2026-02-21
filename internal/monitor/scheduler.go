@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/y0f/Asura/internal/storage"
@@ -11,13 +12,14 @@ import (
 
 // Scheduler dispatches check jobs on a per-monitor interval basis.
 type Scheduler struct {
-	store    storage.Store
-	jobs     chan<- Job
-	logger   *slog.Logger
-	mu       sync.RWMutex
-	monitors []*storage.Monitor
-	nextRun  map[int64]time.Time
-	reload   chan struct{}
+	store       storage.Store
+	jobs        chan<- Job
+	logger      *slog.Logger
+	mu          sync.RWMutex
+	monitors    []*storage.Monitor
+	nextRun     map[int64]time.Time
+	reload      chan struct{}
+	droppedJobs atomic.Int64
 }
 
 func NewScheduler(store storage.Store, jobs chan<- Job, logger *slog.Logger) *Scheduler {
@@ -108,6 +110,7 @@ func (s *Scheduler) dispatch(now time.Time) {
 		case s.jobs <- Job{Monitor: m}:
 			s.nextRun[m.ID] = now.Add(time.Duration(m.Interval) * time.Second)
 		default:
+			s.droppedJobs.Add(1)
 			s.logger.Warn("scheduler: job channel full, skipping", "monitor_id", m.ID)
 		}
 	}

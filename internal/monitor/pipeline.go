@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/y0f/Asura/internal/assertion"
@@ -18,15 +19,16 @@ import (
 // Pipeline orchestrates the full monitoring flow:
 // Scheduler -> Workers -> Result Processor -> Incident Manager -> Notifications
 type Pipeline struct {
-	store      storage.Store
-	registry   *checker.Registry
-	incMgr     *incident.Manager
-	logger     *slog.Logger
-	scheduler  *Scheduler
-	jobs       chan Job
-	results    chan WorkerResult
-	notifyChan chan NotificationEvent
-	workers    int
+	store                storage.Store
+	registry             *checker.Registry
+	incMgr               *incident.Manager
+	logger               *slog.Logger
+	scheduler            *Scheduler
+	jobs                 chan Job
+	results              chan WorkerResult
+	notifyChan           chan NotificationEvent
+	workers              int
+	droppedNotifications atomic.Int64
 }
 
 // NotificationEvent is emitted when something noteworthy happens.
@@ -64,6 +66,16 @@ func (p *Pipeline) NotifyChan() <-chan NotificationEvent {
 // ReloadMonitors triggers a scheduler reload.
 func (p *Pipeline) ReloadMonitors() {
 	p.scheduler.TriggerReload()
+}
+
+// DroppedJobs returns the total number of scheduler jobs dropped due to a full channel.
+func (p *Pipeline) DroppedJobs() int64 {
+	return p.scheduler.droppedJobs.Load()
+}
+
+// DroppedNotifications returns the total number of notification events dropped due to a full channel.
+func (p *Pipeline) DroppedNotifications() int64 {
+	return p.droppedNotifications.Load()
 }
 
 func (p *Pipeline) Run(ctx context.Context) {
@@ -271,6 +283,7 @@ func (p *Pipeline) emitNotification(eventType string, inc *storage.Incident, mon
 		Change:    change,
 	}:
 	default:
+		p.droppedNotifications.Add(1)
 		p.logger.Warn("notification channel full, dropping event", "event", eventType)
 	}
 }

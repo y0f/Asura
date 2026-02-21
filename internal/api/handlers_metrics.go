@@ -64,6 +64,16 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if s.pipeline != nil {
+		sb.WriteString("\n# HELP asura_scheduler_jobs_dropped_total Total scheduler jobs dropped due to full channel.\n")
+		sb.WriteString("# TYPE asura_scheduler_jobs_dropped_total counter\n")
+		fmt.Fprintf(&sb, "asura_scheduler_jobs_dropped_total %d\n", s.pipeline.DroppedJobs())
+
+		sb.WriteString("\n# HELP asura_notifications_dropped_total Total notification events dropped due to full channel.\n")
+		sb.WriteString("# TYPE asura_notifications_dropped_total counter\n")
+		fmt.Fprintf(&sb, "asura_notifications_dropped_total %d\n", s.pipeline.DroppedNotifications())
+	}
+
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	w.Write([]byte(sb.String()))
 }
