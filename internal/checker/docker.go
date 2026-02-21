@@ -46,7 +46,7 @@ func (c *DockerChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 	}
 	client := &http.Client{Transport: transport, Timeout: timeout}
 
-	endpoint := fmt.Sprintf("http://docker/v1.24/containers/%s/json", url.PathEscape(containerName))
+	endpoint := fmt.Sprintf("http://docker/containers/%s/json", url.PathEscape(containerName))
 	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
 	if err != nil {
 		return &Result{

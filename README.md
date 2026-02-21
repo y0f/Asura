@@ -686,6 +686,20 @@ Status mapping:
 - **up**: container running (or healthy when `check_health` is enabled)
 - **degraded**: container running, health status is `starting`
 - **down**: container stopped/exited, not found, or unhealthy
+
+**Setup — systemd (native install):**
+
+```bash
+sudo usermod -aG docker asura
+sudo systemctl restart asura
+```
+
+**Setup — Docker:** Mount the host socket into the container:
+
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+```
 </details>
 
 ---
