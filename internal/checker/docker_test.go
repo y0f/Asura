@@ -215,7 +215,7 @@ func TestDockerCheckerContainerNameFromSettings(t *testing.T) {
 	if result.Status != "up" {
 		t.Errorf("status = %q, want up", result.Status)
 	}
-	if requestedPath != "/v1.24/containers/from-settings/json" {
+	if requestedPath != "/containers/from-settings/json" {
 		t.Errorf("path = %q, want container name from settings", requestedPath)
 	}
 }
