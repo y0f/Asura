@@ -30,7 +30,9 @@ func (c *HTTPChecker) Type() string { return "http" }
 func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.HTTPSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	method := settings.Method

@@ -17,7 +17,9 @@ func (c *DNSChecker) Type() string { return "dns" }
 func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.DNSSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	recordType := settings.RecordType

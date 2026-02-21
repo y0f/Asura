@@ -21,7 +21,9 @@ func (c *TCPChecker) Type() string { return "tcp" }
 func (c *TCPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.TCPSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	timeout := time.Duration(monitor.Timeout) * time.Second

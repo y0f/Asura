@@ -23,7 +23,9 @@ func (c *WebSocketChecker) Type() string { return "websocket" }
 func (c *WebSocketChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.WebSocketSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	timeout := time.Duration(monitor.Timeout) * time.Second

@@ -22,7 +22,9 @@ func (c *DockerChecker) Type() string { return "docker" }
 func (c *DockerChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.DockerSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	socketPath := settings.SocketPath

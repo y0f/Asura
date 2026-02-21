@@ -21,7 +21,9 @@ func (c *TLSChecker) Type() string { return "tls" }
 func (c *TLSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.TLSSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	warnDays := settings.WarnDaysBefore

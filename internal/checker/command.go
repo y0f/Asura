@@ -22,7 +22,9 @@ func (c *CommandChecker) Type() string { return "command" }
 func (c *CommandChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	var settings storage.CommandSettings
 	if len(monitor.Settings) > 0 {
-		json.Unmarshal(monitor.Settings, &settings)
+		if err := json.Unmarshal(monitor.Settings, &settings); err != nil {
+			return &Result{Status: "down", Message: fmt.Sprintf("invalid settings: %v", err)}, nil
+		}
 	}
 
 	if settings.Command == "" {
