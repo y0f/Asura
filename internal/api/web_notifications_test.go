@@ -37,7 +37,9 @@ func TestAssembleNotificationSettingsTelegram(t *testing.T) {
 	raw := assembleNotificationSettings(r, "telegram")
 
 	var s notifier.TelegramSettings
-	json.Unmarshal(raw, &s)
+	if err := json.Unmarshal(raw, &s); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.BotToken != "123:ABC" || s.ChatID != "-100123" {
 		t.Errorf("telegram = %+v", s)
@@ -52,7 +54,9 @@ func TestAssembleNotificationSettingsDiscord(t *testing.T) {
 	raw := assembleNotificationSettings(r, "discord")
 
 	var s notifier.DiscordSettings
-	json.Unmarshal(raw, &s)
+	if err := json.Unmarshal(raw, &s); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.WebhookURL != "https://discord.com/api/webhooks/123" {
 		t.Errorf("discord webhook = %q", s.WebhookURL)
@@ -68,7 +72,9 @@ func TestAssembleNotificationSettingsSlack(t *testing.T) {
 	raw := assembleNotificationSettings(r, "slack")
 
 	var s notifier.SlackSettings
-	json.Unmarshal(raw, &s)
+	if err := json.Unmarshal(raw, &s); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.WebhookURL != "https://hooks.slack.com/services/T/B/X" {
 		t.Errorf("slack webhook = %q", s.WebhookURL)
@@ -91,7 +97,9 @@ func TestAssembleNotificationSettingsEmail(t *testing.T) {
 	raw := assembleNotificationSettings(r, "email")
 
 	var s notifier.EmailSettings
-	json.Unmarshal(raw, &s)
+	if err := json.Unmarshal(raw, &s); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.Host != "smtp.example.com" {
 		t.Errorf("host = %q", s.Host)
@@ -203,7 +211,9 @@ func TestParseNotificationFormFormMode(t *testing.T) {
 	}
 
 	var s notifier.WebhookSettings
-	json.Unmarshal(ch.Settings, &s)
+	if err := json.Unmarshal(ch.Settings, &s); err != nil {
+		t.Fatal(err)
+	}
 	if s.URL != "https://example.com/hook" {
 		t.Errorf("webhook URL = %q", s.URL)
 	}
@@ -224,7 +234,9 @@ func TestParseNotificationFormJSONMode(t *testing.T) {
 	ch := srv.parseNotificationForm(r)
 
 	var s notifier.WebhookSettings
-	json.Unmarshal(ch.Settings, &s)
+	if err := json.Unmarshal(ch.Settings, &s); err != nil {
+		t.Fatal(err)
+	}
 	if s.URL != "https://example.com" || s.Secret != "abc" {
 		t.Errorf("json mode settings = %+v", s)
 	}

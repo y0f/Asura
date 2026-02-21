@@ -105,7 +105,9 @@ func validateMonitorJSON(m *storage.Monitor) error {
 func validateDockerSettings(m *storage.Monitor) error {
 	var ds storage.DockerSettings
 	if len(m.Settings) > 0 {
-		json.Unmarshal(m.Settings, &ds)
+		if err := json.Unmarshal(m.Settings, &ds); err != nil {
+			return fmt.Errorf("invalid docker settings: %w", err)
+		}
 	}
 	name := ds.ContainerName
 	if name == "" {

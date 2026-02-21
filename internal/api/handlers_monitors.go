@@ -139,7 +139,7 @@ func (s *Server) createHeartbeat(ctx context.Context, m *storage.Monitor) (*stor
 	token, err := generateToken()
 	if err != nil {
 		s.logger.Error("generate heartbeat token", "error", err)
-		return nil, fmt.Errorf("failed to generate heartbeat token")
+		return nil, fmt.Errorf("generate heartbeat token: %w", err)
 	}
 	grace := parseGraceFromSettings(m.Settings)
 	hb := &storage.Heartbeat{
@@ -150,7 +150,7 @@ func (s *Server) createHeartbeat(ctx context.Context, m *storage.Monitor) (*stor
 	}
 	if err := s.store.CreateHeartbeat(ctx, hb); err != nil {
 		s.logger.Error("create heartbeat", "error", err)
-		return nil, fmt.Errorf("failed to create heartbeat")
+		return nil, fmt.Errorf("create heartbeat: %w", err)
 	}
 	return hb, nil
 }
