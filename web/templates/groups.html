@@ -41,21 +41,27 @@
                 {{range .Data}}
                 <tr class="hover:bg-surface-200/20 transition-colors">
                     <td class="px-4 py-3">
-                        <span class="text-[13px] text-white font-medium">{{.Name}}</span>
+                        <a href="{{$.BasePath}}/groups/{{.ID}}" class="text-[13px] text-muted-light hover:text-white transition-colors font-medium">{{.Name}}</a>
                     </td>
                     <td class="px-4 py-3">
                         <span class="text-[12px] text-muted tabular-nums">{{.SortOrder}}</span>
                     </td>
                     <td class="px-4 py-3 text-right">
-                        {{if index $.Perms "monitors.write"}}
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button type="button" @click="editGroup({{toJSON .}})"
-                                    class="px-2 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">Edit</button>
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{{$.BasePath}}/groups/{{.ID}}" class="inline-flex items-center text-muted hover:text-white transition-colors" title="View">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </a>
+                            {{if index $.Perms "monitors.write"}}
+                            <button type="button" @click="editGroup({{toJSON .}})" class="inline-flex items-center text-muted hover:text-brand transition-colors" title="Edit">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                            </button>
                             <form method="POST" action="{{$.BasePath}}/groups/{{.ID}}/delete" x-data @submit.prevent="if(confirm('Delete this group? Monitors will be unassigned.')) $el.submit()" class="contents">
-                                <button type="submit" class="px-2 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+                                <button type="submit" class="inline-flex items-center text-muted hover:text-red-400 transition-colors" title="Delete">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                </button>
                             </form>
+                            {{end}}
                         </div>
-                        {{end}}
                     </td>
                 </tr>
                 {{end}}

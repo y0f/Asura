@@ -221,6 +221,8 @@ var templateFuncs = template.FuncMap{
 			return "Command"
 		case "heartbeat":
 			return "Heartbeat"
+		case "docker":
+			return "Docker"
 		default:
 			return t
 		}

@@ -135,6 +135,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/incidents/{id}/delete"), webPerm("incidents.write", s.handleWebIncidentDelete))
 
 		mux.Handle("GET "+s.p("/groups"), webAuth(http.HandlerFunc(s.handleWebGroups)))
+		mux.Handle("GET "+s.p("/groups/{id}"), webAuth(http.HandlerFunc(s.handleWebGroupDetail)))
 		mux.Handle("POST "+s.p("/groups"), webPerm("monitors.write", s.handleWebGroupCreate))
 		mux.Handle("POST "+s.p("/groups/{id}"), webPerm("monitors.write", s.handleWebGroupUpdate))
 		mux.Handle("POST "+s.p("/groups/{id}/delete"), webPerm("monitors.write", s.handleWebGroupDelete))

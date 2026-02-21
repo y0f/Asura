@@ -18,6 +18,33 @@ func (s *Server) handleWebGroups(w http.ResponseWriter, r *http.Request) {
 	s.render(w, "groups.html", pd)
 }
 
+func (s *Server) handleWebGroupDetail(w http.ResponseWriter, r *http.Request) {
+	id, err := parseID(r)
+	if err != nil {
+		s.redirect(w, r, "/groups")
+		return
+	}
+
+	ctx := r.Context()
+	group, err := s.store.GetMonitorGroup(ctx, id)
+	if err != nil {
+		s.redirect(w, r, "/groups")
+		return
+	}
+
+	result, err := s.store.ListMonitors(ctx, storage.MonitorListFilter{GroupID: &id}, storage.Pagination{Page: 1, PerPage: 100})
+	if err != nil {
+		s.logger.Error("web: list group monitors", "error", err)
+	}
+
+	pd := s.newPageData(r, group.Name, "groups")
+	pd.Data = map[string]interface{}{
+		"Group":    group,
+		"Monitors": result,
+	}
+	s.render(w, "group_detail.html", pd)
+}
+
 func (s *Server) handleWebGroupCreate(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	g := &storage.MonitorGroup{
