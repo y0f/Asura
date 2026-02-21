@@ -105,6 +105,16 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 
 	result := wr.Result
 	finalStatus := evaluateAssertions(mon, result)
+
+	if mon.UpsideDown {
+		if finalStatus == "up" {
+			finalStatus = "down"
+		} else {
+			finalStatus = "up"
+			result.Message = ""
+		}
+	}
+
 	cr := buildCheckResult(mon, result, finalStatus)
 
 	if err := p.store.InsertCheckResult(ctx, cr); err != nil {

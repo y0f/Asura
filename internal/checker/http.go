@@ -124,15 +124,6 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		msg = fmt.Sprintf("expected status %d, got %d", settings.ExpectedStatus, resp.StatusCode)
 	}
 
-	if monitor.UpsideDown {
-		if status == "up" {
-			status = "down"
-		} else {
-			status = "up"
-			msg = ""
-		}
-	}
-
 	result := &Result{
 		Status:       status,
 		ResponseTime: elapsed,

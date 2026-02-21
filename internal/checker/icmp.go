@@ -22,12 +22,14 @@ func (c *ICMPChecker) Type() string { return "icmp" }
 func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	timeout := time.Duration(monitor.Timeout) * time.Second
 
-	// Resolve target to IP
+	start := time.Now()
+
 	addrs, err := net.DefaultResolver.LookupIP(ctx, "ip4", monitor.Target)
 	if err != nil || len(addrs) == 0 {
 		return &Result{
-			Status:  "down",
-			Message: fmt.Sprintf("DNS resolution failed: %v", err),
+			Status:       "down",
+			ResponseTime: time.Since(start).Milliseconds(),
+			Message:      fmt.Sprintf("DNS resolution failed: %v", err),
 		}, nil
 	}
 	dst := addrs[0]
@@ -74,7 +76,6 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		dstAddr = &net.IPAddr{IP: dst}
 	}
 
-	start := time.Now()
 	if _, err := conn.WriteTo(wb, dstAddr); err != nil {
 		return &Result{
 			Status:       "down",

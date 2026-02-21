@@ -214,7 +214,7 @@ func TestResolveMaxRedirects(t *testing.T) {
 	}
 }
 
-func TestHTTPCheckerUpsideDown(t *testing.T) {
+func TestHTTPCheckerUpsideDownIgnored(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -222,26 +222,26 @@ func TestHTTPCheckerUpsideDown(t *testing.T) {
 
 	c := &HTTPChecker{AllowPrivate: true}
 
-	t.Run("up becomes down", func(t *testing.T) {
+	t.Run("checker returns raw status", func(t *testing.T) {
 		mon := &storage.Monitor{Target: server.URL, Timeout: 5, UpsideDown: true}
 		result, err := c.Check(context.Background(), mon)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if result.Status != "down" {
-			t.Errorf("status = %q, want down (upside-down)", result.Status)
+		if result.Status != "up" {
+			t.Errorf("status = %q, want up (UpsideDown handled by pipeline, not checker)", result.Status)
 		}
 	})
 
-	t.Run("down becomes up", func(t *testing.T) {
+	t.Run("expected status mismatch returns down", func(t *testing.T) {
 		settings, _ := json.Marshal(storage.HTTPSettings{ExpectedStatus: 404})
 		mon := &storage.Monitor{Target: server.URL, Timeout: 5, UpsideDown: true, Settings: settings}
 		result, err := c.Check(context.Background(), mon)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if result.Status != "up" {
-			t.Errorf("status = %q, want up (upside-down flipped)", result.Status)
+		if result.Status != "down" {
+			t.Errorf("status = %q, want down (UpsideDown handled by pipeline, not checker)", result.Status)
 		}
 	})
 }
