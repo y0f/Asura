@@ -240,15 +240,136 @@ func validateSlug(slug string) string {
 	return slug
 }
 
-var unsafeCSSPattern = regexp.MustCompile(`(?i)(javascript|vbscript|expression|behavior|@import|@charset|url\s*\(|-moz-binding)`)
+var safeCSSProperties = map[string]bool{
+	"color": true, "background": true, "background-color": true,
+	"border": true, "border-color": true, "border-style": true,
+	"border-width": true, "border-radius": true,
+	"border-top": true, "border-right": true, "border-bottom": true, "border-left": true,
+	"outline": true, "outline-color": true, "outline-style": true, "outline-width": true,
+	"margin": true, "margin-top": true, "margin-right": true, "margin-bottom": true, "margin-left": true,
+	"padding": true, "padding-top": true, "padding-right": true, "padding-bottom": true, "padding-left": true,
+	"width": true, "height": true, "max-width": true, "max-height": true, "min-width": true, "min-height": true,
+	"font-size": true, "font-weight": true, "font-family": true, "font-style": true,
+	"text-align": true, "text-decoration": true, "text-transform": true,
+	"line-height": true, "letter-spacing": true, "word-spacing": true,
+	"display": true, "flex": true, "flex-direction": true, "flex-wrap": true,
+	"justify-content": true, "align-items": true, "align-self": true, "gap": true,
+	"grid-template-columns": true, "grid-template-rows": true, "grid-gap": true,
+	"opacity": true, "visibility": true, "overflow": true, "overflow-x": true, "overflow-y": true,
+	"position": true, "top": true, "right": true, "bottom": true, "left": true, "z-index": true,
+	"box-shadow": true, "text-shadow": true,
+	"transition": true, "transform": true,
+	"cursor": true, "white-space": true, "word-break": true, "word-wrap": true,
+	"list-style": true, "list-style-type": true,
+	"vertical-align": true, "text-overflow": true,
+	"content": true, "box-sizing": true, "float": true, "clear": true,
+}
+
+var dangerousValuePattern = regexp.MustCompile(`(?i)(javascript|vbscript|expression\s*\(|behavior\s*:|@import|@charset|-moz-binding|url\s*\(|data\s*:)`)
+
+var cssCommentPattern = regexp.MustCompile(`/\*[\s\S]*?\*/`)
 
 func sanitizeCSS(css string) string {
 	if len(css) > 10000 {
 		css = css[:10000]
 	}
+
 	css = strings.ReplaceAll(css, "<", "")
 	css = strings.ReplaceAll(css, ">", "")
 	css = strings.ReplaceAll(css, "\\", "")
-	css = unsafeCSSPattern.ReplaceAllString(css, "")
-	return css
+	css = cssCommentPattern.ReplaceAllString(css, "")
+
+	var result strings.Builder
+	rules := splitCSSRules(css)
+
+	for _, rule := range rules {
+		rule = strings.TrimSpace(rule)
+		if rule == "" {
+			continue
+		}
+
+		if strings.HasPrefix(rule, "@") {
+			continue
+		}
+
+		braceIdx := strings.Index(rule, "{")
+		if braceIdx == -1 {
+			continue
+		}
+
+		selector := strings.TrimSpace(rule[:braceIdx])
+		body := strings.TrimSpace(rule[braceIdx+1:])
+		body = strings.TrimSuffix(body, "}")
+		body = strings.TrimSpace(body)
+
+		if selector == "" || body == "" {
+			continue
+		}
+
+		sanitized := sanitizeCSSDeclarations(body)
+		if sanitized == "" {
+			continue
+		}
+
+		if result.Len() > 0 {
+			result.WriteString("\n")
+		}
+		result.WriteString(selector)
+		result.WriteString(" { ")
+		result.WriteString(sanitized)
+		result.WriteString(" }")
+	}
+
+	return result.String()
+}
+
+func splitCSSRules(css string) []string {
+	var rules []string
+	depth := 0
+	start := 0
+	for i, ch := range css {
+		switch ch {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				rules = append(rules, css[start:i+1])
+				start = i + 1
+			}
+		}
+	}
+	return rules
+}
+
+func sanitizeCSSDeclarations(body string) string {
+	declarations := strings.Split(body, ";")
+	var safe []string
+
+	for _, decl := range declarations {
+		decl = strings.TrimSpace(decl)
+		if decl == "" {
+			continue
+		}
+
+		parts := strings.SplitN(decl, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		prop := strings.TrimSpace(strings.ToLower(parts[0]))
+		value := strings.TrimSpace(parts[1])
+
+		if !safeCSSProperties[prop] {
+			continue
+		}
+
+		if dangerousValuePattern.MatchString(value) {
+			continue
+		}
+
+		safe = append(safe, prop+": "+value)
+	}
+
+	return strings.Join(safe, "; ")
 }
