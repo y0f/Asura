@@ -301,6 +301,7 @@ func (s *Server) loadTemplates() {
 		"monitor_detail.html",
 		"monitor_form.html",
 		"groups.html",
+		"group_detail.html",
 		"incidents.html",
 		"incident_detail.html",
 		"notifications.html",
