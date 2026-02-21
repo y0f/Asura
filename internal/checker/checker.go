@@ -60,7 +60,7 @@ func DefaultRegistry(commandAllowlist []string, allowPrivateTargets bool) *Regis
 	r := NewRegistry()
 	r.Register(&HTTPChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&TCPChecker{AllowPrivate: allowPrivateTargets})
-	r.Register(&DNSChecker{})
+	r.Register(&DNSChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&ICMPChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&TLSChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&WebSocketChecker{AllowPrivate: allowPrivateTargets})

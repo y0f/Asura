@@ -139,6 +139,9 @@ func secureHeaders(frameAncestors []string) func(http.Handler) http.Handler {
 			w.Header().Set("Content-Security-Policy", "default-src 'none'; "+cspFrame)
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 			w.Header().Set("Cache-Control", "no-store")
+			if r.TLS != nil {
+				w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

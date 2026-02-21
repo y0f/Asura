@@ -7,10 +7,13 @@ import (
 	"net"
 	"time"
 
+	"github.com/y0f/Asura/internal/safenet"
 	"github.com/y0f/Asura/internal/storage"
 )
 
-type DNSChecker struct{}
+type DNSChecker struct {
+	AllowPrivate bool
+}
 
 func (c *DNSChecker) Type() string { return "dns" }
 
@@ -32,7 +35,10 @@ func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 		resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{Timeout: time.Duration(monitor.Timeout) * time.Second}
+				d := net.Dialer{
+					Timeout: time.Duration(monitor.Timeout) * time.Second,
+					Control: safenet.MaybeDialControl(c.AllowPrivate),
+				}
 				return d.DialContext(ctx, "udp", settings.Server+":53")
 			},
 		}
