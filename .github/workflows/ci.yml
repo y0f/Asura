@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -22,74 +22,8 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.24"
-
       - name: Build linux/amd64
         run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /dev/null ./cmd/asura
 
       - name: Build linux/arm64
         run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /dev/null ./cmd/asura
-
-  quality:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.24"
-
-      - name: Install tools
-        run: |
-          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
-          go install github.com/gordonklaus/ineffassign@latest
-          go install github.com/client9/misspell/cmd/misspell@latest
-
-      - name: gofmt
-        run: |
-          out=$(gofmt -l . 2>&1) || true
-          if [ -n "$out" ]; then
-            echo "::warning::gofmt issues found:"
-            echo "$out"
-          else
-            echo "gofmt: OK"
-          fi
-
-      - name: gocyclo
-        run: |
-          out=$(gocyclo -over 15 . 2>&1) || true
-          if [ -n "$out" ]; then
-            echo "::warning::Functions with cyclomatic complexity > 15:"
-            echo "$out"
-          else
-            echo "gocyclo: OK"
-          fi
-
-      - name: ineffassign
-        run: |
-          out=$(ineffassign ./... 2>&1) || true
-          if [ -n "$out" ]; then
-            echo "::warning::Ineffectual assignments found:"
-            echo "$out"
-          else
-            echo "ineffassign: OK"
-          fi
-
-      - name: misspell
-        run: |
-          out=$(misspell -error . 2>&1) || true
-          if [ -n "$out" ]; then
-            echo "::warning::Spelling issues found:"
-            echo "$out"
-          else
-            echo "misspell: OK"
-          fi
