@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -53,7 +54,7 @@ func (s *Server) handleWebDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	displayMonitors := filtered[start:end]
 
-	incidents, err := s.store.ListIncidents(ctx, 0, "open", "", storage.Pagination{Page: 1, PerPage: 10})
+	incidents, err := s.store.ListIncidents(ctx, 0, incident.StatusOpen, "", storage.Pagination{Page: 1, PerPage: 10})
 	if err != nil {
 		s.logger.Error("web: list incidents", "error", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/notifier"
 )
 
@@ -71,7 +72,7 @@ func (s *Server) handleWebIncidentAck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now().UTC()
-	inc.Status = "acknowledged"
+	inc.Status = incident.StatusAcknowledged
 	inc.AcknowledgedAt = &now
 	inc.AcknowledgedBy = getAPIKeyName(ctx)
 
@@ -79,7 +80,7 @@ func (s *Server) handleWebIncidentAck(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("web: ack incident", "error", err)
 	}
 
-	s.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, "acknowledged", "Acknowledged by "+inc.AcknowledgedBy))
+	s.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy))
 
 	if s.notifier != nil {
 		s.notifier.NotifyWithPayload(&notifier.Payload{
@@ -103,7 +104,7 @@ func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request
 	}
 
 	now := time.Now().UTC()
-	inc.Status = "resolved"
+	inc.Status = incident.StatusResolved
 	inc.ResolvedAt = &now
 	inc.ResolvedBy = getAPIKeyName(ctx)
 
@@ -111,7 +112,7 @@ func (s *Server) handleWebIncidentResolve(w http.ResponseWriter, r *http.Request
 		s.logger.Error("web: resolve incident", "error", err)
 	}
 
-	s.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, "resolved", "Manually resolved by "+inc.ResolvedBy))
+	s.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy))
 
 	if s.notifier != nil {
 		s.notifier.NotifyWithPayload(&notifier.Payload{

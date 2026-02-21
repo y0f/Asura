@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -136,7 +137,7 @@ func (s *Server) handleTestNotification(w http.ResponseWriter, r *http.Request) 
 		ID:          0,
 		MonitorID:   0,
 		MonitorName: "Test Monitor",
-		Status:      "open",
+		Status:      incident.StatusOpen,
 		Cause:       "This is a test notification",
 	}
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/notifier"
 	"github.com/y0f/Asura/internal/storage"
 )
@@ -84,7 +85,7 @@ func (s *Server) handleWebNotificationTest(w http.ResponseWriter, r *http.Reques
 	testInc := &storage.Incident{
 		ID:          0,
 		MonitorName: "Test Monitor",
-		Status:      "open",
+		Status:      incident.StatusOpen,
 		Cause:       "Test notification from Asura",
 	}
 

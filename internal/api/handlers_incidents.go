@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/notifier"
 	"github.com/y0f/Asura/internal/storage"
 )
@@ -77,13 +78,13 @@ func (s *Server) handleAckIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if inc.Status != "open" {
+	if inc.Status != incident.StatusOpen {
 		writeError(w, http.StatusConflict, "incident is not open")
 		return
 	}
 
 	now := time.Now().UTC()
-	inc.Status = "acknowledged"
+	inc.Status = incident.StatusAcknowledged
 	inc.AcknowledgedAt = &now
 	inc.AcknowledgedBy = getAPIKeyName(r.Context())
 
@@ -93,7 +94,7 @@ func (s *Server) handleAckIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, "acknowledged", "Acknowledged by "+inc.AcknowledgedBy))
+	s.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy))
 
 	s.audit(r, "acknowledge", "incident", id, "")
 
@@ -125,13 +126,13 @@ func (s *Server) handleResolveIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if inc.Status == "resolved" {
+	if inc.Status == incident.StatusResolved {
 		writeError(w, http.StatusConflict, "incident is already resolved")
 		return
 	}
 
 	now := time.Now().UTC()
-	inc.Status = "resolved"
+	inc.Status = incident.StatusResolved
 	inc.ResolvedAt = &now
 	inc.ResolvedBy = getAPIKeyName(r.Context())
 
@@ -141,7 +142,7 @@ func (s *Server) handleResolveIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, "resolved", "Manually resolved by "+inc.ResolvedBy))
+	s.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy))
 
 	s.audit(r, "resolve", "incident", id, "")
 

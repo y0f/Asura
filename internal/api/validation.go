@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -15,7 +16,7 @@ var validMonitorTypes = map[string]bool{
 }
 
 var validIncidentStatuses = map[string]bool{
-	"open": true, "acknowledged": true, "resolved": true,
+	incident.StatusOpen: true, incident.StatusAcknowledged: true, incident.StatusResolved: true,
 }
 
 var validNotificationTypes = map[string]bool{

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -192,7 +193,7 @@ func (s *Server) publicIncidentsForPage(ctx context.Context, sp *storage.StatusP
 		if !monitorIDs[inc.MonitorID] {
 			continue
 		}
-		if inc.Status == "resolved" && inc.ResolvedAt != nil && inc.ResolvedAt.Before(cutoff) {
+		if inc.Status == incident.StatusResolved && inc.ResolvedAt != nil && inc.ResolvedAt.Before(cutoff) {
 			continue
 		}
 		filtered = append(filtered, inc)
