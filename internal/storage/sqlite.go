@@ -93,6 +93,15 @@ func runMigrations(db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("migration v%d commit: %w", m.version, err)
 		}
+		currentVersion = m.version
+	}
+
+	if currentVersion < schemaVersion {
+		minRequired := schemaVersion
+		if len(migrations) > 0 {
+			minRequired = migrations[0].version - 1
+		}
+		return fmt.Errorf("database schema v%d is too old (minimum v%d); upgrade through v1.0.0 first", currentVersion, minRequired)
 	}
 
 	return nil
