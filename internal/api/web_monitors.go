@@ -25,6 +25,7 @@ type monitorFormData struct {
 	TLS                  storage.TLSSettings
 	WS                   storage.WebSocketSettings
 	Cmd                  storage.CommandSettings
+	Docker               storage.DockerSettings
 	FollowRedirects      bool
 	MaxRedirects         int
 	HeadersJSON          template.JS
@@ -77,6 +78,8 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 		json.Unmarshal(mon.Settings, &fd.WS)
 	case "command":
 		json.Unmarshal(mon.Settings, &fd.Cmd)
+	case "docker":
+		json.Unmarshal(mon.Settings, &fd.Docker)
 	}
 
 	fd.FollowRedirects = fd.HTTP.FollowRedirects == nil || *fd.HTTP.FollowRedirects
@@ -116,7 +119,7 @@ func headersToJSON(headers map[string]string) template.JS {
 		pairs = append(pairs, headerPair{Key: k, Value: v})
 	}
 	b, _ := json.Marshal(pairs)
-	return template.JS(b)
+	return safeJS(b)
 }
 
 func assertionsToJSON(raw json.RawMessage) template.JS {
@@ -128,7 +131,7 @@ func assertionsToJSON(raw json.RawMessage) template.JS {
 		return "[]"
 	}
 	b, _ := json.Marshal(assertions)
-	return template.JS(b)
+	return safeJS(b)
 }
 
 func assembleSettings(r *http.Request, monType string) json.RawMessage {
@@ -175,6 +178,14 @@ func assembleSettings(r *http.Request, monType string) json.RawMessage {
 					s.Args = append(s.Args, trimmed)
 				}
 			}
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "docker":
+		s := storage.DockerSettings{
+			ContainerName: r.FormValue("settings_container_name"),
+			SocketPath:    r.FormValue("settings_socket_path"),
+			CheckHealth:   r.FormValue("settings_check_health") == "on",
 		}
 		b, _ := json.Marshal(s)
 		return b

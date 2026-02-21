@@ -84,6 +84,13 @@ type CommandSettings struct {
 	Args    []string `json:"args,omitempty"`
 }
 
+// DockerSettings holds Docker container check configuration.
+type DockerSettings struct {
+	ContainerName string `json:"container_name"`
+	SocketPath    string `json:"socket_path,omitempty"`
+	CheckHealth   bool   `json:"check_health,omitempty"`
+}
+
 // CheckResult stores the outcome of a single check execution.
 type CheckResult struct {
 	ID           int64      `json:"id"`

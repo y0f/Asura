@@ -180,7 +180,7 @@ func TestRegistryGetUnregistered(t *testing.T) {
 
 func TestDefaultRegistryHasAllTypes(t *testing.T) {
 	r := DefaultRegistry(nil, false)
-	types := []string{"http", "tcp", "dns", "icmp", "tls", "websocket", "command"}
+	types := []string{"http", "tcp", "dns", "icmp", "tls", "websocket", "command", "docker"}
 	for _, typ := range types {
 		if _, err := r.Get(typ); err != nil {
 			t.Fatalf("expected %s checker, got error: %v", typ, err)

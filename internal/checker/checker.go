@@ -65,5 +65,6 @@ func DefaultRegistry(commandAllowlist []string, allowPrivateTargets bool) *Regis
 	r.Register(&TLSChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&WebSocketChecker{AllowPrivate: allowPrivateTargets})
 	r.Register(&CommandChecker{Allowlist: commandAllowlist})
+	r.Register(&DockerChecker{})
 	return r
 }

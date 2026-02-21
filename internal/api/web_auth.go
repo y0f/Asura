@@ -91,6 +91,10 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWebLogout(w http.ResponseWriter, r *http.Request) {
+	if !s.checkOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	if cookie, err := r.Cookie(sessionCookie); err == nil && cookie.Value != "" {
 		tokenHash := hashSessionToken(cookie.Value)
 		s.store.DeleteSession(r.Context(), tokenHash)

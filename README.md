@@ -46,7 +46,7 @@ No runtime. No external database. No container required. Build, copy, run.
 
 | Feature | |
 |---|---|
-| **8 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Heartbeat |
+| **9 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Heartbeat |
 | **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
 | **Change detection** | Line-level diffs on response bodies |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
@@ -395,7 +395,7 @@ GET    /api/v1/monitors/{id}/chart     Response time chart data
 |--------------------|----------|----------|----------------------------------------------------|
 | `name`             | string   | yes      | Display name                                       |
 | `description`      | string   |          | Optional description or notes                      |
-| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `heartbeat` |
+| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `docker` `heartbeat` |
 | `target`           | string   | yes      | URL, host:port, domain, or command                 |
 | `interval`         | int      |          | Seconds between checks (default: 60)               |
 | `timeout`          | int      |          | Timeout in seconds (default: 10)                   |
@@ -668,6 +668,24 @@ Evaluated after each check. Failed assertions mark a monitor `down` or `degraded
 ```json
 {"command":"/usr/local/bin/check_health","args":["--host","db.local"]}
 ```
+</details>
+
+<details><summary><strong>Docker</strong></summary>
+
+| Field              | Type   | Description                                              |
+|--------------------|--------|----------------------------------------------------------|
+| `container_name`   | string | Container name or ID (overrides target if set)           |
+| `socket_path`      | string | Docker socket path (default: `/var/run/docker.sock`)     |
+| `check_health`     | bool   | Use container health status instead of just running state |
+
+```json
+{"container_name":"nginx","socket_path":"/var/run/docker.sock","check_health":true}
+```
+
+Status mapping:
+- **up**: container running (or healthy when `check_health` is enabled)
+- **degraded**: container running, health status is `starting`
+- **down**: container stopped/exited, not found, or unhealthy
 </details>
 
 ---

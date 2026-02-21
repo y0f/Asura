@@ -7,10 +7,20 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/y0f/Asura/web"
 )
+
+var jsEscaper = strings.NewReplacer(
+	"</", `<\/`,
+	"<!--", `<\!--`,
+)
+
+func safeJS(data []byte) template.JS {
+	return template.JS(jsEscaper.Replace(string(data)))
+}
 
 type pageData struct {
 	Title    string
@@ -247,7 +257,7 @@ var templateFuncs = template.FuncMap{
 	},
 	"toJSON": func(v interface{}) template.JS {
 		b, _ := json.Marshal(v)
-		return template.JS(b)
+		return safeJS(b)
 	},
 	"safeCSS": func(s string) template.CSS { return template.CSS(s) },
 	"list":    func(args ...string) []string { return args },

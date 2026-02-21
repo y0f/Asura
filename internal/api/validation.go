@@ -11,7 +11,7 @@ import (
 var validMonitorTypes = map[string]bool{
 	"http": true, "tcp": true, "dns": true,
 	"icmp": true, "tls": true, "websocket": true, "command": true,
-	"heartbeat": true,
+	"heartbeat": true, "docker": true,
 }
 
 var validIncidentStatuses = map[string]bool{
@@ -38,7 +38,7 @@ func validateMonitor(m *storage.Monitor) error {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
 	if !validMonitorTypes[m.Type] {
-		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat")
+		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat, docker")
 	}
 	if m.Type == "heartbeat" {
 		return nil
@@ -93,6 +93,32 @@ func validateMonitorJSON(m *storage.Monitor) error {
 		var a []interface{}
 		if err := json.Unmarshal(m.Assertions, &a); err != nil {
 			return fmt.Errorf("assertions must be a valid JSON array")
+		}
+	}
+	if m.Type == "docker" {
+		return validateDockerSettings(m)
+	}
+	return nil
+}
+
+func validateDockerSettings(m *storage.Monitor) error {
+	var ds storage.DockerSettings
+	if len(m.Settings) > 0 {
+		json.Unmarshal(m.Settings, &ds)
+	}
+	name := ds.ContainerName
+	if name == "" {
+		name = m.Target
+	}
+	if strings.ContainsAny(name, "/\\..") {
+		return fmt.Errorf("container name contains invalid characters")
+	}
+	if ds.SocketPath != "" {
+		if strings.Contains(ds.SocketPath, "..") {
+			return fmt.Errorf("socket path must not contain path traversal")
+		}
+		if !strings.HasPrefix(ds.SocketPath, "/") {
+			return fmt.Errorf("socket path must be an absolute path")
 		}
 	}
 	return nil

@@ -1,0 +1,149 @@
+package checker
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/url"
+	"time"
+
+	"github.com/y0f/Asura/internal/storage"
+)
+
+const defaultDockerSocket = "/var/run/docker.sock"
+
+type DockerChecker struct{}
+
+func (c *DockerChecker) Type() string { return "docker" }
+
+func (c *DockerChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
+	var settings storage.DockerSettings
+	if len(monitor.Settings) > 0 {
+		json.Unmarshal(monitor.Settings, &settings)
+	}
+
+	socketPath := settings.SocketPath
+	if socketPath == "" {
+		socketPath = defaultDockerSocket
+	}
+
+	containerName := settings.ContainerName
+	if containerName == "" {
+		containerName = monitor.Target
+	}
+
+	timeout := time.Duration(monitor.Timeout) * time.Second
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			return (&net.Dialer{Timeout: timeout}).DialContext(ctx, "unix", socketPath)
+		},
+	}
+	client := &http.Client{Transport: transport, Timeout: timeout}
+
+	endpoint := fmt.Sprintf("http://docker/v1.24/containers/%s/json", url.PathEscape(containerName))
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return &Result{
+			Status:  "down",
+			Message: fmt.Sprintf("request build failed: %v", err),
+		}, nil
+	}
+
+	start := time.Now()
+	resp, err := client.Do(req)
+	elapsed := time.Since(start).Milliseconds()
+
+	if err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("docker socket connection failed: %v", err),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyRead))
+	if err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("read response failed: %v", err),
+		}, nil
+	}
+
+	if resp.StatusCode == 404 {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			StatusCode:   resp.StatusCode,
+			Message:      fmt.Sprintf("container %q not found", containerName),
+		}, nil
+	}
+
+	if resp.StatusCode != 200 {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			StatusCode:   resp.StatusCode,
+			Message:      fmt.Sprintf("docker api returned status %d", resp.StatusCode),
+		}, nil
+	}
+
+	var inspect struct {
+		State struct {
+			Status  string `json:"Status"`
+			Running bool   `json:"Running"`
+			Health  *struct {
+				Status string `json:"Status"`
+			} `json:"Health"`
+		} `json:"State"`
+	}
+	if err := json.Unmarshal(body, &inspect); err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("parse response failed: %v", err),
+		}, nil
+	}
+
+	if !inspect.State.Running {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("container status: %s", inspect.State.Status),
+		}, nil
+	}
+
+	if settings.CheckHealth && inspect.State.Health != nil {
+		switch inspect.State.Health.Status {
+		case "healthy":
+			return &Result{
+				Status:       "up",
+				ResponseTime: elapsed,
+				Message:      "container running, health: healthy",
+			}, nil
+		case "starting":
+			return &Result{
+				Status:       "degraded",
+				ResponseTime: elapsed,
+				Message:      "container running, health: starting",
+			}, nil
+		default:
+			return &Result{
+				Status:       "down",
+				ResponseTime: elapsed,
+				Message:      fmt.Sprintf("container running, health: %s", inspect.State.Health.Status),
+			}, nil
+		}
+	}
+
+	return &Result{
+		Status:       "up",
+		ResponseTime: elapsed,
+		Message:      "container running",
+	}, nil
+}

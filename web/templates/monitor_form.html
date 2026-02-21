@@ -66,12 +66,13 @@
                         <option value="tls">TLS</option>
                         <option value="websocket">WebSocket</option>
                         <option value="command">Command</option>
+                        <option value="docker">Docker</option>
                         <option value="heartbeat">Heartbeat</option>
                     </select>
                 </div>
                 <div x-show="monitorType !== 'heartbeat'">
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Target</label>
-                    <input type="text" name="target" value="{{$mon.Target}}" placeholder="https://example.com"
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5" x-text="monitorType === 'docker' ? 'Container Name / ID' : 'Target'">Target</label>
+                    <input type="text" name="target" value="{{$mon.Target}}" :placeholder="monitorType === 'docker' ? 'nginx, postgres, or container ID' : 'https://example.com'"
                            class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
                 </div>
             </div>
@@ -380,6 +381,29 @@
                         <input type="text" name="settings_args" value="{{range $i, $a := $fd.Cmd.Args}}{{if $i}}, {{end}}{{$a}}{{end}}" placeholder="--verbose, --timeout=5"
                                class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
                         <p class="text-[10px] text-muted mt-1">Comma-separated</p>
+                    </div>
+                </div>
+
+                <!-- Docker Settings -->
+                <div x-show="monitorType === 'docker'" x-cloak class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Container Name / ID</label>
+                        <input type="text" name="settings_container_name" value="{{$fd.Docker.ContainerName}}" placeholder="my-container or abc123def"
+                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        <p class="text-[10px] text-muted mt-1">Overrides target if set</p>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Docker Socket Path</label>
+                        <input type="text" name="settings_socket_path" value="{{$fd.Docker.SocketPath}}" placeholder="/var/run/docker.sock"
+                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        <p class="text-[10px] text-muted mt-1">Default: /var/run/docker.sock</p>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="settings_check_health" {{if $fd.Docker.CheckHealth}}checked{{end}}
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Check container health status</span>
+                        </label>
                     </div>
                 </div>
             </div>
