@@ -109,6 +109,7 @@ func runMigrations(db *sql.DB) error {
 
 func (s *SQLiteStore) Close() error {
 	s.readDB.Close()
+	s.writeDB.Exec("PRAGMA wal_checkpoint(TRUNCATE)")
 	return s.writeDB.Close()
 }
 
