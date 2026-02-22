@@ -1,0 +1,472 @@
+package monitor
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"log/slog"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/y0f/Asura/internal/checker"
+	"github.com/y0f/Asura/internal/incident"
+	"github.com/y0f/Asura/internal/storage"
+)
+
+func testStore(t *testing.T) *storage.SQLiteStore {
+	t.Helper()
+	tmpFile, err := os.CreateTemp("", "asura-monitor-test-*.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpFile.Close()
+	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
+
+	store, err := storage.NewSQLiteStore(tmpFile.Name(), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { store.Close() })
+	return store
+}
+
+func discardLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+func TestHashBody(t *testing.T) {
+	t.Run("deterministic", func(t *testing.T) {
+		h1 := HashBody("hello world")
+		h2 := HashBody("hello world")
+		if h1 != h2 {
+			t.Fatal("expected same hash for same input")
+		}
+		if len(h1) != 64 {
+			t.Fatalf("expected 64 hex chars, got %d", len(h1))
+		}
+	})
+
+	t.Run("different inputs differ", func(t *testing.T) {
+		h1 := HashBody("hello")
+		h2 := HashBody("world")
+		if h1 == h2 {
+			t.Fatal("different inputs should have different hashes")
+		}
+	})
+}
+
+func TestEvaluateAssertions(t *testing.T) {
+	t.Run("no assertions returns original status", func(t *testing.T) {
+		mon := &storage.Monitor{}
+		result := &checker.Result{Status: "up"}
+		got := evaluateAssertions(mon, result)
+		if got != "up" {
+			t.Fatalf("expected up, got %s", got)
+		}
+	})
+
+	t.Run("empty assertions array returns original", func(t *testing.T) {
+		mon := &storage.Monitor{Assertions: json.RawMessage(`[]`)}
+		result := &checker.Result{Status: "up"}
+		got := evaluateAssertions(mon, result)
+		if got != "up" {
+			t.Fatalf("expected up, got %s", got)
+		}
+	})
+
+	t.Run("failing hard assertion returns down", func(t *testing.T) {
+		assertions := `[{"type":"status_code","operator":"eq","value":"200"}]`
+		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
+		result := &checker.Result{Status: "up", StatusCode: 500}
+		got := evaluateAssertions(mon, result)
+		if got != "down" {
+			t.Fatalf("expected down, got %s", got)
+		}
+	})
+
+	t.Run("failing soft assertion returns degraded", func(t *testing.T) {
+		assertions := `[{"type":"status_code","operator":"eq","value":"200","degraded":true}]`
+		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
+		result := &checker.Result{Status: "up", StatusCode: 500}
+		got := evaluateAssertions(mon, result)
+		if got != "degraded" {
+			t.Fatalf("expected degraded, got %s", got)
+		}
+	})
+
+	t.Run("passing assertion keeps status", func(t *testing.T) {
+		assertions := `[{"type":"status_code","operator":"eq","value":"200"}]`
+		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
+		result := &checker.Result{Status: "up", StatusCode: 200}
+		got := evaluateAssertions(mon, result)
+		if got != "up" {
+			t.Fatalf("expected up, got %s", got)
+		}
+	})
+}
+
+func TestBuildCheckResult(t *testing.T) {
+	now := time.Now()
+	certTs := now.Unix()
+	mon := &storage.Monitor{ID: 42}
+	result := &checker.Result{
+		Status:       "up",
+		ResponseTime: 150,
+		StatusCode:   200,
+		Message:      "OK",
+		Headers:      map[string]string{"Content-Type": "text/html"},
+		Body:         "<html>",
+		BodyHash:     "abc123",
+		CertExpiry:   &certTs,
+		DNSRecords:   []string{"1.2.3.4"},
+	}
+
+	cr := buildCheckResult(mon, result, "up")
+
+	if cr.MonitorID != 42 {
+		t.Fatalf("expected monitor_id 42, got %d", cr.MonitorID)
+	}
+	if cr.Status != "up" {
+		t.Fatalf("expected status up, got %s", cr.Status)
+	}
+	if cr.ResponseTime != 150 {
+		t.Fatalf("expected response_time 150, got %d", cr.ResponseTime)
+	}
+	if cr.StatusCode != 200 {
+		t.Fatalf("expected status_code 200, got %d", cr.StatusCode)
+	}
+	if cr.Message != "OK" {
+		t.Fatalf("expected message OK, got %s", cr.Message)
+	}
+	if cr.BodyHash != "abc123" {
+		t.Fatalf("expected body_hash abc123, got %s", cr.BodyHash)
+	}
+	if cr.CertExpiry == nil {
+		t.Fatal("expected cert_expiry to be set")
+	}
+	if cr.Body != "<html>" {
+		t.Fatalf("expected body <html>, got %s", cr.Body)
+	}
+}
+
+func TestEmitNotification(t *testing.T) {
+	logger := discardLogger()
+	store := testStore(t)
+	registry := checker.NewRegistry()
+	incMgr := incident.NewManager(store, logger)
+	p := NewPipeline(store, registry, incMgr, 1, logger)
+
+	t.Run("event lands on channel", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 1, Name: "test"}
+		p.emitNotification("incident.created", nil, mon, nil)
+
+		select {
+		case ev := <-p.notifyChan:
+			if ev.EventType != "incident.created" {
+				t.Fatalf("expected incident.created, got %s", ev.EventType)
+			}
+			if ev.MonitorID != 1 {
+				t.Fatalf("expected monitor_id 1, got %d", ev.MonitorID)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timeout waiting for notification")
+		}
+	})
+
+	t.Run("full channel increments dropped counter", func(t *testing.T) {
+		smallStore := testStore(t)
+		smallIncMgr := incident.NewManager(smallStore, logger)
+		smallRegistry := checker.NewRegistry()
+		smallP := NewPipeline(smallStore, smallRegistry, smallIncMgr, 1, logger)
+		// Replace notifyChan with a size-1 channel and fill it
+		smallP.notifyChan = make(chan NotificationEvent, 1)
+		smallP.notifyChan <- NotificationEvent{}
+		before := smallP.droppedNotifications.Load()
+
+		mon := &storage.Monitor{ID: 2}
+		smallP.emitNotification("test", nil, mon, nil)
+
+		after := smallP.droppedNotifications.Load()
+		if after <= before {
+			t.Fatal("expected dropped counter to increment")
+		}
+	})
+}
+
+func TestHandleResult(t *testing.T) {
+	logger := discardLogger()
+	store := testStore(t)
+	ctx := context.Background()
+
+	mon := &storage.Monitor{
+		Name:             "Test HTTP",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	registry := checker.NewRegistry()
+	incMgr := incident.NewManager(store, logger)
+	p := NewPipeline(store, registry, incMgr, 1, logger)
+
+	t.Run("inserts check result and updates status", func(t *testing.T) {
+		wr := WorkerResult{
+			Monitor: mon,
+			Result:  &checker.Result{Status: "up", ResponseTime: 100, StatusCode: 200},
+		}
+		p.handleResult(ctx, wr)
+
+		status, err := store.GetMonitorStatus(ctx, mon.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if status.Status != "up" {
+			t.Fatalf("expected up, got %s", status.Status)
+		}
+		if status.ConsecSuccesses != 1 {
+			t.Fatalf("expected 1 consec success, got %d", status.ConsecSuccesses)
+		}
+	})
+
+	t.Run("consecutive fails increment", func(t *testing.T) {
+		for i := 0; i < 3; i++ {
+			wr := WorkerResult{
+				Monitor: mon,
+				Result:  &checker.Result{Status: "down", Message: "timeout"},
+			}
+			p.handleResult(ctx, wr)
+		}
+
+		status, err := store.GetMonitorStatus(ctx, mon.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if status.ConsecFails != 3 {
+			t.Fatalf("expected 3 consec fails, got %d", status.ConsecFails)
+		}
+		if status.ConsecSuccesses != 0 {
+			t.Fatalf("expected 0 consec successes, got %d", status.ConsecSuccesses)
+		}
+	})
+
+	t.Run("success resets fail counter", func(t *testing.T) {
+		wr := WorkerResult{
+			Monitor: mon,
+			Result:  &checker.Result{Status: "up", ResponseTime: 50},
+		}
+		p.handleResult(ctx, wr)
+
+		status, err := store.GetMonitorStatus(ctx, mon.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if status.ConsecFails != 0 {
+			t.Fatalf("expected 0 consec fails, got %d", status.ConsecFails)
+		}
+		if status.ConsecSuccesses != 1 {
+			t.Fatalf("expected 1 consec success, got %d", status.ConsecSuccesses)
+		}
+	})
+}
+
+func TestProcessIncidents(t *testing.T) {
+	logger := discardLogger()
+	store := testStore(t)
+	ctx := context.Background()
+
+	mon := &storage.Monitor{
+		Name:             "Incident Test",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 2,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	registry := checker.NewRegistry()
+	incMgr := incident.NewManager(store, logger)
+	p := NewPipeline(store, registry, incMgr, 1, logger)
+
+	t.Run("incident created after threshold failures", func(t *testing.T) {
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 2,
+		}
+		p.processIncidents(ctx, mon, "down", status, "connection refused")
+
+		inc, err := store.GetOpenIncident(ctx, mon.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if inc == nil {
+			t.Fatal("expected incident to be created")
+		}
+		if inc.Cause != "connection refused" {
+			t.Fatalf("expected cause 'connection refused', got %q", inc.Cause)
+		}
+
+		// Drain notification channel
+		select {
+		case <-p.notifyChan:
+		case <-time.After(time.Second):
+			t.Fatal("expected notification event")
+		}
+	})
+
+	t.Run("incident resolved after threshold successes", func(t *testing.T) {
+		status := &storage.MonitorStatus{
+			MonitorID:       mon.ID,
+			ConsecSuccesses: 1,
+		}
+		p.processIncidents(ctx, mon, "up", status, "")
+
+		inc, err := store.GetOpenIncident(ctx, mon.ID)
+		if err != nil {
+			// sql.ErrNoRows is expected here
+		}
+		if inc != nil {
+			t.Fatal("expected no open incident after resolution")
+		}
+
+		select {
+		case <-p.notifyChan:
+		case <-time.After(time.Second):
+			t.Fatal("expected resolution notification")
+		}
+	})
+
+	t.Run("maintenance suppresses notification", func(t *testing.T) {
+		// Create a maintenance window covering now
+		now := time.Now()
+		mw := &storage.MaintenanceWindow{
+			Name:      "Test Maintenance",
+			StartTime: now.Add(-1 * time.Hour),
+			EndTime:   now.Add(1 * time.Hour),
+		}
+		if err := store.CreateMaintenanceWindow(ctx, mw); err != nil {
+			t.Fatal(err)
+		}
+
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 2,
+		}
+		p.processIncidents(ctx, mon, "down", status, "maintenance test")
+
+		// Should still create incident but NOT emit notification
+		select {
+		case <-p.notifyChan:
+			t.Fatal("expected no notification during maintenance")
+		case <-time.After(100 * time.Millisecond):
+			// good — no notification
+		}
+	})
+}
+
+func TestSchedulerDispatch(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	logger := discardLogger()
+
+	// Create an enabled monitor
+	mon := &storage.Monitor{
+		Name:             "Scheduled",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a heartbeat monitor (should be skipped)
+	hbMon := &storage.Monitor{
+		Name:             "Heartbeat",
+		Type:             "heartbeat",
+		Target:           "heartbeat",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, hbMon); err != nil {
+		t.Fatal(err)
+	}
+
+	jobs := make(chan Job, 10)
+	s := NewScheduler(store, jobs, logger)
+	s.loadMonitors(ctx)
+
+	t.Run("due monitors dispatched", func(t *testing.T) {
+		now := time.Now().Add(time.Minute)
+		s.dispatch(now)
+
+		select {
+		case job := <-jobs:
+			if job.Monitor.ID != mon.ID {
+				t.Fatalf("expected monitor %d, got %d", mon.ID, job.Monitor.ID)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("expected job to be dispatched")
+		}
+	})
+
+	t.Run("heartbeat monitors skipped", func(t *testing.T) {
+		// Drain and re-dispatch
+		for len(jobs) > 0 {
+			<-jobs
+		}
+		now := time.Now().Add(5 * time.Minute)
+		s.dispatch(now)
+
+		found := false
+		for len(jobs) > 0 {
+			job := <-jobs
+			if job.Monitor.Type == "heartbeat" {
+				t.Fatal("heartbeat monitor should not be dispatched")
+			}
+			found = true
+		}
+		if !found {
+			t.Fatal("expected at least one job dispatched")
+		}
+	})
+
+	t.Run("full channel increments dropped jobs", func(t *testing.T) {
+		fullJobs := make(chan Job) // unbuffered = full
+		fullSched := NewScheduler(store, fullJobs, logger)
+		fullSched.loadMonitors(ctx)
+		// Set nextRun to past so they're due
+		fullSched.mu.Lock()
+		for id := range fullSched.nextRun {
+			fullSched.nextRun[id] = time.Time{}
+		}
+		fullSched.mu.Unlock()
+
+		before := fullSched.droppedJobs.Load()
+		fullSched.dispatch(time.Now().Add(10 * time.Minute))
+		after := fullSched.droppedJobs.Load()
+
+		if after <= before {
+			t.Fatal("expected dropped jobs to increment")
+		}
+	})
+}
