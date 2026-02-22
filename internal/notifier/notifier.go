@@ -123,6 +123,11 @@ func (d *Dispatcher) SendTest(ch *storage.NotificationChannel, inc *storage.Inci
 	})
 }
 
+const (
+	maxRetries  = 3
+	baseBackoff = 2 * time.Second
+)
+
 func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChannel, payload *Payload) {
 	d.sem <- struct{}{}
 	defer func() { <-d.sem }()
@@ -131,9 +136,9 @@ func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChanne
 	defer cancel()
 
 	var lastErr error
-	for attempt := 0; attempt < 2; attempt++ {
+	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
-			time.Sleep(5 * time.Second)
+			time.Sleep(baseBackoff * time.Duration(1<<(attempt-1)))
 		}
 		if err := sender.Send(ctx, ch, payload); err != nil {
 			lastErr = err
@@ -141,6 +146,7 @@ func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChanne
 				"channel_id", ch.ID,
 				"channel_type", ch.Type,
 				"attempt", attempt+1,
+				"max_attempts", maxRetries,
 				"error", err,
 			)
 			continue
@@ -152,9 +158,10 @@ func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChanne
 		)
 		return
 	}
-	d.logger.Error("notification send failed after retry",
+	d.logger.Error("notification send failed after retries",
 		"channel_id", ch.ID,
 		"channel_type", ch.Type,
+		"attempts", maxRetries,
 		"error", lastErr,
 	)
 }
