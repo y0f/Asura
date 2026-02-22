@@ -35,7 +35,7 @@ git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh
 | **Runtime** | Single static binary | Node.js / Java / Python runtime |
 | **Database** | SQLite compiled in | Requires Postgres, MySQL, or Redis |
 | **Binary size** | ~15 MB | 100-500 MB installed |
-| **Concurrency** | Goroutine worker pool with channel backpressure | Event loop or thread pool |
+| **Concurrency** | Goroutine worker pool with channel backpressure and adaptive scheduling | Event loop or thread pool |
 | **Deploy** | `scp` binary + run | Package manager, runtime install, migrations |
 | **Config** | One YAML file | Multiple config files, env vars, database setup |
 | **RAM** | ~20 MB idle | Varies — runtime + database overhead |
@@ -264,7 +264,7 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 | `server`   | Listen address, TLS, timeouts, CORS, rate limiting, base path, external URL, trusted proxies, web UI toggle, frame embedding |
 | `database` | SQLite path, read pool size, retention policy, request log retention |
 | `auth`     | API keys (SHA-256 hashed), roles, session lifetime, login rate limiting |
-| `monitor`  | Worker count, default intervals, thresholds           |
+| `monitor`  | Worker count, default intervals, thresholds, adaptive scheduling |
 | `logging`  | Level (debug/info/warn/error), format (text/json)     |
 
 ### Key Server Settings
@@ -277,6 +277,26 @@ See [`config.example.yaml`](config.example.yaml) for all options. Environment va
 | `trusted_proxies` | `[]` | IPs/CIDRs whose `X-Real-IP`/`X-Forwarded-For` headers are trusted |
 | `rate_limit_per_sec` | `10` | Per-IP request rate limit |
 | `web_ui_enabled` | `true` | Set `false` for API-only mode |
+
+### Key Monitor Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `workers` | `10` | Concurrent check workers |
+| `default_interval` | `60s` | Default check interval for new monitors |
+| `default_timeout` | `10s` | Default check timeout |
+| `adaptive_intervals` | `true` | Dynamically adjust check frequency based on monitor stability |
+
+#### Adaptive Intervals
+
+When enabled, the scheduler adjusts the effective check interval per monitor based on its recent behavior:
+
+- **Stable monitors** (60+ consecutive successes) gradually slow down to 2x their base interval, reducing unnecessary checks
+- **Flapping monitors** (failure after being slowed down) snap back to 0.5x the base interval for faster detection
+- **Recovering monitors** return to the normal base interval until stability is confirmed
+- **Actively failing monitors** stay at the normal base interval
+
+The base interval configured per monitor is never modified — adaptive intervals only adjust the scheduler's internal timing. Disable with `adaptive_intervals: false` to always use fixed intervals.
 
 ---
 
@@ -713,11 +733,11 @@ Webhook notifications include an `X-Asura-Signature` header: `sha256=<hex HMAC-S
 ```
 Scheduler -> Worker Pool -> Result Processor -> Dispatcher
     |            |              |                |
-  Cron      Concurrent     Incidents +      Webhook/Email/Telegram
- Tickers     Checks       Change Diffs    Discord/Slack/ntfy
+ Min-heap    Concurrent     Incidents +      Webhook/Email/Telegram
+ dispatch     Checks       Change Diffs    Discord/Slack/ntfy
 ```
 
-Channel-based pipeline with backpressure. SQLite WAL mode with separate read/write pools.
+Min-heap scheduler dispatches only due monitors each tick (O(log n) per dispatch). Channel-based pipeline with backpressure. SQLite WAL mode with separate read/write pools.
 
 ## Contributing
 

@@ -155,7 +155,7 @@ func TestEmitNotification(t *testing.T) {
 	store := testStore(t)
 	registry := checker.NewRegistry()
 	incMgr := incident.NewManager(store, logger)
-	p := NewPipeline(store, registry, incMgr, 1, logger)
+	p := NewPipeline(store, registry, incMgr, 1, false, logger)
 
 	t.Run("event lands on channel", func(t *testing.T) {
 		mon := &storage.Monitor{ID: 1, Name: "test"}
@@ -178,7 +178,7 @@ func TestEmitNotification(t *testing.T) {
 		smallStore := testStore(t)
 		smallIncMgr := incident.NewManager(smallStore, logger)
 		smallRegistry := checker.NewRegistry()
-		smallP := NewPipeline(smallStore, smallRegistry, smallIncMgr, 1, logger)
+		smallP := NewPipeline(smallStore, smallRegistry, smallIncMgr, 1, false, logger)
 		// Replace notifyChan with a size-1 channel and fill it
 		smallP.notifyChan = make(chan NotificationEvent, 1)
 		smallP.notifyChan <- NotificationEvent{}
@@ -215,7 +215,7 @@ func TestHandleResult(t *testing.T) {
 
 	registry := checker.NewRegistry()
 	incMgr := incident.NewManager(store, logger)
-	p := NewPipeline(store, registry, incMgr, 1, logger)
+	p := NewPipeline(store, registry, incMgr, 1, false, logger)
 
 	t.Run("inserts check result and updates status", func(t *testing.T) {
 		wr := WorkerResult{
@@ -298,7 +298,7 @@ func TestProcessIncidents(t *testing.T) {
 
 	registry := checker.NewRegistry()
 	incMgr := incident.NewManager(store, logger)
-	p := NewPipeline(store, registry, incMgr, 1, logger)
+	p := NewPipeline(store, registry, incMgr, 1, false, logger)
 
 	t.Run("incident created after threshold failures", func(t *testing.T) {
 		status := &storage.MonitorStatus{
@@ -454,12 +454,6 @@ func TestSchedulerDispatch(t *testing.T) {
 		fullJobs := make(chan Job) // unbuffered = full
 		fullSched := NewScheduler(store, fullJobs, logger)
 		fullSched.loadMonitors(ctx)
-		// Set nextRun to past so they're due
-		fullSched.mu.Lock()
-		for id := range fullSched.nextRun {
-			fullSched.nextRun[id] = time.Time{}
-		}
-		fullSched.mu.Unlock()
 
 		before := fullSched.droppedJobs.Load()
 		fullSched.dispatch(time.Now().Add(10 * time.Minute))
@@ -469,4 +463,208 @@ func TestSchedulerDispatch(t *testing.T) {
 			t.Fatal("expected dropped jobs to increment")
 		}
 	})
+}
+
+func TestSchedulerHeapOrdering(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	logger := discardLogger()
+
+	// Create two monitors with different intervals
+	fast := &storage.Monitor{
+		Name:             "Fast",
+		Type:             "http",
+		Target:           "https://fast.example.com",
+		Interval:         10,
+		Timeout:          5,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, fast); err != nil {
+		t.Fatal(err)
+	}
+
+	slow := &storage.Monitor{
+		Name:             "Slow",
+		Type:             "http",
+		Target:           "https://slow.example.com",
+		Interval:         300,
+		Timeout:          5,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, slow); err != nil {
+		t.Fatal(err)
+	}
+
+	jobs := make(chan Job, 10)
+	s := NewScheduler(store, jobs, logger)
+	s.loadMonitors(ctx)
+
+	// First dispatch: both are due (nextRun = now)
+	now := time.Now().Add(time.Minute)
+	s.dispatch(now)
+
+	// Drain all jobs from first dispatch
+	for len(jobs) > 0 {
+		<-jobs
+	}
+
+	// After first dispatch, fast should fire again at now+10s,
+	// slow at now+300s. Dispatch at now+15s should only fire fast.
+	s.dispatch(now.Add(15 * time.Second))
+
+	select {
+	case job := <-jobs:
+		if job.Monitor.ID != fast.ID {
+			t.Fatalf("expected fast monitor %d to fire first, got %d", fast.ID, job.Monitor.ID)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected fast monitor to be dispatched")
+	}
+
+	// Slow should not have fired
+	select {
+	case job := <-jobs:
+		t.Fatalf("slow monitor %d should not have fired, got job for %d", slow.ID, job.Monitor.ID)
+	default:
+		// good
+	}
+}
+
+func TestSchedulerUpdateInterval(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	logger := discardLogger()
+
+	mon := &storage.Monitor{
+		Name:             "Adaptive",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	jobs := make(chan Job, 10)
+	s := NewScheduler(store, jobs, logger)
+	s.loadMonitors(ctx)
+
+	t.Run("default multiplier is 1.0", func(t *testing.T) {
+		m := s.GetMultiplier(mon.ID)
+		if m != 1.0 {
+			t.Fatalf("expected default multiplier 1.0, got %v", m)
+		}
+	})
+
+	t.Run("update interval changes effective interval", func(t *testing.T) {
+		newInterval := 120 * time.Second
+		s.UpdateInterval(mon.ID, newInterval)
+
+		m := s.GetMultiplier(mon.ID)
+		want := 2.0
+		if m != want {
+			t.Fatalf("expected multiplier %v after doubling interval, got %v", want, m)
+		}
+	})
+
+	t.Run("updated interval affects dispatch timing", func(t *testing.T) {
+		// Set effective interval to 120s
+		s.UpdateInterval(mon.ID, 120*time.Second)
+
+		// First dispatch to consume the initial due entry
+		now := time.Now().Add(time.Minute)
+		s.dispatch(now)
+		for len(jobs) > 0 {
+			<-jobs
+		}
+
+		// Dispatch at now+60s: with 120s interval, should NOT fire
+		s.dispatch(now.Add(60 * time.Second))
+		select {
+		case <-jobs:
+			t.Fatal("monitor should not fire before updated interval elapses")
+		default:
+			// good
+		}
+
+		// Dispatch at now+121s: should fire
+		s.dispatch(now.Add(121 * time.Second))
+		select {
+		case <-jobs:
+			// good
+		default:
+			t.Fatal("monitor should fire after updated interval elapses")
+		}
+	})
+
+	t.Run("get multiplier for unknown monitor returns 1.0", func(t *testing.T) {
+		m := s.GetMultiplier(99999)
+		if m != 1.0 {
+			t.Fatalf("expected 1.0 for unknown monitor, got %v", m)
+		}
+	})
+}
+
+func TestSchedulerReload(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	logger := discardLogger()
+
+	mon := &storage.Monitor{
+		Name:             "Reloadable",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	jobs := make(chan Job, 10)
+	s := NewScheduler(store, jobs, logger)
+	s.loadMonitors(ctx)
+
+	// Set a custom effective interval
+	s.UpdateInterval(mon.ID, 90*time.Second)
+
+	// Reload should preserve effective interval
+	s.loadMonitors(ctx)
+
+	s.mu.Lock()
+	eff := s.effectiveInterval[mon.ID]
+	s.mu.Unlock()
+
+	if eff != int64(90*time.Second) {
+		t.Fatalf("expected effective interval preserved after reload (90s), got %v", time.Duration(eff))
+	}
+
+	// Disable the monitor and reload
+	if err := store.SetMonitorEnabled(ctx, mon.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	s.loadMonitors(ctx)
+
+	s.mu.Lock()
+	_, exists := s.effectiveInterval[mon.ID]
+	heapLen := s.heap.Len()
+	s.mu.Unlock()
+
+	if exists {
+		t.Fatal("expected effective interval to be removed for disabled monitor")
+	}
+	if heapLen != 0 {
+		t.Fatalf("expected empty heap after disabling only monitor, got %d entries", heapLen)
+	}
 }

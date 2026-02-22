@@ -79,7 +79,7 @@ func main() {
 
 	registry := checker.DefaultRegistry(cfg.Monitor.CommandAllowlist, cfg.Monitor.AllowPrivateTargets)
 	incMgr := incident.NewManager(store, logger)
-	pipeline := monitor.NewPipeline(store, registry, incMgr, cfg.Monitor.Workers, logger)
+	pipeline := monitor.NewPipeline(store, registry, incMgr, cfg.Monitor.Workers, cfg.Monitor.AdaptiveIntervals, logger)
 	dispatcher := notifier.NewDispatcher(store, logger, cfg.Monitor.AllowPrivateTargets)
 
 	go forwardNotifications(ctx, pipeline, dispatcher)

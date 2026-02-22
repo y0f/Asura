@@ -119,6 +119,7 @@ type MonitorConfig struct {
 	CommandAllowlist       []string      `yaml:"command_allowlist"`
 	HeartbeatCheckInterval time.Duration `yaml:"heartbeat_check_interval"`
 	AllowPrivateTargets    bool          `yaml:"allow_private_targets"`
+	AdaptiveIntervals      bool          `yaml:"adaptive_intervals"`
 }
 
 type LoggingConfig struct {
@@ -162,6 +163,7 @@ func Defaults() *Config {
 			SuccessThreshold:       1,
 			CommandTimeout:         30 * time.Second,
 			HeartbeatCheckInterval: 30 * time.Second,
+			AdaptiveIntervals:      true,
 		},
 		Logging: LoggingConfig{
 			Level:  "info",

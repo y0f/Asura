@@ -28,6 +28,7 @@ type Pipeline struct {
 	results              chan WorkerResult
 	notifyChan           chan NotificationEvent
 	workers              int
+	adaptiveIntervals    bool
 	droppedNotifications atomic.Int64
 }
 
@@ -40,21 +41,22 @@ type NotificationEvent struct {
 	Change    *storage.ContentChange
 }
 
-func NewPipeline(store storage.Store, registry *checker.Registry, incMgr *incident.Manager, workers int, logger *slog.Logger) *Pipeline {
+func NewPipeline(store storage.Store, registry *checker.Registry, incMgr *incident.Manager, workers int, adaptiveIntervals bool, logger *slog.Logger) *Pipeline {
 	jobs := make(chan Job, workers*2)
 	results := make(chan WorkerResult, workers*2)
 	notifyChan := make(chan NotificationEvent, 100)
 
 	return &Pipeline{
-		store:      store,
-		registry:   registry,
-		incMgr:     incMgr,
-		logger:     logger,
-		scheduler:  NewScheduler(store, jobs, logger),
-		jobs:       jobs,
-		results:    results,
-		notifyChan: notifyChan,
-		workers:    workers,
+		store:             store,
+		registry:          registry,
+		incMgr:            incMgr,
+		logger:            logger,
+		scheduler:         NewScheduler(store, jobs, logger),
+		jobs:              jobs,
+		results:           results,
+		notifyChan:        notifyChan,
+		workers:           workers,
+		adaptiveIntervals: adaptiveIntervals,
 	}
 }
 
@@ -164,6 +166,13 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 
 	if err := p.store.UpsertMonitorStatus(ctx, status); err != nil {
 		p.logger.Error("upsert monitor status", "error", err)
+	}
+
+	if p.adaptiveIntervals {
+		baseInterval := time.Duration(mon.Interval) * time.Second
+		prevMultiplier := p.scheduler.GetMultiplier(mon.ID)
+		newInterval, _ := computeAdaptiveInterval(baseInterval, status.ConsecSuccesses, status.ConsecFails, prevMultiplier)
+		p.scheduler.UpdateInterval(mon.ID, newInterval)
 	}
 
 	p.processIncidents(ctx, mon, finalStatus, status, cr.Message)

@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"container/heap"
 	"context"
 	"log/slog"
 	"sync"
@@ -10,25 +11,61 @@ import (
 	"github.com/y0f/Asura/internal/storage"
 )
 
-// Scheduler dispatches check jobs on a per-monitor interval basis.
+type schedulerEntry struct {
+	monitorID int64
+	nextRun   int64 // UnixNano for fast comparison
+	index     int
+}
+
+type schedulerHeap []*schedulerEntry
+
+func (h schedulerHeap) Len() int          { return len(h) }
+func (h schedulerHeap) Less(i, j int) bool { return h[i].nextRun < h[j].nextRun }
+func (h schedulerHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+	h[i].index = i
+	h[j].index = j
+}
+
+func (h *schedulerHeap) Push(x any) {
+	entry := x.(*schedulerEntry)
+	entry.index = len(*h)
+	*h = append(*h, entry)
+}
+
+func (h *schedulerHeap) Pop() any {
+	old := *h
+	n := len(old)
+	entry := old[n-1]
+	old[n-1] = nil
+	entry.index = -1
+	*h = old[:n-1]
+	return entry
+}
+
+// Scheduler dispatches check jobs using a min-heap ordered by next-run time.
 type Scheduler struct {
-	store       storage.Store
-	jobs        chan<- Job
-	logger      *slog.Logger
-	mu          sync.RWMutex
-	monitors    []*storage.Monitor
-	nextRun     map[int64]time.Time
-	reload      chan struct{}
-	droppedJobs atomic.Int64
+	store             storage.Store
+	jobs              chan<- Job
+	logger            *slog.Logger
+	mu                sync.RWMutex
+	monitors          map[int64]*storage.Monitor
+	entries           map[int64]*schedulerEntry
+	heap              schedulerHeap
+	effectiveInterval map[int64]int64 // nanoseconds
+	reload            chan struct{}
+	droppedJobs       atomic.Int64
 }
 
 func NewScheduler(store storage.Store, jobs chan<- Job, logger *slog.Logger) *Scheduler {
 	return &Scheduler{
-		store:   store,
-		jobs:    jobs,
-		logger:  logger,
-		nextRun: make(map[int64]time.Time),
-		reload:  make(chan struct{}, 1),
+		store:             store,
+		jobs:              jobs,
+		logger:            logger,
+		monitors:          make(map[int64]*storage.Monitor),
+		entries:           make(map[int64]*schedulerEntry),
+		effectiveInterval: make(map[int64]int64),
+		reload:            make(chan struct{}, 1),
 	}
 }
 
@@ -68,50 +105,122 @@ func (s *Scheduler) loadMonitors(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.monitors = monitors
+	nowNano := time.Now().UnixNano()
+	activeIDs := make(map[int64]struct{}, len(monitors))
+	newMonitors := make(map[int64]*storage.Monitor, len(monitors))
 
-	activeIDs := make(map[int64]bool, len(monitors))
 	for _, m := range monitors {
-		activeIDs[m.ID] = true
-		if _, exists := s.nextRun[m.ID]; !exists {
-			s.nextRun[m.ID] = time.Now()
+		activeIDs[m.ID] = struct{}{}
+		newMonitors[m.ID] = m
+
+		if _, exists := s.entries[m.ID]; !exists {
+			baseNano := int64(m.Interval) * int64(time.Second)
+			if _, hasEff := s.effectiveInterval[m.ID]; !hasEff {
+				s.effectiveInterval[m.ID] = baseNano
+			}
+			entry := &schedulerEntry{monitorID: m.ID, nextRun: nowNano}
+			s.entries[m.ID] = entry
+			heap.Push(&s.heap, entry)
 		}
 	}
 
-	for id := range s.nextRun {
-		if !activeIDs[id] {
-			delete(s.nextRun, id)
+	for id, entry := range s.entries {
+		if _, active := activeIDs[id]; !active {
+			heap.Remove(&s.heap, entry.index)
+			delete(s.entries, id)
+			delete(s.effectiveInterval, id)
 		}
 	}
 
+	s.monitors = newMonitors
 	s.logger.Debug("scheduler: loaded monitors", "count", len(monitors))
+}
+
+// interval returns the effective interval in nanoseconds for a monitor,
+// falling back to the monitor's base interval.
+func (s *Scheduler) interval(monitorID int64, baseIntervalSecs int) int64 {
+	if eff := s.effectiveInterval[monitorID]; eff > 0 {
+		return eff
+	}
+	return int64(baseIntervalSecs) * int64(time.Second)
 }
 
 func (s *Scheduler) dispatch(now time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, m := range s.monitors {
-		if m.Type == "heartbeat" {
+	nowNano := now.UnixNano()
+
+	for s.heap.Len() > 0 && s.heap[0].nextRun <= nowNano {
+		entry := heap.Pop(&s.heap).(*schedulerEntry)
+
+		mon, exists := s.monitors[entry.monitorID]
+		if !exists {
+			delete(s.entries, entry.monitorID)
+			delete(s.effectiveInterval, entry.monitorID)
 			continue
 		}
 
-		next, exists := s.nextRun[m.ID]
-		if !exists {
-			s.nextRun[m.ID] = now
-			next = now
-		}
+		iv := s.interval(entry.monitorID, mon.Interval)
 
-		if now.Before(next) {
+		if mon.Type == "heartbeat" {
+			entry.nextRun = nowNano + iv
+			heap.Push(&s.heap, entry)
 			continue
 		}
 
 		select {
-		case s.jobs <- Job{Monitor: m}:
-			s.nextRun[m.ID] = now.Add(time.Duration(m.Interval) * time.Second)
+		case s.jobs <- Job{Monitor: mon}:
+			entry.nextRun = nowNano + iv
 		default:
 			s.droppedJobs.Add(1)
-			s.logger.Warn("scheduler: job channel full, skipping", "monitor_id", m.ID)
+			s.logger.Warn("scheduler: job channel full, skipping", "monitor_id", entry.monitorID)
+			entry.nextRun = nowNano + iv
 		}
+
+		heap.Push(&s.heap, entry)
+	}
+}
+
+// GetMultiplier returns the current effective interval multiplier for a monitor.
+func (s *Scheduler) GetMultiplier(monitorID int64) float64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	eff, ok := s.effectiveInterval[monitorID]
+	if !ok {
+		return 1.0
+	}
+
+	mon, exists := s.monitors[monitorID]
+	if !exists || mon.Interval <= 0 {
+		return 1.0
+	}
+
+	base := int64(mon.Interval) * int64(time.Second)
+	return float64(eff) / float64(base)
+}
+
+// UpdateInterval sets the effective interval for a monitor and adjusts the heap.
+func (s *Scheduler) UpdateInterval(monitorID int64, interval time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	nano := int64(interval)
+	s.effectiveInterval[monitorID] = nano
+
+	entry, exists := s.entries[monitorID]
+	if !exists {
+		return
+	}
+
+	mon, monExists := s.monitors[monitorID]
+	if !monExists {
+		return
+	}
+
+	base := int64(mon.Interval) * int64(time.Second)
+	if base != nano {
+		heap.Fix(&s.heap, entry.index)
 	}
 }
