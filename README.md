@@ -5,7 +5,7 @@
   <p align="center">A self-contained Go monitoring service with no external runtime dependencies.</p>
   <p align="center">
     <a href="https://github.com/y0f/Asura/actions/workflows/ci.yml"><img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://goreportcard.com/report/github.com/y0f/Asura"><img src="https://goreportcard.com/badge/github.com/y0f/Asura" alt="Go Report Card"></a>
+    <a href="https://goreportcard.com/report/github.com/y0f/Asura?branch=main"><img src="https://goreportcard.com/badge/github.com/y0f/Asura?branch=main" alt="Go Report Card"></a>
     <a href="https://github.com/y0f/Asura/blob/main/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/y0f/Asura" alt="Go Version"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
     <a href="https://github.com/y0f/Asura/releases/latest"><img src="https://img.shields.io/github/v/release/y0f/Asura?include_prereleases&sort=semver" alt="Release"></a>
@@ -732,9 +732,9 @@ Webhook notifications include an `X-Asura-Signature` header: `sha256=<hex HMAC-S
 
 ```
 Scheduler -> Worker Pool -> Result Processor -> Dispatcher
-    |            |              |                |
- Min-heap    Concurrent     Incidents +      Webhook/Email/Telegram
- dispatch     Checks       Change Diffs    Discord/Slack/ntfy
+    |            |               |                  |
+ Min-heap    Concurrent      Incidents +      Webhook/Email/Telegram
+ dispatch     Checks        Change Diffs      Discord/Slack/ntfy
 ```
 
 Min-heap scheduler dispatches only due monitors each tick (O(log n) per dispatch). Channel-based pipeline with backpressure. SQLite WAL mode with separate read/write pools.
