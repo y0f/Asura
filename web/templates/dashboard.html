@@ -47,6 +47,7 @@
                     <a href="{{$bp}}/?type=websocket" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "websocket"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">WS</a>
                     <a href="{{$bp}}/?type=heartbeat" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "heartbeat"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">HB</a>
                     <a href="{{$bp}}/?type=command" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "command"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">CMD</a>
+                    <a href="{{$bp}}/?type=docker" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "docker"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">DK</a>
                 </div>
             <div id="monitor-grid" hx-get="{{$bp}}/?page={{.Data.Page}}{{if $f}}&type={{$f}}{{end}}" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false"
                  class="border border-line border-t-0 rounded-b-lg overflow-hidden">
