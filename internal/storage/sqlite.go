@@ -1302,6 +1302,13 @@ func (s *SQLiteStore) DeleteSession(ctx context.Context, tokenHash string) error
 	return err
 }
 
+func (s *SQLiteStore) ExtendSession(ctx context.Context, tokenHash string, newExpiry time.Time) error {
+	_, err := s.writeDB.ExecContext(ctx,
+		"UPDATE sessions SET expires_at=? WHERE token_hash=?",
+		formatTime(newExpiry), tokenHash)
+	return err
+}
+
 func (s *SQLiteStore) DeleteSessionsByAPIKeyName(ctx context.Context, apiKeyName string) (int64, error) {
 	res, err := s.writeDB.ExecContext(ctx, "DELETE FROM sessions WHERE api_key_name=?", apiKeyName)
 	if err != nil {

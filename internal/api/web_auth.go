@@ -147,18 +147,10 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		if time.Now().After(sess.ExpiresAt) {
+		now := time.Now()
+		if now.After(sess.ExpiresAt) {
 			s.store.DeleteSession(r.Context(), tokenHash)
 			s.clearSessionCookie(w)
-			http.Redirect(w, r, loginURL, http.StatusSeeOther)
-			return
-		}
-
-		clientIP := extractIP(r, s.cfg.TrustedNets())
-		if sess.IPAddress != "" && sess.IPAddress != clientIP {
-			s.store.DeleteSession(r.Context(), tokenHash)
-			s.clearSessionCookie(w)
-			s.auditLogin("session_ip_mismatch", sess.APIKeyName, clientIP)
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
@@ -177,6 +169,21 @@ func (s *Server) webAuth(next http.Handler) http.Handler {
 			s.auditLogin("session_key_rotated", sess.APIKeyName, extractIP(r, s.cfg.TrustedNets()))
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
+		}
+
+		lifetime := s.cfg.Auth.Session.Lifetime
+		if now.After(sess.ExpiresAt.Add(-lifetime / 2)) {
+			newExpiry := now.Add(lifetime)
+			s.store.ExtendSession(r.Context(), tokenHash, newExpiry)
+			http.SetCookie(w, &http.Cookie{
+				Name:     sessionCookie,
+				Value:    cookie.Value,
+				Path:     s.cfg.Server.BasePath + "/",
+				MaxAge:   int(lifetime.Seconds()),
+				HttpOnly: true,
+				Secure:   s.cfg.Auth.Session.CookieSecure,
+				SameSite: http.SameSiteLaxMode,
+			})
 		}
 
 		ctx := context.WithValue(r.Context(), ctxKeyAPIKey, apiKey)
