@@ -386,7 +386,7 @@ All endpoints return JSON. Authenticate with `X-API-Key` header. When `base_path
 ### Health *(no auth)*
 
 ```
-GET  /api/v1/health       Status, version, uptime
+GET  /api/v1/health       Status, uptime
 ```
 
 ### Metrics *(read auth)*
