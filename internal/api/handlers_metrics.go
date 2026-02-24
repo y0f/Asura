@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/y0f/Asura/internal/incident"
 	"github.com/y0f/Asura/internal/storage"
 )
 
@@ -40,6 +42,7 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Per-monitor metrics
 	sb.WriteString("\n# HELP asura_monitor_up Whether the monitor is up (1) or down (0).\n")
 	sb.WriteString("# TYPE asura_monitor_up gauge\n")
 	for _, m := range monList {
@@ -51,7 +54,6 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 			m.ID, escapeProm(m.Name), m.Type, val)
 	}
 
-	// Single query instead of per-monitor lookups
 	rtMap, err := s.store.GetLatestResponseTimes(ctx)
 	if err == nil && len(rtMap) > 0 {
 		sb.WriteString("\n# HELP asura_monitor_response_time_ms Last response time in milliseconds.\n")
@@ -62,6 +64,61 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 					m.ID, escapeProm(m.Name), rt)
 			}
 		}
+	}
+
+	sb.WriteString("\n# HELP asura_monitor_consecutive_failures Current consecutive failure count.\n")
+	sb.WriteString("# TYPE asura_monitor_consecutive_failures gauge\n")
+	for _, m := range monList {
+		fmt.Fprintf(&sb, "asura_monitor_consecutive_failures{id=\"%d\",name=\"%s\"} %d\n",
+			m.ID, escapeProm(m.Name), m.ConsecFails)
+	}
+
+	sb.WriteString("\n# HELP asura_monitor_consecutive_successes Current consecutive success count.\n")
+	sb.WriteString("# TYPE asura_monitor_consecutive_successes gauge\n")
+	for _, m := range monList {
+		fmt.Fprintf(&sb, "asura_monitor_consecutive_successes{id=\"%d\",name=\"%s\"} %d\n",
+			m.ID, escapeProm(m.Name), m.ConsecSuccesses)
+	}
+
+	// Monitor type distribution
+	typeCounts := make(map[string]int)
+	for _, m := range monList {
+		typeCounts[m.Type]++
+	}
+	sb.WriteString("\n# HELP asura_monitors_by_type Total monitors by type.\n")
+	sb.WriteString("# TYPE asura_monitors_by_type gauge\n")
+	for t, c := range typeCounts {
+		fmt.Fprintf(&sb, "asura_monitors_by_type{type=\"%s\"} %d\n", t, c)
+	}
+
+	// Incident counts by status
+	onePageMin := storage.Pagination{Page: 1, PerPage: 1}
+	for _, st := range []string{incident.StatusOpen, incident.StatusAcknowledged, incident.StatusResolved} {
+		res, ierr := s.store.ListIncidents(ctx, 0, st, "", onePageMin)
+		if ierr != nil {
+			continue
+		}
+		if sb.Len() > 0 && st == incident.StatusOpen {
+			sb.WriteString("\n# HELP asura_incidents_total Total incidents by status.\n")
+			sb.WriteString("# TYPE asura_incidents_total gauge\n")
+		}
+		fmt.Fprintf(&sb, "asura_incidents_total{status=\"%s\"} %d\n", st, res.Total)
+	}
+
+	// Request log stats (24h)
+	now := time.Now().UTC()
+	if stats, serr := s.store.GetRequestLogStats(ctx, now.Add(-24*time.Hour), now); serr == nil && stats != nil {
+		sb.WriteString("\n# HELP asura_http_requests_24h Total HTTP requests in last 24 hours.\n")
+		sb.WriteString("# TYPE asura_http_requests_24h gauge\n")
+		fmt.Fprintf(&sb, "asura_http_requests_24h %d\n", stats.TotalRequests)
+
+		sb.WriteString("\n# HELP asura_http_unique_visitors_24h Unique visitors in last 24 hours.\n")
+		sb.WriteString("# TYPE asura_http_unique_visitors_24h gauge\n")
+		fmt.Fprintf(&sb, "asura_http_unique_visitors_24h %d\n", stats.UniqueVisitors)
+
+		sb.WriteString("\n# HELP asura_http_avg_latency_ms Average request latency in last 24 hours.\n")
+		sb.WriteString("# TYPE asura_http_avg_latency_ms gauge\n")
+		fmt.Fprintf(&sb, "asura_http_avg_latency_ms %d\n", stats.AvgLatencyMs)
 	}
 
 	if s.pipeline != nil {

@@ -46,12 +46,13 @@ No runtime. No external database. No container required. Build, copy, run.
 
 | Feature | |
 |---|---|
-| **9 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Heartbeat |
+| **12 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Heartbeat, Domain (WHOIS), gRPC, MQTT |
 | **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
 | **Change detection** | Line-level diffs on response bodies |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy |
 | **Monitor groups** | Organize monitors into named groups with custom sort order |
+| **Proxy support** | HTTP and SOCKS5 proxies with per-monitor assignment |
 | **Per-monitor routing** | Route notifications to specific channels per monitor |
 | **Maintenance** | Recurring windows to suppress alerts |
 | **Heartbeat monitoring** | Cron jobs, workers, and pipelines report in -- silence triggers incidents |
@@ -59,7 +60,7 @@ No runtime. No external database. No container required. Build, copy, run.
 | **Request logging** | Built-in request log viewer with visitor analytics and per-monitor tracking |
 | **Multiple status pages** | Create multiple public status pages, each with its own slug, monitors, and grouping |
 | **Analytics** | Uptime %, response time percentiles |
-| **Prometheus** | `/metrics` endpoint, ready to scrape |
+| **Prometheus** | `/metrics` endpoint with per-monitor, incident, and request metrics |
 | **Sub-path support** | Serve from `/asura` or any prefix behind a reverse proxy |
 | **Trusted proxies** | Correct client IP detection behind nginx/caddy |
 | **SQLite + WAL** | Concurrent reads, single writer, zero config |
@@ -415,12 +416,13 @@ GET    /api/v1/monitors/{id}/chart     Response time chart data
 |--------------------|----------|----------|----------------------------------------------------|
 | `name`             | string   | yes      | Display name                                       |
 | `description`      | string   |          | Optional description or notes                      |
-| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `docker` `heartbeat` |
+| `type`             | string   | yes      | `http` `tcp` `dns` `icmp` `tls` `websocket` `command` `docker` `heartbeat` `domain` `grpc` `mqtt` |
 | `target`           | string   | yes      | URL, host:port, domain, or command                 |
 | `interval`         | int      |          | Seconds between checks (default: 60)               |
 | `timeout`          | int      |          | Timeout in seconds (default: 10)                   |
 | `tags`             | string[] |          | Grouping tags                                      |
 | `group_id`         | int      |          | Monitor group ID (null if ungrouped)               |
+| `proxy_id`         | int      |          | Proxy ID for routing checks through a proxy        |
 | `notification_channel_ids` | int[] |   | Notification channels to route to (empty = all)    |
 | `settings`         | object   |          | Protocol-specific ([see below](#protocol-settings)) |
 | `assertions`       | array    |          | Assertion rules ([see below](#assertions))          |
@@ -503,6 +505,28 @@ DELETE /api/v1/groups/{id}             Delete
 | `sort_order` | int    |          | Display order (default: 0)     |
 
 Assign monitors to a group by setting `group_id` on the monitor. Deleting a group ungroups its monitors (sets `group_id` to null).
+
+### Proxies
+
+```
+GET    /api/v1/proxies                 List
+POST   /api/v1/proxies                 Create
+GET    /api/v1/proxies/{id}            Get
+PUT    /api/v1/proxies/{id}            Update
+DELETE /api/v1/proxies/{id}            Delete
+```
+
+| Field      | Type   | Required | Description                          |
+|------------|--------|----------|--------------------------------------|
+| `name`     | string | yes      | Display name (max 255 chars)         |
+| `protocol` | string | yes      | `http` or `socks5`                   |
+| `host`     | string | yes      | Proxy hostname or IP                 |
+| `port`     | int    | yes      | Proxy port (1-65535)                 |
+| `auth_user`| string |          | Authentication username              |
+| `auth_pass`| string |          | Authentication password              |
+| `enabled`  | bool   |          | Whether proxy is active (default: true) |
+
+Assign a proxy to a monitor by setting `proxy_id`. HTTP proxies work with HTTP monitors; SOCKS5 proxies work with all protocol types.
 
 ### Incidents
 
@@ -720,6 +744,51 @@ sudo systemctl restart asura
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock
 ```
+</details>
+
+<details><summary><strong>Domain (WHOIS)</strong></summary>
+
+| Field              | Type | Description                                    |
+|--------------------|------|------------------------------------------------|
+| `warn_days_before` | int  | Days before expiry to mark as degraded (default: 30) |
+
+```json
+{"warn_days_before": 30}
+```
+
+Target is a domain name (e.g. `example.com`). Queries the appropriate WHOIS server for the TLD, parses the expiry date, and reports status based on remaining days.
+</details>
+
+<details><summary><strong>gRPC</strong></summary>
+
+| Field             | Type   | Description                                    |
+|-------------------|--------|------------------------------------------------|
+| `service_name`    | string | gRPC service to health-check (empty = all)     |
+| `use_tls`         | bool   | Use TLS (default: false)                       |
+| `skip_tls_verify` | bool   | Skip TLS certificate verification              |
+
+```json
+{"service_name": "my.service.v1", "use_tls": true}
+```
+
+Uses the standard `grpc.health.v1.Health/Check` protocol. Default port: 50051 (plaintext), 443 (TLS).
+</details>
+
+<details><summary><strong>MQTT</strong></summary>
+
+| Field       | Type   | Description                              |
+|-------------|--------|------------------------------------------|
+| `client_id` | string | MQTT client ID (auto-generated if empty) |
+| `username`  | string | Authentication username                  |
+| `password`  | string | Authentication password                  |
+| `topic`     | string | Topic to subscribe to (optional)         |
+| `use_tls`   | bool   | Use TLS (default: false)                 |
+
+```json
+{"username": "monitor", "password": "secret", "topic": "health/status", "use_tls": true}
+```
+
+Connects using MQTT 3.1.1. Default port: 1883 (plaintext), 8883 (TLS). Optionally subscribes to a topic to verify permissions.
 </details>
 
 ---
