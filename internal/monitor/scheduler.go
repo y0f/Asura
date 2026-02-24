@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -20,7 +21,7 @@ type schedulerEntry struct {
 
 type schedulerHeap []*schedulerEntry
 
-func (h schedulerHeap) Len() int          { return len(h) }
+func (h schedulerHeap) Len() int           { return len(h) }
 func (h schedulerHeap) Less(i, j int) bool { return h[i].nextRun < h[j].nextRun }
 func (h schedulerHeap) Swap(i, j int) {
 	h[i], h[j] = h[j], h[i]
@@ -222,13 +223,14 @@ func (s *Scheduler) resolveProxyURLs(ctx context.Context, monitors []*storage.Mo
 		if err != nil || !p.Enabled {
 			continue
 		}
-		var proxyURL string
-		if p.AuthUser != "" {
-			proxyURL = fmt.Sprintf("%s://%s:%s@%s:%d", p.Protocol, p.AuthUser, p.AuthPass, p.Host, p.Port)
-		} else {
-			proxyURL = fmt.Sprintf("%s://%s:%d", p.Protocol, p.Host, p.Port)
+		u := &url.URL{
+			Scheme: p.Protocol,
+			Host:   fmt.Sprintf("%s:%d", p.Host, p.Port),
 		}
-		proxyCache[id] = proxyURL
+		if p.AuthUser != "" {
+			u.User = url.UserPassword(p.AuthUser, p.AuthPass)
+		}
+		proxyCache[id] = u.String()
 	}
 
 	for _, m := range monitors {

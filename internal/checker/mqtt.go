@@ -31,9 +31,9 @@ func (c *MQTTChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	target := monitor.Target
 	if _, _, err := net.SplitHostPort(target); err != nil {
 		if settings.UseTLS {
-			target = target + ":8883"
+			target += ":8883"
 		} else {
-			target = target + ":1883"
+			target += ":1883"
 		}
 	}
 
@@ -52,122 +52,102 @@ func (c *MQTTChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 
 	start := time.Now()
 	conn, err := dialFn(ctx, "tcp", target)
-	elapsed := time.Since(start).Milliseconds()
-
 	if err != nil {
 		return &Result{
 			Status:       "down",
-			ResponseTime: elapsed,
+			ResponseTime: time.Since(start).Milliseconds(),
 			Message:      fmt.Sprintf("MQTT connection failed: %v", err),
 		}, nil
 	}
 	defer conn.Close()
 
 	if settings.UseTLS {
-		host, _, _ := net.SplitHostPort(target)
-		tlsConn := tls.Client(conn, &tls.Config{ServerName: host})
-		if err := tlsConn.HandshakeContext(ctx); err != nil {
-			elapsed = time.Since(start).Milliseconds()
+		conn, err = mqttTLSUpgrade(ctx, conn, target)
+		if err != nil {
 			return &Result{
 				Status:       "down",
-				ResponseTime: elapsed,
+				ResponseTime: time.Since(start).Milliseconds(),
 				Message:      fmt.Sprintf("MQTT TLS handshake failed: %v", err),
 			}, nil
 		}
-		conn = tlsConn
 	}
 
 	conn.SetDeadline(time.Now().Add(timeout))
 
-	connectPkt := buildConnectPacket(clientID, settings.Username, settings.Password)
-	if _, err := conn.Write(connectPkt); err != nil {
-		elapsed = time.Since(start).Milliseconds()
+	if err := mqttHandshake(conn, clientID, settings); err != nil {
 		return &Result{
 			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("MQTT CONNECT send failed: %v", err),
-		}, nil
-	}
-
-	connackBuf := make([]byte, 4)
-	if _, err := readFull(conn, connackBuf); err != nil {
-		elapsed = time.Since(start).Milliseconds()
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("MQTT CONNACK read failed: %v", err),
-		}, nil
-	}
-
-	if connackBuf[0]>>4 != 2 { // CONNACK packet type
-		elapsed = time.Since(start).Milliseconds()
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("MQTT unexpected packet type: %d", connackBuf[0]>>4),
-		}, nil
-	}
-
-	returnCode := connackBuf[3]
-	if returnCode != 0 {
-		elapsed = time.Since(start).Milliseconds()
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("MQTT CONNACK rejected: code=%d (%s)", returnCode, mqttConnackError(returnCode)),
+			ResponseTime: time.Since(start).Milliseconds(),
+			Message:      err.Error(),
 		}, nil
 	}
 
 	if settings.Topic != "" {
-		subPkt := buildSubscribePacket(1, settings.Topic)
-		if _, err := conn.Write(subPkt); err != nil {
-			elapsed = time.Since(start).Milliseconds()
+		if err := mqttSubscribe(conn, settings.Topic); err != nil {
 			return &Result{
 				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("MQTT SUBSCRIBE send failed: %v", err),
-			}, nil
-		}
-
-		subackBuf := make([]byte, 5)
-		if _, err := readFull(conn, subackBuf); err != nil {
-			elapsed = time.Since(start).Milliseconds()
-			return &Result{
-				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("MQTT SUBACK read failed: %v", err),
-			}, nil
-		}
-
-		if subackBuf[0]>>4 != 9 { // SUBACK packet type
-			elapsed = time.Since(start).Milliseconds()
-			return &Result{
-				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("MQTT unexpected packet type: %d (expected SUBACK)", subackBuf[0]>>4),
-			}, nil
-		}
-
-		if subackBuf[4] == 0x80 {
-			elapsed = time.Since(start).Milliseconds()
-			return &Result{
-				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      "MQTT subscription rejected",
+				ResponseTime: time.Since(start).Milliseconds(),
+				Message:      err.Error(),
 			}, nil
 		}
 	}
 
-	// Send DISCONNECT
 	conn.Write([]byte{0xe0, 0x00})
-
-	elapsed = time.Since(start).Milliseconds()
 
 	return &Result{
 		Status:       "up",
-		ResponseTime: elapsed,
+		ResponseTime: time.Since(start).Milliseconds(),
 		Message:      "MQTT connection successful",
 	}, nil
+}
+
+func mqttTLSUpgrade(ctx context.Context, conn net.Conn, target string) (net.Conn, error) {
+	host, _, _ := net.SplitHostPort(target)
+	tlsConn := tls.Client(conn, &tls.Config{ServerName: host})
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		return nil, err
+	}
+	return tlsConn, nil
+}
+
+func mqttHandshake(conn net.Conn, clientID string, settings storage.MQTTSettings) error {
+	if _, err := conn.Write(buildConnectPacket(clientID, settings.Username, settings.Password)); err != nil {
+		return fmt.Errorf("MQTT CONNECT send failed: %v", err)
+	}
+
+	connackBuf := make([]byte, 4)
+	if _, err := readFull(conn, connackBuf); err != nil {
+		return fmt.Errorf("MQTT CONNACK read failed: %v", err)
+	}
+
+	if connackBuf[0]>>4 != 2 {
+		return fmt.Errorf("MQTT unexpected packet type: %d", connackBuf[0]>>4)
+	}
+
+	if code := connackBuf[3]; code != 0 {
+		return fmt.Errorf("MQTT CONNACK rejected: code=%d (%s)", code, mqttConnackError(code))
+	}
+	return nil
+}
+
+func mqttSubscribe(conn net.Conn, topic string) error {
+	if _, err := conn.Write(buildSubscribePacket(1, topic)); err != nil {
+		return fmt.Errorf("MQTT SUBSCRIBE send failed: %v", err)
+	}
+
+	subackBuf := make([]byte, 5)
+	if _, err := readFull(conn, subackBuf); err != nil {
+		return fmt.Errorf("MQTT SUBACK read failed: %v", err)
+	}
+
+	if subackBuf[0]>>4 != 9 {
+		return fmt.Errorf("MQTT unexpected packet type: %d (expected SUBACK)", subackBuf[0]>>4)
+	}
+
+	if subackBuf[4] == 0x80 {
+		return fmt.Errorf("MQTT subscription rejected")
+	}
+	return nil
 }
 
 func readFull(conn net.Conn, buf []byte) (int, error) {
@@ -284,4 +264,3 @@ func decodeRemainingLength(data []byte) (int, int) {
 	}
 	return value, len(data)
 }
-

@@ -95,8 +95,13 @@ func (s *Server) handleUpdateProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	updated, _ := s.store.GetProxy(r.Context(), id)
+	if updated == nil {
+		updated = &p
+	}
+
 	s.audit(r, "update", "proxy", p.ID, "")
-	writeJSON(w, http.StatusOK, p)
+	writeJSON(w, http.StatusOK, updated)
 }
 
 func (s *Server) handleDeleteProxy(w http.ResponseWriter, r *http.Request) {

@@ -72,3 +72,7 @@ type contextDialer struct {
 func (d *contextDialer) Dial(network, addr string) (net.Conn, error) {
 	return d.dial(context.Background(), network, addr)
 }
+
+func (d *contextDialer) DialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	return d.dial(ctx, network, addr)
+}

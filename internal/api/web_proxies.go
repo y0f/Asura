@@ -76,7 +76,11 @@ func (s *Server) handleWebProxyCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWebProxyUpdate(w http.ResponseWriter, r *http.Request) {
-	id, _ := parseID(r)
+	id, err := parseID(r)
+	if err != nil {
+		s.redirect(w, r, "/proxies")
+		return
+	}
 	r.ParseForm()
 
 	p := parseProxyForm(r)
@@ -103,10 +107,19 @@ func (s *Server) handleWebProxyUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleWebProxyDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := parseID(r)
+	id, err := parseID(r)
+	if err != nil {
+		s.redirect(w, r, "/proxies")
+		return
+	}
+
 	if err := s.store.DeleteProxy(r.Context(), id); err != nil {
 		s.logger.Error("web: delete proxy", "error", err)
+		s.setFlash(w, "Failed to delete proxy")
+		s.redirect(w, r, "/proxies")
+		return
 	}
+
 	s.audit(r, "delete", "proxy", id, "")
 	s.setFlash(w, "Proxy deleted")
 	s.redirect(w, r, "/proxies")

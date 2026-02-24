@@ -58,45 +58,23 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	applyBodyAndHeaders(req, settings)
 	applyAuthentication(req, settings)
 
+	timeout := time.Duration(monitor.Timeout) * time.Second
 	baseDial := (&net.Dialer{
-		Timeout: time.Duration(monitor.Timeout) * time.Second,
+		Timeout: timeout,
 		Control: safenet.MaybeDialControl(c.AllowPrivate),
 	}).DialContext
 
 	transport := &http.Transport{
 		DialContext:       baseDial,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: settings.SkipTLSVerify,
-		},
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: settings.SkipTLSVerify},
 		DisableKeepAlives: true,
 	}
-
-	if monitor.ProxyURL != "" {
-		if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
-			transport.DialContext = socks
-		} else if pu := HTTPProxyURL(monitor.ProxyURL); pu != nil {
-			transport.Proxy = http.ProxyURL(pu)
-		}
-	}
-
-	maxRedirects := resolveMaxRedirects(settings)
+	applyHTTPProxy(transport, monitor.ProxyURL, baseDial)
 
 	client := &http.Client{
-		Transport: transport,
-		Timeout:   time.Duration(monitor.Timeout) * time.Second,
-	}
-	if maxRedirects == 0 {
-		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	} else {
-		limit := maxRedirects
-		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			if len(via) >= limit {
-				return fmt.Errorf("stopped after %d redirects", limit)
-			}
-			return nil
-		}
+		Transport:     transport,
+		Timeout:       timeout,
+		CheckRedirect: redirectPolicy(resolveMaxRedirects(settings)),
 	}
 
 	start := time.Now()
@@ -116,12 +94,38 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	}
 	defer resp.Body.Close()
 
+	return buildHTTPResult(resp, elapsed, settings)
+}
+
+func applyHTTPProxy(transport *http.Transport, proxyURL string, baseDial func(context.Context, string, string) (net.Conn, error)) {
+	if proxyURL == "" {
+		return
+	}
+	if socks := ProxyDialer(proxyURL, baseDial); socks != nil {
+		transport.DialContext = socks
+	} else if pu := HTTPProxyURL(proxyURL); pu != nil {
+		transport.Proxy = http.ProxyURL(pu)
+	}
+}
+
+func redirectPolicy(maxRedirects int) func(*http.Request, []*http.Request) error {
+	if maxRedirects == 0 {
+		return func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+	return func(_ *http.Request, via []*http.Request) error {
+		if len(via) >= maxRedirects {
+			return fmt.Errorf("stopped after %d redirects", maxRedirects)
+		}
+		return nil
+	}
+}
+
+func buildHTTPResult(resp *http.Response, elapsed int64, settings storage.HTTPSettings) (*Result, error) {
 	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, maxBodyRead))
-	body := string(bodyBytes)
 
 	h := sha256.Sum256(bodyBytes)
-	bodyHash := hex.EncodeToString(h[:])
-
 	headers := make(map[string]string)
 	for k := range resp.Header {
 		headers[k] = resp.Header.Get(k)
@@ -139,8 +143,8 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		ResponseTime: elapsed,
 		StatusCode:   resp.StatusCode,
 		Message:      msg,
-		Body:         body,
-		BodyHash:     bodyHash,
+		Body:         string(bodyBytes),
+		BodyHash:     hex.EncodeToString(h[:]),
 		Headers:      headers,
 	}
 
@@ -148,7 +152,6 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		expiry := resp.TLS.PeerCertificates[0].NotAfter.Unix()
 		result.CertExpiry = &expiry
 	}
-
 	return result, nil
 }
 

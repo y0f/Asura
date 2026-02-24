@@ -95,15 +95,7 @@ func (c *DockerChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 		}, nil
 	}
 
-	var inspect struct {
-		State struct {
-			Status  string `json:"Status"`
-			Running bool   `json:"Running"`
-			Health  *struct {
-				Status string `json:"Status"`
-			} `json:"Health"`
-		} `json:"State"`
-	}
+	var inspect dockerInspect
 	if err := json.Unmarshal(body, &inspect); err != nil {
 		return &Result{
 			Status:       "down",
@@ -112,40 +104,42 @@ func (c *DockerChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 		}, nil
 	}
 
+	return evaluateContainerState(inspect, settings, elapsed), nil
+}
+
+type dockerInspect struct {
+	State struct {
+		Status  string `json:"Status"`
+		Running bool   `json:"Running"`
+		Health  *struct {
+			Status string `json:"Status"`
+		} `json:"Health"`
+	} `json:"State"`
+}
+
+func evaluateContainerState(inspect dockerInspect, settings storage.DockerSettings, elapsed int64) *Result {
 	if !inspect.State.Running {
 		return &Result{
 			Status:       "down",
 			ResponseTime: elapsed,
 			Message:      fmt.Sprintf("container status: %s", inspect.State.Status),
-		}, nil
-	}
-
-	if settings.CheckHealth && inspect.State.Health != nil {
-		switch inspect.State.Health.Status {
-		case "healthy":
-			return &Result{
-				Status:       "up",
-				ResponseTime: elapsed,
-				Message:      "container running, health: healthy",
-			}, nil
-		case "starting":
-			return &Result{
-				Status:       "degraded",
-				ResponseTime: elapsed,
-				Message:      "container running, health: starting",
-			}, nil
-		default:
-			return &Result{
-				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("container running, health: %s", inspect.State.Health.Status),
-			}, nil
 		}
 	}
 
-	return &Result{
-		Status:       "up",
-		ResponseTime: elapsed,
-		Message:      "container running",
-	}, nil
+	if settings.CheckHealth && inspect.State.Health != nil {
+		return containerHealthResult(inspect.State.Health.Status, elapsed)
+	}
+
+	return &Result{Status: "up", ResponseTime: elapsed, Message: "container running"}
+}
+
+func containerHealthResult(health string, elapsed int64) *Result {
+	switch health {
+	case "healthy":
+		return &Result{Status: "up", ResponseTime: elapsed, Message: "container running, health: healthy"}
+	case "starting":
+		return &Result{Status: "degraded", ResponseTime: elapsed, Message: "container running, health: starting"}
+	default:
+		return &Result{Status: "down", ResponseTime: elapsed, Message: fmt.Sprintf("container running, health: %s", health)}
+	}
 }

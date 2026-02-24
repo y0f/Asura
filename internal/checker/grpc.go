@@ -34,9 +34,9 @@ func (c *GRPCChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	target := monitor.Target
 	if _, _, err := net.SplitHostPort(target); err != nil {
 		if settings.UseTLS {
-			target = target + ":443"
+			target += ":443"
 		} else {
-			target = target + ":50051"
+			target += ":50051"
 		}
 	}
 
@@ -51,15 +51,40 @@ func (c *GRPCChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		dialFn = socks
 	}
 
+	scheme, transport := grpcTransport(settings, target, dialFn)
 	reqBody := encodeGRPCFrame(encodeHealthRequest(settings.ServiceName))
 
-	var scheme string
-	var transport http.RoundTripper
+	url := fmt.Sprintf("%s://%s/grpc.health.v1.Health/Check", scheme, target)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
+	if err != nil {
+		return &Result{Status: "down", Message: fmt.Sprintf("invalid request: %v", err)}, nil
+	}
+	req.Header.Set("Content-Type", "application/grpc")
+	req.Header.Set("TE", "trailers")
 
+	client := &http.Client{Transport: transport, Timeout: timeout}
+
+	start := time.Now()
+	resp, err := client.Do(req)
+	elapsed := time.Since(start).Milliseconds()
+
+	if err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("gRPC request failed: %v", err),
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	return evaluateGRPCResponse(resp, body, elapsed)
+}
+
+func grpcTransport(settings storage.GRPCSettings, target string, dialFn func(context.Context, string, string) (net.Conn, error)) (string, http.RoundTripper) {
 	if settings.UseTLS {
-		scheme = "https"
 		host, _, _ := net.SplitHostPort(target)
-		transport = &http2.Transport{
+		return "https", &http2.Transport{
 			TLSClientConfig: &tls.Config{
 				ServerName:         host,
 				InsecureSkipVerify: settings.SkipTLSVerify,
@@ -77,44 +102,16 @@ func (c *GRPCChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 				return tlsConn, nil
 			},
 		}
-	} else {
-		scheme = "http"
-		transport = &http2.Transport{
-			AllowHTTP: true,
-			DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
-				return dialFn(ctx, network, addr)
-			},
-		}
 	}
-
-	url := fmt.Sprintf("%s://%s/grpc.health.v1.Health/Check", scheme, target)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(reqBody))
-	if err != nil {
-		return &Result{Status: "down", Message: fmt.Sprintf("invalid request: %v", err)}, nil
+	return "http", &http2.Transport{
+		AllowHTTP: true,
+		DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+			return dialFn(ctx, network, addr)
+		},
 	}
-	req.Header.Set("Content-Type", "application/grpc")
-	req.Header.Set("TE", "trailers")
+}
 
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   timeout,
-	}
-
-	start := time.Now()
-	resp, err := client.Do(req)
-	elapsed := time.Since(start).Milliseconds()
-
-	if err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("gRPC request failed: %v", err),
-		}, nil
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-
+func evaluateGRPCResponse(resp *http.Response, body []byte, elapsed int64) (*Result, error) {
 	grpcStatus := resp.Trailer.Get("grpc-status")
 	if grpcStatus == "" {
 		grpcStatus = resp.Header.Get("grpc-status")
@@ -143,29 +140,23 @@ func (c *GRPCChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 
-	healthStatus := decodeHealthResponse(payload)
+	return grpcHealthResult(decodeHealthResponse(payload), resp.StatusCode, elapsed), nil
+}
 
-	result := &Result{
-		ResponseTime: elapsed,
-		StatusCode:   resp.StatusCode,
-	}
-
-	switch healthStatus {
-	case 1: // SERVING
-		result.Status = "up"
-		result.Message = "gRPC health: SERVING"
-	case 2: // NOT_SERVING
-		result.Status = "down"
-		result.Message = "gRPC health: NOT_SERVING"
-	case 3: // SERVICE_UNKNOWN
-		result.Status = "down"
-		result.Message = "gRPC health: SERVICE_UNKNOWN"
+func grpcHealthResult(status int32, statusCode int, elapsed int64) *Result {
+	r := &Result{ResponseTime: elapsed, StatusCode: statusCode}
+	switch status {
+	case 1:
+		r.Status, r.Message = "up", "gRPC health: SERVING"
+	case 2:
+		r.Status, r.Message = "down", "gRPC health: NOT_SERVING"
+	case 3:
+		r.Status, r.Message = "down", "gRPC health: SERVICE_UNKNOWN"
 	default:
-		result.Status = "down"
-		result.Message = fmt.Sprintf("gRPC health: UNKNOWN(%d)", healthStatus)
+		r.Status = "down"
+		r.Message = fmt.Sprintf("gRPC health: UNKNOWN(%d)", status)
 	}
-
-	return result, nil
+	return r
 }
 
 func encodeGRPCFrame(payload []byte) []byte {

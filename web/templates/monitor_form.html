@@ -75,7 +75,7 @@
                 </div>
                 <div x-show="monitorType !== 'heartbeat'">
                     <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5" x-text="monitorType === 'docker' ? 'Container Name / ID' : 'Target'">Target</label>
-                    <input type="text" name="target" value="{{$mon.Target}}" :placeholder="monitorType === 'docker' ? 'nginx, postgres, or container ID' : 'https://example.com'"
+                    <input type="text" name="target" value="{{$mon.Target}}" :placeholder="{http:'https://example.com', tcp:'host:port', dns:'example.com', icmp:'8.8.8.8', tls:'example.com', websocket:'wss://example.com/ws', command:'/usr/bin/check', docker:'nginx, postgres, or container ID', domain:'example.com', grpc:'host:port', mqtt:'broker.example.com:1883'}[monitorType] || 'https://example.com'"
                            class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
                 </div>
             </div>

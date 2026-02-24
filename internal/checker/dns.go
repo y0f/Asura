@@ -45,11 +45,10 @@ func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 		resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				proto := "udp"
 				if monitor.ProxyURL != "" {
-					proto = "tcp"
+					network = "tcp"
 				}
-				return dialFn(ctx, proto, settings.Server+":53")
+				return dialFn(ctx, network, settings.Server+":53")
 			},
 		}
 	}

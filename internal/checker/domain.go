@@ -33,16 +33,14 @@ func (c *DomainChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 		warnDays = 30
 	}
 
-	domain := strings.TrimSpace(monitor.Target)
+	domain := sanitizeDomain(monitor.Target)
 	if domain == "" {
 		return &Result{Status: "down", Message: "domain target is empty"}, nil
 	}
-	domain = strings.ToLower(domain)
 
-	tld := extractTLD(domain)
-	server := whoisServerForTLD(tld)
+	server := whoisServerForTLD(extractTLD(domain))
 	if server == "" {
-		return &Result{Status: "down", Message: fmt.Sprintf("no WHOIS server known for TLD: %s", tld)}, nil
+		return &Result{Status: "down", Message: fmt.Sprintf("no WHOIS server known for TLD: %s", extractTLD(domain))}, nil
 	}
 
 	timeout := time.Duration(monitor.Timeout) * time.Second
@@ -53,28 +51,41 @@ func (c *DomainChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 		dialFn = socks
 	}
 
+	body, elapsed, err := queryWhois(ctx, domain, server, timeout, dialFn)
+	if err != nil {
+		return &Result{Status: "down", ResponseTime: elapsed, Message: err.Error()}, nil
+	}
+
+	return evaluateDomainExpiry(body, elapsed, warnDays)
+}
+
+func sanitizeDomain(target string) string {
+	domain := strings.TrimSpace(target)
+	if domain == "" {
+		return ""
+	}
+	domain = strings.ToLower(domain)
+	domain = strings.NewReplacer("\r", "", "\n", "").Replace(domain)
+
+	parts := strings.Split(domain, ".")
+	if len(parts) > 2 {
+		domain = strings.Join(parts[len(parts)-2:], ".")
+	}
+	return domain
+}
+
+func queryWhois(ctx context.Context, domain, server string, timeout time.Duration, dialFn func(context.Context, string, string) (net.Conn, error)) (string, int64, error) {
 	start := time.Now()
 	conn, err := dialFn(ctx, "tcp", server+":43")
-	elapsed := time.Since(start).Milliseconds()
-
 	if err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("WHOIS connection failed: %v", err),
-		}, nil
+		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS connection failed: %v", err)
 	}
 	defer conn.Close()
 
 	conn.SetDeadline(time.Now().Add(timeout))
 
-	_, err = fmt.Fprintf(conn, "%s\r\n", domain)
-	if err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("WHOIS query failed: %v", err),
-		}, nil
+	if _, err = fmt.Fprintf(conn, "%s\r\n", domain); err != nil {
+		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS query failed: %v", err)
 	}
 
 	scanner := bufio.NewScanner(conn)
@@ -88,47 +99,43 @@ func (c *DomainChecker) Check(ctx context.Context, monitor *storage.Monitor) (*R
 		}
 	}
 
-	elapsed = time.Since(start).Milliseconds()
 	body := response.String()
+	elapsed := time.Since(start).Milliseconds()
 
-	if strings.Contains(strings.ToLower(body), "no match") ||
-		strings.Contains(strings.ToLower(body), "not found") ||
-		strings.Contains(strings.ToLower(body), "no data found") {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      "domain not found in WHOIS",
-			Body:         body,
-		}, nil
+	if body == "" && scanner.Err() != nil {
+		return "", elapsed, fmt.Errorf("WHOIS read failed: %v", scanner.Err())
+	}
+	return body, elapsed, nil
+}
+
+func evaluateDomainExpiry(body string, elapsed int64, warnDays int) (*Result, error) {
+	lower := strings.ToLower(body)
+	if strings.Contains(lower, "no match") ||
+		strings.Contains(lower, "not found") ||
+		strings.Contains(lower, "no data found") {
+		return &Result{Status: "down", ResponseTime: elapsed, Message: "domain not found in WHOIS", Body: body}, nil
 	}
 
 	expiry, err := parseWhoisExpiry(body)
 	if err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: elapsed,
-			Message:      fmt.Sprintf("could not parse expiry date: %v", err),
-			Body:         body,
-		}, nil
+		return &Result{Status: "down", ResponseTime: elapsed, Message: fmt.Sprintf("could not parse expiry date: %v", err), Body: body}, nil
 	}
 
-	daysUntilExpiry := int(time.Until(expiry).Hours() / 24)
-
+	days := int(time.Until(expiry).Hours() / 24)
 	result := &Result{
 		Status:       "up",
 		ResponseTime: elapsed,
-		Message:      fmt.Sprintf("domain expires in %d days (%s)", daysUntilExpiry, expiry.Format("2006-01-02")),
+		Message:      fmt.Sprintf("domain expires in %d days (%s)", days, expiry.Format("2006-01-02")),
 		Body:         body,
 	}
 
-	if daysUntilExpiry <= 0 {
+	if days <= 0 {
 		result.Status = "down"
 		result.Message = fmt.Sprintf("domain expired on %s", expiry.Format("2006-01-02"))
-	} else if daysUntilExpiry <= warnDays {
+	} else if days <= warnDays {
 		result.Status = "degraded"
-		result.Message = fmt.Sprintf("domain expires in %d days (warning threshold: %d)", daysUntilExpiry, warnDays)
+		result.Message = fmt.Sprintf("domain expires in %d days (warning threshold: %d)", days, warnDays)
 	}
-
 	return result, nil
 }
 

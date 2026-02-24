@@ -1572,7 +1572,7 @@ func (s *SQLiteStore) InsertRequestLogBatch(ctx context.Context, logs []*Request
 	return tx.Commit()
 }
 
-func (s *SQLiteStore) ListRequestLogs(ctx context.Context, f RequestLogFilter, p Pagination) (*PaginatedResult, error) {
+func buildRequestLogWhere(f RequestLogFilter) (string, []interface{}) {
 	where := "1=1"
 	var args []interface{}
 
@@ -1608,6 +1608,11 @@ func (s *SQLiteStore) ListRequestLogs(ctx context.Context, f RequestLogFilter, p
 		where += " AND created_at < ?"
 		args = append(args, formatTime(f.To))
 	}
+	return where, args
+}
+
+func (s *SQLiteStore) ListRequestLogs(ctx context.Context, f RequestLogFilter, p Pagination) (*PaginatedResult, error) {
+	where, args := buildRequestLogWhere(f)
 
 	var total int64
 	countArgs := make([]interface{}, len(args))

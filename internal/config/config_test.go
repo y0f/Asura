@@ -141,77 +141,68 @@ func TestValidate(t *testing.T) {
 }
 
 func TestValidateAPIKeys(t *testing.T) {
-	t.Run("admin role sets super admin", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "admin", Hash: "abc123", Role: "admin"},
-		}
-		if err := validateAPIKeys(keys); err != nil {
-			t.Fatal(err)
-		}
-		if !keys[0].SuperAdmin {
-			t.Fatal("expected SuperAdmin to be set")
-		}
-		if keys[0].Role != "" {
-			t.Fatalf("expected Role cleared, got %q", keys[0].Role)
-		}
-	})
+	t.Run("admin role sets super admin", testValidateAPIKeysAdminRole)
+	t.Run("readonly role sets read permissions", testValidateAPIKeysReadonlyRole)
+	t.Run("missing name", testValidateAPIKeysMissingName)
+	t.Run("missing hash", testValidateAPIKeysMissingHash)
+	t.Run("invalid permission", testValidateAPIKeysInvalidPerm)
+	t.Run("no perms and no super admin", testValidateAPIKeysNoPerm)
+}
 
-	t.Run("readonly role sets read permissions", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "viewer", Hash: "abc123", Role: "readonly"},
-		}
-		if err := validateAPIKeys(keys); err != nil {
-			t.Fatal(err)
-		}
-		if len(keys[0].Permissions) == 0 {
-			t.Fatal("expected permissions to be set")
-		}
-		for _, p := range keys[0].Permissions {
-			if !strings.HasSuffix(p, ".read") {
-				t.Fatalf("expected read-only permission, got %q", p)
-			}
-		}
-	})
+func testValidateAPIKeysAdminRole(t *testing.T) {
+	keys := []APIKeyConfig{{Name: "admin", Hash: "abc123", Role: "admin"}}
+	if err := validateAPIKeys(keys); err != nil {
+		t.Fatal(err)
+	}
+	if !keys[0].SuperAdmin {
+		t.Fatal("expected SuperAdmin to be set")
+	}
+	if keys[0].Role != "" {
+		t.Fatalf("expected Role cleared, got %q", keys[0].Role)
+	}
+}
 
-	t.Run("missing name", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "", Hash: "abc123", SuperAdmin: true},
+func testValidateAPIKeysReadonlyRole(t *testing.T) {
+	keys := []APIKeyConfig{{Name: "viewer", Hash: "abc123", Role: "readonly"}}
+	if err := validateAPIKeys(keys); err != nil {
+		t.Fatal(err)
+	}
+	if len(keys[0].Permissions) == 0 {
+		t.Fatal("expected permissions to be set")
+	}
+	for _, p := range keys[0].Permissions {
+		if !strings.HasSuffix(p, ".read") {
+			t.Fatalf("expected read-only permission, got %q", p)
 		}
-		err := validateAPIKeys(keys)
-		if err == nil || !strings.Contains(err.Error(), "name is required") {
-			t.Fatalf("expected name error, got %v", err)
-		}
-	})
+	}
+}
 
-	t.Run("missing hash", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "test", Hash: "", SuperAdmin: true},
-		}
-		err := validateAPIKeys(keys)
-		if err == nil || !strings.Contains(err.Error(), "hash is required") {
-			t.Fatalf("expected hash error, got %v", err)
-		}
-	})
+func testValidateAPIKeysMissingName(t *testing.T) {
+	err := validateAPIKeys([]APIKeyConfig{{Name: "", Hash: "abc123", SuperAdmin: true}})
+	if err == nil || !strings.Contains(err.Error(), "name is required") {
+		t.Fatalf("expected name error, got %v", err)
+	}
+}
 
-	t.Run("invalid permission", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "test", Hash: "abc123", Permissions: []string{"fake.perm"}},
-		}
-		err := validateAPIKeys(keys)
-		if err == nil || !strings.Contains(err.Error(), "invalid permission") {
-			t.Fatalf("expected invalid permission error, got %v", err)
-		}
-	})
+func testValidateAPIKeysMissingHash(t *testing.T) {
+	err := validateAPIKeys([]APIKeyConfig{{Name: "test", Hash: "", SuperAdmin: true}})
+	if err == nil || !strings.Contains(err.Error(), "hash is required") {
+		t.Fatalf("expected hash error, got %v", err)
+	}
+}
 
-	t.Run("no perms and no super admin", func(t *testing.T) {
-		keys := []APIKeyConfig{
-			{Name: "test", Hash: "abc123"},
-		}
-		err := validateAPIKeys(keys)
-		if err == nil || !strings.Contains(err.Error(), "must have super_admin or permissions") {
-			t.Fatalf("expected error, got %v", err)
-		}
-	})
+func testValidateAPIKeysInvalidPerm(t *testing.T) {
+	err := validateAPIKeys([]APIKeyConfig{{Name: "test", Hash: "abc123", Permissions: []string{"fake.perm"}}})
+	if err == nil || !strings.Contains(err.Error(), "invalid permission") {
+		t.Fatalf("expected invalid permission error, got %v", err)
+	}
+}
+
+func testValidateAPIKeysNoPerm(t *testing.T) {
+	err := validateAPIKeys([]APIKeyConfig{{Name: "test", Hash: "abc123"}})
+	if err == nil || !strings.Contains(err.Error(), "must have super_admin or permissions") {
+		t.Fatalf("expected error, got %v", err)
+	}
 }
 
 func TestValidateLogLevel(t *testing.T) {

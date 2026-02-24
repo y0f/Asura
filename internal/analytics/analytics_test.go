@@ -26,99 +26,74 @@ func testStore(t *testing.T) *storage.SQLiteStore {
 	return store
 }
 
-func TestComputeMetrics(t *testing.T) {
+func setupMetricsTest(t *testing.T) *MonitorMetrics {
+	t.Helper()
 	store := testStore(t)
 	ctx := context.Background()
 
 	mon := &storage.Monitor{
-		Name:             "Analytics Test",
-		Type:             "http",
-		Target:           "https://example.com",
-		Interval:         60,
-		Timeout:          10,
-		Enabled:          true,
-		FailureThreshold: 3,
-		SuccessThreshold: 1,
+		Name: "Analytics Test", Type: "http", Target: "https://example.com",
+		Interval: 60, Timeout: 10, Enabled: true,
+		FailureThreshold: 3, SuccessThreshold: 1,
 	}
 	if err := store.CreateMonitor(ctx, mon); err != nil {
 		t.Fatal(err)
 	}
 
-	now := time.Now()
-	from := now.Add(-1 * time.Hour)
-	to := now.Add(1 * time.Hour)
-
-	checks := []struct {
+	for _, c := range []struct {
 		status       string
 		responseTime int64
 	}{
-		{"up", 50},
-		{"up", 100},
-		{"up", 150},
-		{"up", 200},
-		{"up", 250},
-		{"up", 300},
-		{"up", 350},
-		{"down", 0},
-		{"degraded", 400},
-		{"up", 100},
-	}
-
-	for _, c := range checks {
-		cr := &storage.CheckResult{
-			MonitorID:    mon.ID,
-			Status:       c.status,
-			ResponseTime: c.responseTime,
-		}
-		if err := store.InsertCheckResult(ctx, cr); err != nil {
+		{"up", 50}, {"up", 100}, {"up", 150}, {"up", 200}, {"up", 250},
+		{"up", 300}, {"up", 350}, {"down", 0}, {"degraded", 400}, {"up", 100},
+	} {
+		if err := store.InsertCheckResult(ctx, &storage.CheckResult{
+			MonitorID: mon.ID, Status: c.status, ResponseTime: c.responseTime,
+		}); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	metrics, err := ComputeMetrics(ctx, store, mon.ID, from, to)
+	now := time.Now()
+	metrics, err := ComputeMetrics(ctx, store, mon.ID, now.Add(-1*time.Hour), now.Add(1*time.Hour))
 	if err != nil {
 		t.Fatal(err)
 	}
+	return metrics
+}
 
-	if metrics.MonitorID != mon.ID {
-		t.Fatalf("expected monitor_id %d, got %d", mon.ID, metrics.MonitorID)
+func TestComputeMetricsCounts(t *testing.T) {
+	m := setupMetricsTest(t)
+	if m.TotalChecks != 10 {
+		t.Fatalf("expected 10 total checks, got %d", m.TotalChecks)
 	}
+	if m.UpChecks != 8 {
+		t.Fatalf("expected 8 up checks, got %d", m.UpChecks)
+	}
+	if m.DownChecks != 1 {
+		t.Fatalf("expected 1 down check, got %d", m.DownChecks)
+	}
+	if m.DegradedChecks != 1 {
+		t.Fatalf("expected 1 degraded check, got %d", m.DegradedChecks)
+	}
+}
 
-	if metrics.TotalChecks != 10 {
-		t.Fatalf("expected 10 total checks, got %d", metrics.TotalChecks)
+func TestComputeMetricsUptime(t *testing.T) {
+	m := setupMetricsTest(t)
+	if m.UptimePct < 79 || m.UptimePct > 81 {
+		t.Fatalf("expected uptime ~80%%, got %.2f%%", m.UptimePct)
 	}
+}
 
-	if metrics.UpChecks != 8 {
-		t.Fatalf("expected 8 up checks, got %d", metrics.UpChecks)
+func TestComputeMetricsPercentiles(t *testing.T) {
+	m := setupMetricsTest(t)
+	if m.P50 <= 0 || m.P95 <= 0 || m.P99 <= 0 {
+		t.Fatalf("expected positive percentiles, got P50=%v P95=%v P99=%v", m.P50, m.P95, m.P99)
 	}
-
-	if metrics.DownChecks != 1 {
-		t.Fatalf("expected 1 down check, got %d", metrics.DownChecks)
+	if m.P50 > m.P95 {
+		t.Fatalf("expected P50 <= P95, got P50=%v P95=%v", m.P50, m.P95)
 	}
-
-	if metrics.DegradedChecks != 1 {
-		t.Fatalf("expected 1 degraded check, got %d", metrics.DegradedChecks)
-	}
-
-	// Uptime should be ~80% (8 up out of 10)
-	if metrics.UptimePct < 79 || metrics.UptimePct > 81 {
-		t.Fatalf("expected uptime ~80%%, got %.2f%%", metrics.UptimePct)
-	}
-
-	if metrics.P50 <= 0 {
-		t.Fatal("expected P50 > 0")
-	}
-	if metrics.P95 <= 0 {
-		t.Fatal("expected P95 > 0")
-	}
-	if metrics.P99 <= 0 {
-		t.Fatal("expected P99 > 0")
-	}
-
-	if metrics.P50 > metrics.P95 {
-		t.Fatalf("expected P50 <= P95, got P50=%v P95=%v", metrics.P50, metrics.P95)
-	}
-	if metrics.P95 > metrics.P99 {
-		t.Fatalf("expected P95 <= P99, got P95=%v P99=%v", metrics.P95, metrics.P99)
+	if m.P95 > m.P99 {
+		t.Fatalf("expected P95 <= P99, got P95=%v P99=%v", m.P95, m.P99)
 	}
 }

@@ -248,75 +248,84 @@ func handleTOTPCommands(configPath, setupName, verifyName, removeName string, ar
 
 	switch {
 	case setupName != "":
-		apiKey := cfg.LookupAPIKeyByName(setupName)
-		if apiKey == nil {
-			fmt.Fprintf(os.Stderr, "error: API key %q not found in config\n", setupName)
-			os.Exit(1)
-		}
-		if !apiKey.TOTP {
-			fmt.Fprintf(os.Stderr, "error: API key %q does not have totp: true in config\n", setupName)
-			os.Exit(1)
-		}
-		if existing, _ := store.GetTOTPKey(ctx, setupName); existing != nil {
-			fmt.Fprintf(os.Stderr, "error: TOTP already configured for %q — remove first with --remove-totp %s\n", setupName, setupName)
-			os.Exit(1)
-		}
-
-		secret, err := totp.GenerateSecret()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
-		}
-		encoded := totp.EncodeSecret(secret)
-		if err := store.CreateTOTPKey(ctx, &storage.TOTPKey{APIKeyName: setupName, Secret: encoded}); err != nil {
-			fmt.Fprintf(os.Stderr, "error: failed to store TOTP key: %v\n", err)
-			os.Exit(1)
-		}
-
-		uri := totp.FormatKeyURI("Asura", setupName, secret)
-		fmt.Println()
-		fmt.Printf("  TOTP configured for %q\n", setupName)
-		fmt.Println()
-		fmt.Printf("  Secret : %s\n", encoded)
-		fmt.Printf("  URI    : %s\n", uri)
-		fmt.Println()
-		printQR(uri)
-		fmt.Println("  Scan the QR code or enter the secret in your authenticator app.")
-		fmt.Println("  Verify with: asura --verify-totp", setupName, "CODE")
-		fmt.Println()
-
+		handleSetupTOTP(ctx, store, cfg, setupName)
 	case verifyName != "":
-		if len(args) == 0 {
-			fmt.Fprintf(os.Stderr, "usage: asura --verify-totp %s CODE\n", verifyName)
-			os.Exit(1)
-		}
-		code := args[0]
-		totpKey, err := store.GetTOTPKey(ctx, verifyName)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: no TOTP key found for %q\n", verifyName)
-			os.Exit(1)
-		}
-		secret, err := totp.DecodeSecret(totpKey.Secret)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: failed to decode TOTP secret: %v\n", err)
-			os.Exit(1)
-		}
-		if totp.Validate(secret, code, time.Now()) {
-			fmt.Println("valid")
-			os.Exit(0)
-		}
-		fmt.Println("invalid")
-		os.Exit(1)
-
+		handleVerifyTOTP(ctx, store, verifyName, args)
 	case removeName != "":
-		if err := store.DeleteTOTPKey(ctx, removeName); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("TOTP removed for %q\n", removeName)
+		handleRemoveTOTP(ctx, store, removeName)
 	}
 
 	os.Exit(0)
+}
+
+func handleSetupTOTP(ctx context.Context, store storage.Store, cfg *config.Config, name string) {
+	apiKey := cfg.LookupAPIKeyByName(name)
+	if apiKey == nil {
+		fmt.Fprintf(os.Stderr, "error: API key %q not found in config\n", name)
+		os.Exit(1)
+	}
+	if !apiKey.TOTP {
+		fmt.Fprintf(os.Stderr, "error: API key %q does not have totp: true in config\n", name)
+		os.Exit(1)
+	}
+	if existing, _ := store.GetTOTPKey(ctx, name); existing != nil {
+		fmt.Fprintf(os.Stderr, "error: TOTP already configured for %q — remove first with --remove-totp %s\n", name, name)
+		os.Exit(1)
+	}
+
+	secret, err := totp.GenerateSecret()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	encoded := totp.EncodeSecret(secret)
+	if err := store.CreateTOTPKey(ctx, &storage.TOTPKey{APIKeyName: name, Secret: encoded}); err != nil {
+		fmt.Fprintf(os.Stderr, "error: failed to store TOTP key: %v\n", err)
+		os.Exit(1)
+	}
+
+	uri := totp.FormatKeyURI("Asura", name, secret)
+	fmt.Println()
+	fmt.Printf("  TOTP configured for %q\n", name)
+	fmt.Println()
+	fmt.Printf("  Secret : %s\n", encoded)
+	fmt.Printf("  URI    : %s\n", uri)
+	fmt.Println()
+	printQR(uri)
+	fmt.Println("  Scan the QR code or enter the secret in your authenticator app.")
+	fmt.Println("  Verify with: asura --verify-totp", name, "CODE")
+	fmt.Println()
+}
+
+func handleVerifyTOTP(ctx context.Context, store storage.Store, name string, args []string) {
+	if len(args) == 0 {
+		fmt.Fprintf(os.Stderr, "usage: asura --verify-totp %s CODE\n", name)
+		os.Exit(1)
+	}
+	totpKey, err := store.GetTOTPKey(ctx, name)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: no TOTP key found for %q\n", name)
+		os.Exit(1)
+	}
+	secret, err := totp.DecodeSecret(totpKey.Secret)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: failed to decode TOTP secret: %v\n", err)
+		os.Exit(1)
+	}
+	if totp.Validate(secret, args[0], time.Now()) {
+		fmt.Println("valid")
+		os.Exit(0)
+	}
+	fmt.Println("invalid")
+	os.Exit(1)
+}
+
+func handleRemoveTOTP(ctx context.Context, store storage.Store, name string) {
+	if err := store.DeleteTOTPKey(ctx, name); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("TOTP removed for %q\n", name)
 }
 
 func printQR(data string) {

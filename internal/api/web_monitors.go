@@ -58,40 +58,44 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 		return fd
 	}
 
+	fd.SettingsJSON = "{}"
 	if len(mon.Settings) > 0 {
 		fd.SettingsJSON = string(mon.Settings)
-	} else {
-		fd.SettingsJSON = "{}"
 	}
+	fd.AssertionsRaw = "[]"
 	if len(mon.Assertions) > 0 {
 		fd.AssertionsRaw = string(mon.Assertions)
-	} else {
-		fd.AssertionsRaw = "[]"
 	}
 
-	switch mon.Type {
-	case "http":
-		json.Unmarshal(mon.Settings, &fd.HTTP)
-	case "tcp":
-		json.Unmarshal(mon.Settings, &fd.TCP)
-	case "dns":
-		json.Unmarshal(mon.Settings, &fd.DNS)
-	case "tls":
-		json.Unmarshal(mon.Settings, &fd.TLS)
-	case "websocket":
-		json.Unmarshal(mon.Settings, &fd.WS)
-	case "command":
-		json.Unmarshal(mon.Settings, &fd.Cmd)
-	case "docker":
-		json.Unmarshal(mon.Settings, &fd.Docker)
-	case "domain":
-		json.Unmarshal(mon.Settings, &fd.Domain)
-	case "grpc":
-		json.Unmarshal(mon.Settings, &fd.GRPC)
-	case "mqtt":
-		json.Unmarshal(mon.Settings, &fd.MQTT)
-	}
+	unmarshalMonitorSettings(fd, mon)
+	applyHTTPDefaults(fd)
 
+	fd.HeadersJSON = headersToJSON(fd.HTTP.Headers)
+	fd.WsHeadersJSON = headersToJSON(fd.WS.Headers)
+	fd.AssertionsJSON = assertionsToJSON(mon.Assertions)
+	return fd
+}
+
+var settingsTargets = map[string]func(*monitorFormData) interface{}{
+	"http":      func(fd *monitorFormData) interface{} { return &fd.HTTP },
+	"tcp":       func(fd *monitorFormData) interface{} { return &fd.TCP },
+	"dns":       func(fd *monitorFormData) interface{} { return &fd.DNS },
+	"tls":       func(fd *monitorFormData) interface{} { return &fd.TLS },
+	"websocket": func(fd *monitorFormData) interface{} { return &fd.WS },
+	"command":   func(fd *monitorFormData) interface{} { return &fd.Cmd },
+	"docker":    func(fd *monitorFormData) interface{} { return &fd.Docker },
+	"domain":    func(fd *monitorFormData) interface{} { return &fd.Domain },
+	"grpc":      func(fd *monitorFormData) interface{} { return &fd.GRPC },
+	"mqtt":      func(fd *monitorFormData) interface{} { return &fd.MQTT },
+}
+
+func unmarshalMonitorSettings(fd *monitorFormData, mon *storage.Monitor) {
+	if fn, ok := settingsTargets[mon.Type]; ok {
+		json.Unmarshal(mon.Settings, fn(fd))
+	}
+}
+
+func applyHTTPDefaults(fd *monitorFormData) {
 	fd.FollowRedirects = fd.HTTP.FollowRedirects == nil || *fd.HTTP.FollowRedirects
 	fd.MaxRedirects = fd.HTTP.MaxRedirects
 	if fd.MaxRedirects == 0 && fd.FollowRedirects {
@@ -101,10 +105,6 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 	if fd.HTTP.BodyEncoding == "" {
 		fd.HTTP.BodyEncoding = "json"
 	}
-	fd.HeadersJSON = headersToJSON(fd.HTTP.Headers)
-	fd.WsHeadersJSON = headersToJSON(fd.WS.Headers)
-	fd.AssertionsJSON = assertionsToJSON(mon.Assertions)
-	return fd
 }
 
 func inferHTTPAuthMethod(h storage.HTTPSettings) string {
@@ -144,90 +144,97 @@ func assertionsToJSON(raw json.RawMessage) template.JS {
 	return safeJS(b)
 }
 
-func assembleSettings(r *http.Request, monType string) json.RawMessage {
-	switch monType {
-	case "http":
+var settingsAssemblers = map[string]func(*http.Request) json.RawMessage{
+	"http": func(r *http.Request) json.RawMessage {
 		b, _ := json.Marshal(assembleHTTPSettings(r))
 		return b
-	case "tcp":
-		s := storage.TCPSettings{
+	},
+	"tcp": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.TCPSettings{
 			SendData:   r.FormValue("settings_send_data"),
 			ExpectData: r.FormValue("settings_expect_data"),
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	case "dns":
-		s := storage.DNSSettings{
+	},
+	"dns": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.DNSSettings{
 			RecordType: r.FormValue("settings_record_type"),
 			Server:     r.FormValue("settings_dns_server"),
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	case "tls":
+	},
+	"tls": func(r *http.Request) json.RawMessage {
 		s := storage.TLSSettings{}
 		if v := r.FormValue("settings_warn_days_before"); v != "" {
 			s.WarnDaysBefore, _ = strconv.Atoi(v)
 		}
 		b, _ := json.Marshal(s)
 		return b
-	case "websocket":
-		s := storage.WebSocketSettings{
+	},
+	"websocket": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.WebSocketSettings{
 			SendMessage: r.FormValue("settings_send_message"),
 			ExpectReply: r.FormValue("settings_expect_reply"),
 			Headers:     assembleHeaders(r, "settings_ws_header_key", "settings_ws_header_value"),
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	case "command":
-		s := storage.CommandSettings{
-			Command: r.FormValue("settings_command"),
-		}
-		if argsStr := strings.TrimSpace(r.FormValue("settings_args")); argsStr != "" {
-			for _, a := range strings.Split(argsStr, ",") {
-				if trimmed := strings.TrimSpace(a); trimmed != "" {
-					s.Args = append(s.Args, trimmed)
-				}
-			}
-		}
-		b, _ := json.Marshal(s)
-		return b
-	case "docker":
-		s := storage.DockerSettings{
+	},
+	"command": assembleCommandSettings,
+	"docker": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.DockerSettings{
 			ContainerName: r.FormValue("settings_container_name"),
 			SocketPath:    r.FormValue("settings_socket_path"),
 			CheckHealth:   r.FormValue("settings_check_health") == "on",
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	case "domain":
+	},
+	"domain": func(r *http.Request) json.RawMessage {
 		s := storage.DomainSettings{}
 		if v := r.FormValue("settings_domain_warn_days"); v != "" {
 			s.WarnDaysBefore, _ = strconv.Atoi(v)
 		}
 		b, _ := json.Marshal(s)
 		return b
-	case "grpc":
-		s := storage.GRPCSettings{
+	},
+	"grpc": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.GRPCSettings{
 			ServiceName:   r.FormValue("settings_grpc_service"),
 			UseTLS:        r.FormValue("settings_grpc_tls") == "on",
 			SkipTLSVerify: r.FormValue("settings_grpc_skip_verify") == "on",
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	case "mqtt":
-		s := storage.MQTTSettings{
+	},
+	"mqtt": func(r *http.Request) json.RawMessage {
+		b, _ := json.Marshal(storage.MQTTSettings{
 			ClientID:      r.FormValue("settings_mqtt_client_id"),
 			Username:      r.FormValue("settings_mqtt_username"),
 			Password:      r.FormValue("settings_mqtt_password"),
 			Topic:         r.FormValue("settings_mqtt_topic"),
 			ExpectMessage: r.FormValue("settings_mqtt_expect"),
 			UseTLS:        r.FormValue("settings_mqtt_tls") == "on",
-		}
-		b, _ := json.Marshal(s)
+		})
 		return b
-	default:
-		return nil
+	},
+}
+
+func assembleSettings(r *http.Request, monType string) json.RawMessage {
+	if fn, ok := settingsAssemblers[monType]; ok {
+		return fn(r)
 	}
+	return nil
+}
+
+func assembleCommandSettings(r *http.Request) json.RawMessage {
+	s := storage.CommandSettings{Command: r.FormValue("settings_command")}
+	if argsStr := strings.TrimSpace(r.FormValue("settings_args")); argsStr != "" {
+		for _, a := range strings.Split(argsStr, ",") {
+			if trimmed := strings.TrimSpace(a); trimmed != "" {
+				s.Args = append(s.Args, trimmed)
+			}
+		}
+	}
+	b, _ := json.Marshal(s)
+	return b
 }
 
 func assembleHTTPSettings(r *http.Request) storage.HTTPSettings {

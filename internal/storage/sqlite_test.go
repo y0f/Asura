@@ -349,183 +349,165 @@ func TestIsMonitorOnStatusPage(t *testing.T) {
 }
 
 func TestSessionCRUD(t *testing.T) {
+	t.Run("CreateAndGet", testSessionCreateAndGet)
+	t.Run("GetNotFound", testSessionGetNotFound)
+	t.Run("Delete", testSessionDelete)
+	t.Run("DeleteExpired", testSessionDeleteExpired)
+	t.Run("DeleteByAPIKeyName", testSessionDeleteByAPIKeyName)
+	t.Run("DeleteExceptKeyNames", testSessionDeleteExceptKeyNames)
+	t.Run("DeleteExceptKeyNamesEmpty", testSessionDeleteExceptEmpty)
+	t.Run("KeyHashStored", testSessionKeyHashStored)
+}
+
+func testSessionCreateAndGet(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()
+	sess := &Session{
+		TokenHash: "abc123hash", APIKeyName: "admin",
+		IPAddress: "192.168.1.1", ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+	if err := store.CreateSession(ctx, sess); err != nil {
+		t.Fatal(err)
+	}
+	if sess.ID == 0 {
+		t.Fatal("expected non-zero ID")
+	}
+	got, err := store.GetSessionByTokenHash(ctx, "abc123hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.APIKeyName != "admin" {
+		t.Fatalf("expected api_key_name 'admin', got %q", got.APIKeyName)
+	}
+	if got.IPAddress != "192.168.1.1" {
+		t.Fatalf("expected ip '192.168.1.1', got %q", got.IPAddress)
+	}
+}
 
-	t.Run("CreateAndGet", func(t *testing.T) {
-		sess := &Session{
-			TokenHash:  "abc123hash",
-			APIKeyName: "admin",
-			IPAddress:  "192.168.1.1",
-			ExpiresAt:  time.Now().Add(24 * time.Hour),
-		}
-		if err := store.CreateSession(ctx, sess); err != nil {
-			t.Fatal(err)
-		}
-		if sess.ID == 0 {
-			t.Fatal("expected non-zero ID")
-		}
+func testSessionGetNotFound(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	_, err := store.GetSessionByTokenHash(ctx, "nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent session")
+	}
+}
 
-		got, err := store.GetSessionByTokenHash(ctx, "abc123hash")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.APIKeyName != "admin" {
-			t.Fatalf("expected api_key_name 'admin', got %q", got.APIKeyName)
-		}
-		if got.IPAddress != "192.168.1.1" {
-			t.Fatalf("expected ip '192.168.1.1', got %q", got.IPAddress)
-		}
+func testSessionDelete(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{TokenHash: "deleteme", APIKeyName: "admin", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	if err := store.DeleteSession(ctx, "deleteme"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.GetSessionByTokenHash(ctx, "deleteme"); err == nil {
+		t.Fatal("expected error after delete")
+	}
+}
+
+func testSessionDeleteExpired(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{TokenHash: "expired_token", APIKeyName: "admin", ExpiresAt: time.Now().Add(-1 * time.Hour)})
+	store.CreateSession(ctx, &Session{TokenHash: "valid_token", APIKeyName: "admin", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+	deleted, err := store.DeleteExpiredSessions(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted == 0 {
+		t.Fatal("expected at least 1 expired session deleted")
+	}
+	if _, err = store.GetSessionByTokenHash(ctx, "expired_token"); err == nil {
+		t.Fatal("expected expired session to be deleted")
+	}
+	got, err := store.GetSessionByTokenHash(ctx, "valid_token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.TokenHash != "valid_token" {
+		t.Fatal("valid session should still exist")
+	}
+}
+
+func testSessionDeleteByAPIKeyName(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{TokenHash: "key1_sess1", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	store.CreateSession(ctx, &Session{TokenHash: "key1_sess2", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	store.CreateSession(ctx, &Session{TokenHash: "key2_sess1", APIKeyName: "key2", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+	deleted, err := store.DeleteSessionsByAPIKeyName(ctx, "key1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 2 {
+		t.Fatalf("expected 2 deleted, got %d", deleted)
+	}
+	if _, err = store.GetSessionByTokenHash(ctx, "key1_sess1"); err == nil {
+		t.Fatal("expected key1 session to be deleted")
+	}
+	got, err := store.GetSessionByTokenHash(ctx, "key2_sess1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.APIKeyName != "key2" {
+		t.Fatal("key2 session should still exist")
+	}
+}
+
+func testSessionDeleteExceptKeyNames(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{TokenHash: "admin_tok", APIKeyName: "admin", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	store.CreateSession(ctx, &Session{TokenHash: "readonly_tok", APIKeyName: "readonly", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	store.CreateSession(ctx, &Session{TokenHash: "removed_tok", APIKeyName: "removed", ExpiresAt: time.Now().Add(24 * time.Hour)})
+
+	deleted, err := store.DeleteSessionsExceptKeyNames(ctx, []string{"admin", "readonly"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("expected 1 deleted, got %d", deleted)
+	}
+	if _, err = store.GetSessionByTokenHash(ctx, "removed_tok"); err == nil {
+		t.Fatal("expected removed key session to be deleted")
+	}
+	if _, err := store.GetSessionByTokenHash(ctx, "admin_tok"); err != nil {
+		t.Fatal("admin session should still exist")
+	}
+	if _, err := store.GetSessionByTokenHash(ctx, "readonly_tok"); err != nil {
+		t.Fatal("readonly session should still exist")
+	}
+}
+
+func testSessionDeleteExceptEmpty(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{TokenHash: "tok1", APIKeyName: "any", ExpiresAt: time.Now().Add(24 * time.Hour)})
+	deleted, err := store.DeleteSessionsExceptKeyNames(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("expected 1 deleted, got %d", deleted)
+	}
+}
+
+func testSessionKeyHashStored(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	store.CreateSession(ctx, &Session{
+		TokenHash: "hash_test_tok", APIKeyName: "admin",
+		KeyHash: "abcdef123456", ExpiresAt: time.Now().Add(24 * time.Hour),
 	})
-
-	t.Run("GetNotFound", func(t *testing.T) {
-		_, err := store.GetSessionByTokenHash(ctx, "nonexistent")
-		if err == nil {
-			t.Fatal("expected error for nonexistent session")
-		}
-	})
-
-	t.Run("Delete", func(t *testing.T) {
-		sess := &Session{
-			TokenHash:  "deleteme",
-			APIKeyName: "admin",
-			ExpiresAt:  time.Now().Add(24 * time.Hour),
-		}
-		store.CreateSession(ctx, sess)
-
-		if err := store.DeleteSession(ctx, "deleteme"); err != nil {
-			t.Fatal(err)
-		}
-		_, err := store.GetSessionByTokenHash(ctx, "deleteme")
-		if err == nil {
-			t.Fatal("expected error after delete")
-		}
-	})
-
-	t.Run("DeleteExpired", func(t *testing.T) {
-		// Create an already-expired session
-		expired := &Session{
-			TokenHash:  "expired_token",
-			APIKeyName: "admin",
-			ExpiresAt:  time.Now().Add(-1 * time.Hour),
-		}
-		store.CreateSession(ctx, expired)
-
-		// Create a valid session
-		valid := &Session{
-			TokenHash:  "valid_token",
-			APIKeyName: "admin",
-			ExpiresAt:  time.Now().Add(24 * time.Hour),
-		}
-		store.CreateSession(ctx, valid)
-
-		deleted, err := store.DeleteExpiredSessions(ctx)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if deleted == 0 {
-			t.Fatal("expected at least 1 expired session deleted")
-		}
-
-		// Expired session should be gone
-		_, err = store.GetSessionByTokenHash(ctx, "expired_token")
-		if err == nil {
-			t.Fatal("expected expired session to be deleted")
-		}
-
-		// Valid session should still exist
-		got, err := store.GetSessionByTokenHash(ctx, "valid_token")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.TokenHash != "valid_token" {
-			t.Fatal("valid session should still exist")
-		}
-	})
-
-	t.Run("DeleteByAPIKeyName", func(t *testing.T) {
-		s2 := testStore(t)
-		s2.CreateSession(ctx, &Session{TokenHash: "key1_sess1", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
-		s2.CreateSession(ctx, &Session{TokenHash: "key1_sess2", APIKeyName: "key1", ExpiresAt: time.Now().Add(24 * time.Hour)})
-		s2.CreateSession(ctx, &Session{TokenHash: "key2_sess1", APIKeyName: "key2", ExpiresAt: time.Now().Add(24 * time.Hour)})
-
-		deleted, err := s2.DeleteSessionsByAPIKeyName(ctx, "key1")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if deleted != 2 {
-			t.Fatalf("expected 2 deleted, got %d", deleted)
-		}
-
-		_, err = s2.GetSessionByTokenHash(ctx, "key1_sess1")
-		if err == nil {
-			t.Fatal("expected key1 session to be deleted")
-		}
-		got, err := s2.GetSessionByTokenHash(ctx, "key2_sess1")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.APIKeyName != "key2" {
-			t.Fatal("key2 session should still exist")
-		}
-	})
-
-	t.Run("DeleteExceptKeyNames", func(t *testing.T) {
-		s3 := testStore(t)
-		s3.CreateSession(ctx, &Session{TokenHash: "admin_tok", APIKeyName: "admin", ExpiresAt: time.Now().Add(24 * time.Hour)})
-		s3.CreateSession(ctx, &Session{TokenHash: "readonly_tok", APIKeyName: "readonly", ExpiresAt: time.Now().Add(24 * time.Hour)})
-		s3.CreateSession(ctx, &Session{TokenHash: "removed_tok", APIKeyName: "removed", ExpiresAt: time.Now().Add(24 * time.Hour)})
-
-		deleted, err := s3.DeleteSessionsExceptKeyNames(ctx, []string{"admin", "readonly"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if deleted != 1 {
-			t.Fatalf("expected 1 deleted, got %d", deleted)
-		}
-
-		_, err = s3.GetSessionByTokenHash(ctx, "removed_tok")
-		if err == nil {
-			t.Fatal("expected removed key session to be deleted")
-		}
-		if _, err := s3.GetSessionByTokenHash(ctx, "admin_tok"); err != nil {
-			t.Fatal("admin session should still exist")
-		}
-		if _, err := s3.GetSessionByTokenHash(ctx, "readonly_tok"); err != nil {
-			t.Fatal("readonly session should still exist")
-		}
-	})
-
-	t.Run("DeleteExceptKeyNamesEmpty", func(t *testing.T) {
-		s4 := testStore(t)
-		s4.CreateSession(ctx, &Session{TokenHash: "tok1", APIKeyName: "any", ExpiresAt: time.Now().Add(24 * time.Hour)})
-
-		deleted, err := s4.DeleteSessionsExceptKeyNames(ctx, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if deleted != 1 {
-			t.Fatalf("expected 1 deleted, got %d", deleted)
-		}
-	})
-
-	t.Run("KeyHashStored", func(t *testing.T) {
-		s5 := testStore(t)
-		s5.CreateSession(ctx, &Session{
-			TokenHash:  "hash_test_tok",
-			APIKeyName: "admin",
-			KeyHash:    "abcdef123456",
-			ExpiresAt:  time.Now().Add(24 * time.Hour),
-		})
-
-		got, err := s5.GetSessionByTokenHash(ctx, "hash_test_tok")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.KeyHash != "abcdef123456" {
-			t.Fatalf("expected key_hash 'abcdef123456', got %q", got.KeyHash)
-		}
-	})
+	got, err := store.GetSessionByTokenHash(ctx, "hash_test_tok")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.KeyHash != "abcdef123456" {
+		t.Fatalf("expected key_hash 'abcdef123456', got %q", got.KeyHash)
+	}
 }
 
 func TestRequestLogBatchInsertAndList(t *testing.T) {
@@ -885,52 +867,33 @@ func TestTOTPKeyCRUD(t *testing.T) {
 }
 
 func TestProxyCRUD(t *testing.T) {
+	t.Run("CreateGetListUpdateDelete", testProxyLifecycle)
+	t.Run("AssignToMonitor", testProxyAssignToMonitor)
+	t.Run("NotFound", testProxyNotFound)
+}
+
+func testProxyLifecycle(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()
-
-	// Create
 	p := &Proxy{
-		Name:     "Test Proxy",
-		Protocol: "http",
-		Host:     "proxy.example.com",
-		Port:     8080,
-		AuthUser: "user",
-		AuthPass: "pass",
-		Enabled:  true,
+		Name: "Test Proxy", Protocol: "http", Host: "proxy.example.com",
+		Port: 8080, AuthUser: "user", AuthPass: "pass", Enabled: true,
 	}
-	err := store.CreateProxy(ctx, p)
-	if err != nil {
+	if err := store.CreateProxy(ctx, p); err != nil {
 		t.Fatal(err)
 	}
 	if p.ID == 0 {
 		t.Fatal("expected non-zero ID")
 	}
 
-	// Get
 	got, err := store.GetProxy(ctx, p.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Name != "Test Proxy" {
-		t.Fatalf("expected 'Test Proxy', got %q", got.Name)
-	}
-	if got.Protocol != "http" {
-		t.Fatalf("expected 'http', got %q", got.Protocol)
-	}
-	if got.Host != "proxy.example.com" {
-		t.Fatalf("expected 'proxy.example.com', got %q", got.Host)
-	}
-	if got.Port != 8080 {
-		t.Fatalf("expected 8080, got %d", got.Port)
-	}
-	if got.AuthUser != "user" {
-		t.Fatalf("expected 'user', got %q", got.AuthUser)
-	}
-	if got.AuthPass != "pass" {
-		t.Fatalf("expected 'pass', got %q", got.AuthPass)
+	if got.Name != "Test Proxy" || got.Host != "proxy.example.com" || got.Port != 8080 {
+		t.Fatalf("get mismatch: %+v", got)
 	}
 
-	// List
 	proxies, err := store.ListProxies(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -939,61 +902,53 @@ func TestProxyCRUD(t *testing.T) {
 		t.Fatalf("expected 1 proxy, got %d", len(proxies))
 	}
 
-	// Update
 	p.Name = "Updated Proxy"
 	p.Protocol = "socks5"
 	p.Port = 1080
-	err = store.UpdateProxy(ctx, p)
-	if err != nil {
+	if err := store.UpdateProxy(ctx, p); err != nil {
 		t.Fatal(err)
 	}
 	got, _ = store.GetProxy(ctx, p.ID)
-	if got.Name != "Updated Proxy" {
-		t.Fatalf("expected 'Updated Proxy', got %q", got.Name)
-	}
-	if got.Protocol != "socks5" {
-		t.Fatalf("expected 'socks5', got %q", got.Protocol)
-	}
-	if got.Port != 1080 {
-		t.Fatalf("expected 1080, got %d", got.Port)
+	if got.Name != "Updated Proxy" || got.Protocol != "socks5" || got.Port != 1080 {
+		t.Fatalf("update mismatch: %+v", got)
 	}
 
-	// Assign proxy to monitor
-	m := &Monitor{
-		Name:             "Proxied Monitor",
-		Type:             "http",
-		Target:           "https://example.com",
-		Interval:         60,
-		Timeout:          10,
-		Enabled:          true,
-		Tags:             []string{},
-		FailureThreshold: 3,
-		SuccessThreshold: 1,
-		ProxyID:          &p.ID,
+	if err := store.DeleteProxy(ctx, p.ID); err != nil {
+		t.Fatal(err)
 	}
-	err = store.CreateMonitor(ctx, m)
-	if err != nil {
+	proxies, _ = store.ListProxies(ctx)
+	if len(proxies) != 0 {
+		t.Fatalf("expected 0 proxies after delete, got %d", len(proxies))
+	}
+}
+
+func testProxyAssignToMonitor(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	p := &Proxy{Name: "Proxy", Protocol: "http", Host: "proxy.example.com", Port: 8080, Enabled: true}
+	if err := store.CreateProxy(ctx, p); err != nil {
+		t.Fatal(err)
+	}
+	m := &Monitor{
+		Name: "Proxied Monitor", Type: "http", Target: "https://example.com",
+		Interval: 60, Timeout: 10, Enabled: true, Tags: []string{},
+		FailureThreshold: 3, SuccessThreshold: 1, ProxyID: &p.ID,
+	}
+	if err := store.CreateMonitor(ctx, m); err != nil {
 		t.Fatal(err)
 	}
 	mon, _ := store.GetMonitor(ctx, m.ID)
 	if mon.ProxyID == nil || *mon.ProxyID != p.ID {
 		t.Fatalf("expected proxy_id=%d, got %v", p.ID, mon.ProxyID)
 	}
+}
 
-	// Delete proxy
-	err = store.DeleteProxy(ctx, p.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	proxies, _ = store.ListProxies(ctx)
-	if len(proxies) != 0 {
-		t.Fatalf("expected 0 proxies, got %d", len(proxies))
-	}
-
-	// Not found
-	_, err = store.GetProxy(ctx, p.ID)
+func testProxyNotFound(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	_, err := store.GetProxy(ctx, 99999)
 	if err == nil {
-		t.Fatal("expected error for deleted proxy")
+		t.Fatal("expected error for nonexistent proxy")
 	}
 }
 
