@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 func testStore(t *testing.T) *storage.SQLiteStore {

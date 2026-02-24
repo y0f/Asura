@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 type DiscordSettings struct {
@@ -40,9 +40,9 @@ func (s *DiscordSender) Send(ctx context.Context, channel *storage.NotificationC
 		color = 0xF39C12 // yellow
 	}
 
-	body, _ := json.Marshal(map[string]interface{}{
+	body, _ := json.Marshal(map[string]any{
 		"username": "Asura Monitor",
-		"embeds": []map[string]interface{}{
+		"embeds": []map[string]any{
 			{
 				"title":       text,
 				"color":       color,

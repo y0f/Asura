@@ -206,7 +206,7 @@ func evalCertExpiry(a Assertion, certExpiry *int64) AssertionDetail {
 
 	// Value is in days
 	expectedDays, _ := strconv.ParseInt(a.Value, 10, 64)
-	daysUntilExpiry := (*certExpiry - nowFunc().Unix()) / 86400
+	daysUntilExpiry := (*certExpiry - _nowFunc().Unix()) / 86400
 	actual := strconv.FormatInt(daysUntilExpiry, 10)
 
 	pass := compareInt64(daysUntilExpiry, expectedDays, a.Operator)
@@ -251,8 +251,8 @@ func evalDNSRecord(a Assertion, dnsRecords []string) AssertionDetail {
 
 // walkJSONPath walks a JSON document using dot notation with array indexing.
 // Examples: "status", "data.name", "items[0].id", "nested.list[2].value"
-func walkJSONPath(jsonStr string, path string) (interface{}, error) {
-	var root interface{}
+func walkJSONPath(jsonStr string, path string) (any, error) {
+	var root any
 	if err := json.Unmarshal([]byte(jsonStr), &root); err != nil {
 		return nil, fmt.Errorf("invalid JSON body")
 	}
@@ -264,7 +264,7 @@ func walkJSONPath(jsonStr string, path string) (interface{}, error) {
 		key, idx, hasIdx := parsePathPart(part)
 
 		if key != "" {
-			obj, ok := current.(map[string]interface{})
+			obj, ok := current.(map[string]any)
 			if !ok {
 				return nil, fmt.Errorf("expected object at %s", key)
 			}
@@ -276,7 +276,7 @@ func walkJSONPath(jsonStr string, path string) (interface{}, error) {
 		}
 
 		if hasIdx {
-			arr, ok := current.([]interface{})
+			arr, ok := current.([]any)
 			if !ok {
 				return nil, fmt.Errorf("expected array at index %d", idx)
 			}
@@ -402,5 +402,5 @@ func truncate(s string, max int) string {
 	return s[:max] + "..."
 }
 
-// nowFunc allows overriding time in tests.
-var nowFunc = time.Now
+// _nowFunc allows overriding time in tests.
+var _nowFunc = time.Now

@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/y0f/Asura/internal/safenet"
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/safenet"
+	"github.com/y0f/asura/internal/storage"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
@@ -21,7 +21,6 @@ func (c *ICMPChecker) Type() string { return "icmp" }
 
 func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Result, error) {
 	timeout := time.Duration(monitor.Timeout) * time.Second
-
 	start := time.Now()
 
 	addrs, err := net.DefaultResolver.LookupIP(ctx, "ip4", monitor.Target)
@@ -41,20 +40,32 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 
-	// Try privileged raw socket first, fall back to udp
-	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	conn, err := listenICMP()
 	if err != nil {
-		// Fall back to UDP (works on Linux with net.ipv4.ping_group_range)
-		conn, err = icmp.ListenPacket("udp4", "0.0.0.0")
-		if err != nil {
-			return &Result{
-				Status:  "down",
-				Message: fmt.Sprintf("ICMP listen failed: %v", err),
-			}, nil
-		}
+		return &Result{Status: "down", Message: fmt.Sprintf("ICMP listen failed: %v", err)}, nil
 	}
 	defer conn.Close()
 
+	if err := sendEchoRequest(conn, dst); err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: time.Since(start).Milliseconds(),
+			Message:      fmt.Sprintf("send failed: %v", err),
+		}, nil
+	}
+
+	return readEchoReply(conn, dst, start, timeout)
+}
+
+func listenICMP() (*icmp.PacketConn, error) {
+	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		conn, err = icmp.ListenPacket("udp4", "0.0.0.0")
+	}
+	return conn, err
+}
+
+func sendEchoRequest(conn *icmp.PacketConn, dst net.IP) error {
 	msg := icmp.Message{
 		Type: ipv4.ICMPTypeEcho,
 		Code: 0,
@@ -66,7 +77,7 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	}
 	wb, err := msg.Marshal(nil)
 	if err != nil {
-		return &Result{Status: "down", Message: fmt.Sprintf("marshal failed: %v", err)}, nil
+		return err
 	}
 
 	var dstAddr net.Addr
@@ -75,15 +86,11 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	} else {
 		dstAddr = &net.IPAddr{IP: dst}
 	}
+	_, err = conn.WriteTo(wb, dstAddr)
+	return err
+}
 
-	if _, err := conn.WriteTo(wb, dstAddr); err != nil {
-		return &Result{
-			Status:       "down",
-			ResponseTime: time.Since(start).Milliseconds(),
-			Message:      fmt.Sprintf("send failed: %v", err),
-		}, nil
-	}
-
+func readEchoReply(conn *icmp.PacketConn, dst net.IP, start time.Time, timeout time.Duration) (*Result, error) {
 	conn.SetReadDeadline(time.Now().Add(timeout))
 	rb := make([]byte, 1500)
 	n, _, err := conn.ReadFrom(rb)
@@ -97,13 +104,12 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 
-	proto := 1 // ICMPv4
+	proto := 1
 	if conn.LocalAddr().Network() == "udp4" {
-		proto = 58 // parse as-is for UDP
+		proto = 58
 	}
 	rm, err := icmp.ParseMessage(proto, rb[:n])
 	if err != nil {
-		// Try parsing with the other protocol number
 		rm, err = icmp.ParseMessage(1, rb[:n])
 		if err != nil {
 			return &Result{

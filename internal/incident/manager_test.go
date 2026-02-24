@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 	"log/slog"
 )
 

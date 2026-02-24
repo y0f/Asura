@@ -1,0 +1,146 @@
+package web
+
+import (
+	"database/sql"
+	"errors"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/y0f/asura/internal/httputil"
+	"github.com/y0f/asura/internal/incident"
+	"github.com/y0f/asura/internal/notifier"
+	"github.com/y0f/asura/internal/storage"
+	"github.com/y0f/asura/internal/validate"
+)
+
+func newIncidentEvent(incidentID int64, eventType, message string) *storage.IncidentEvent {
+	return &storage.IncidentEvent{
+		IncidentID: incidentID,
+		Type:       eventType,
+		Message:    message,
+	}
+}
+
+func (h *Handler) Incidents(w http.ResponseWriter, r *http.Request) {
+	p := httputil.ParsePagination(r)
+	status := r.URL.Query().Get("status")
+	if !validate.ValidIncidentStatuses[status] {
+		status = ""
+	}
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+
+	result, err := h.store.ListIncidents(r.Context(), 0, status, q, p)
+	if err != nil {
+		h.logger.Error("web: list incidents", "error", err)
+	}
+
+	pd := h.newPageData(r, "Incidents", "incidents")
+	pd.Data = map[string]any{
+		"Result": result,
+		"Filter": status,
+		"Search": q,
+	}
+	h.render(w, "incidents/list.html", pd)
+}
+
+func (h *Handler) IncidentDetail(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
+
+	inc, err := h.store.GetIncident(r.Context(), id)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
+
+	events, _ := h.store.ListIncidentEvents(r.Context(), id)
+
+	pd := h.newPageData(r, "Incident #"+r.PathValue("id"), "incidents")
+	pd.Data = map[string]any{
+		"Incident": inc,
+		"Events":   events,
+	}
+	h.render(w, "incidents/detail.html", pd)
+}
+
+func (h *Handler) IncidentAck(w http.ResponseWriter, r *http.Request) {
+	id, _ := httputil.ParseID(r)
+	ctx := r.Context()
+
+	inc, err := h.store.GetIncident(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			h.redirect(w, r, "/incidents")
+			return
+		}
+		h.logger.Error("web: get incident for ack", "error", err)
+		h.redirect(w, r, "/incidents")
+		return
+	}
+
+	now := time.Now().UTC()
+	inc.Status = incident.StatusAcknowledged
+	inc.AcknowledgedAt = &now
+	inc.AcknowledgedBy = httputil.GetAPIKeyName(ctx)
+
+	if err := h.store.UpdateIncident(ctx, inc); err != nil {
+		h.logger.Error("web: ack incident", "error", err)
+	}
+
+	h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy))
+
+	if h.notifier != nil {
+		h.notifier.NotifyWithPayload(&notifier.Payload{
+			EventType: "incident.acknowledged",
+			Incident:  inc,
+		})
+	}
+
+	h.setFlash(w, "Incident acknowledged")
+	h.redirect(w, r, "/incidents/"+r.PathValue("id"))
+}
+
+func (h *Handler) IncidentResolve(w http.ResponseWriter, r *http.Request) {
+	id, _ := httputil.ParseID(r)
+	ctx := r.Context()
+
+	inc, err := h.store.GetIncident(ctx, id)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
+
+	now := time.Now().UTC()
+	inc.Status = incident.StatusResolved
+	inc.ResolvedAt = &now
+	inc.ResolvedBy = httputil.GetAPIKeyName(ctx)
+
+	if err := h.store.UpdateIncident(ctx, inc); err != nil {
+		h.logger.Error("web: resolve incident", "error", err)
+	}
+
+	h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy))
+
+	if h.notifier != nil {
+		h.notifier.NotifyWithPayload(&notifier.Payload{
+			EventType: "incident.resolved",
+			Incident:  inc,
+		})
+	}
+
+	h.setFlash(w, "Incident resolved")
+	h.redirect(w, r, "/incidents/"+r.PathValue("id"))
+}
+
+func (h *Handler) IncidentDelete(w http.ResponseWriter, r *http.Request) {
+	id, _ := httputil.ParseID(r)
+	if err := h.store.DeleteIncident(r.Context(), id); err != nil {
+		h.logger.Error("web: delete incident", "error", err)
+	}
+	h.setFlash(w, "Incident deleted")
+	h.redirect(w, r, "/incidents")
+}

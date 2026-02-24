@@ -1,0 +1,173 @@
+{{define "status_page"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="icon" href="{{.BasePath}}/static/favicon.ico">
+    <link rel="stylesheet" href="{{.BasePath}}/static/tailwind.css">
+    <script defer src="{{.BasePath}}/static/alpine.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::selection { background: rgba(0,128,255,.15); }
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgb(var(--line-light-rgb)); border-radius: 3px; }
+        .noise-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700' width='700' height='700'%3E%3Cdefs%3E%3Cfilter id='nnnoise-filter' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' seed='15' stitchTiles='stitch' x='0%25' y='0%25' width='100%25' height='100%25' result='turbulence'/%3E%3CfeSpecularLighting surfaceScale='5' specularConstant='0.8' specularExponent='20' lighting-color='white' x='0%25' y='0%25' width='100%25' height='100%25' in='turbulence' result='specularLighting'%3E%3CfeDistantLight azimuth='3' elevation='96'/%3E%3C/feSpecularLighting%3E%3CfeColorMatrix type='saturate' values='0' x='0%25' y='0%25' width='100%25' height='100%25' in='specularLighting' result='colormatrix'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='700' height='700' fill='black'/%3E%3Crect width='700' height='700' fill='white' filter='url(%23nnnoise-filter)'/%3E%3C/svg%3E");
+            background-size: 400px;
+            opacity: 0.045;
+        }
+        .glow-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(ellipse 90% 45% at 50% -5%, rgba(0,128,255,0.08) 0%, transparent 70%);
+        }
+        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+        .animate-ping { animation: ping 1.5s cubic-bezier(0,0,.2,1) infinite; }
+        {{with .Data}}{{with index . "Config"}}{{if .CustomCSS}}{{safeCSS .CustomCSS}}{{end}}{{end}}{{end}}
+    </style>
+</head>
+<body class="bg-surface text-muted-light font-sans min-h-screen antialiased">
+    <div class="noise-bg"></div>
+    <div class="glow-bg"></div>
+
+    <div class="relative z-10 max-w-2xl mx-auto px-4 py-14 sm:px-6 sm:py-20">
+        {{with .Data}}
+        {{$cfg := index . "Config"}}
+        {{$overall := index . "Overall"}}
+        {{$monitors := index . "Monitors"}}
+        {{$incidents := index . "Incidents"}}
+        {{$hasIncidents := index . "HasIncidents"}}
+
+        <div class="mb-8 rounded-lg border {{if eq $overall "operational"}}border-emerald-500/20 bg-emerald-500/[0.04]{{else if eq $overall "degraded"}}border-yellow-500/20 bg-yellow-500/[0.04]{{else}}border-red-500/20 bg-red-500/[0.04]{{end}} px-4 py-3.5 flex items-center gap-3">
+            <span class="relative flex h-2 w-2 flex-shrink-0">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{if eq $overall "operational"}}bg-emerald-400{{else if eq $overall "degraded"}}bg-yellow-400{{else}}bg-red-400{{end}} opacity-50"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 {{if eq $overall "operational"}}bg-emerald-400{{else if eq $overall "degraded"}}bg-yellow-400{{else}}bg-red-400{{end}}"></span>
+            </span>
+            <span class="text-[13px] font-medium {{if eq $overall "operational"}}text-emerald-400{{else if eq $overall "degraded"}}text-yellow-400{{else}}text-red-400{{end}}">
+                {{if eq $overall "operational"}}All Systems Operational{{else if eq $overall "degraded"}}Partial System Degradation{{else}}Major System Outage{{end}}
+            </span>
+        </div>
+
+        {{$hasGroups := false}}
+        {{if index . "HasGroups"}}{{$hasGroups = true}}{{end}}
+
+        {{if $hasGroups}}
+        {{$groups := index . "Groups"}}
+        {{range $groups}}
+        {{if .Name}}
+        <h2 class="text-[11px] font-medium text-muted uppercase tracking-widest mb-2 mt-6">{{.Name}}</h2>
+        {{end}}
+        <div class="border border-line rounded-lg overflow-hidden divide-y divide-line mb-4">
+            {{range .Monitors}}
+            <div class="px-4 py-4" style="background: rgb(var(--surface-50-rgb) / 0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">{{.Monitor.Name}}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full {{statusDot .Monitor.Status}}"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Monitor.Status}}">{{.Monitor.Status}}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-[2px]" x-data="{tooltip: '', show: false, mx: 0, my: 0}">
+                    {{range .DailyBars}}
+                    <div class="flex-1 h-7 rounded-[2px] {{uptimeBarColor .UptimePct .HasData}} opacity-80 hover:opacity-100 transition-opacity cursor-default"
+                         @mouseenter="tooltip = '{{uptimeBarTooltip .UptimePct .HasData .Label}}'; show = true; mx = $event.clientX; my = $event.clientY"
+                         @mousemove="mx = $event.clientX; my = $event.clientY"
+                         @mouseleave="show = false"></div>
+                    {{end}}
+                    <div x-show="show" x-cloak
+                         class="fixed z-50 px-2.5 py-1.5 bg-surface-100 border border-line rounded text-[11px] text-muted-light shadow-lg pointer-events-none whitespace-nowrap"
+                         :style="`top: ${my - 40}px; left: ${mx}px`"
+                         x-text="tooltip"></div>
+                </div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums {{uptimeColor .Uptime90d}}">{{.UptimeLabel}}</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+
+        {{else if $monitors}}
+        <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+            {{range $monitors}}
+            <div class="px-4 py-4" style="background: rgb(var(--surface-50-rgb) / 0.35)">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[13px] font-medium text-white">{{.Monitor.Name}}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full {{statusDot .Monitor.Status}}"></span>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Monitor.Status}}">{{.Monitor.Status}}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-[2px]" x-data="{tooltip: '', show: false, mx: 0, my: 0}">
+                    {{range .DailyBars}}
+                    <div class="flex-1 h-7 rounded-[2px] {{uptimeBarColor .UptimePct .HasData}} opacity-80 hover:opacity-100 transition-opacity cursor-default"
+                         @mouseenter="tooltip = '{{uptimeBarTooltip .UptimePct .HasData .Label}}'; show = true; mx = $event.clientX; my = $event.clientY"
+                         @mousemove="mx = $event.clientX; my = $event.clientY"
+                         @mouseleave="show = false"></div>
+                    {{end}}
+                    <div x-show="show" x-cloak
+                         class="fixed z-50 px-2.5 py-1.5 bg-surface-100 border border-line rounded text-[11px] text-muted-light shadow-lg pointer-events-none whitespace-nowrap"
+                         :style="`top: ${my - 40}px; left: ${mx}px`"
+                         x-text="tooltip"></div>
+                </div>
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-[10px] text-muted">90 days ago</span>
+                    <span class="text-[11px] font-medium tabular-nums {{uptimeColor .Uptime90d}}">{{.UptimeLabel}}</span>
+                    <span class="text-[10px] text-muted">Today</span>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="border border-line rounded-lg px-4 py-12 text-center">
+            <p class="text-muted text-[13px]">No monitors configured</p>
+        </div>
+        {{end}}
+
+        {{if and $cfg.ShowIncidents $hasIncidents}}
+        <div class="mt-8">
+            <h2 class="text-[10px] font-medium text-muted uppercase tracking-widest mb-3">Recent Incidents</h2>
+            <div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+                {{range $incidents}}
+                <div class="px-4 py-3" style="background: rgb(var(--surface-50-rgb) / 0.35)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full {{statusDot .Status}}"></span>
+                            <span class="text-[13px] text-white">{{.MonitorName}}</span>
+                        </div>
+                        <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Status}}">{{.Status}}</span>
+                    </div>
+                    <div class="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+                        <span>{{timeAgo .StartedAt}}</span>
+                        {{if .Cause}}<span>{{.Cause}}</span>{{end}}
+                        {{if .ResolvedAt}}<span class="text-emerald-400">Resolved in {{incidentDuration .StartedAt .ResolvedAt}}</span>{{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <div class="mt-12 pt-5 border-t border-line flex items-center justify-center gap-1.5">
+            <span class="text-[11px] text-muted">Powered by</span>
+            <a href="https://github.com/y0f/asura" target="_blank" rel="noopener" class="flex items-center">
+                <img src="{{$.BasePath}}/static/logo.gif" alt="Asura" class="h-2" style="margin-top:2px">
+            </a>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>
+{{end}}

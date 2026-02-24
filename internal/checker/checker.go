@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 // Result holds the outcome of a protocol check.

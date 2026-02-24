@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 type TelegramSettings struct {
@@ -35,7 +35,7 @@ func (s *TelegramSender) Send(ctx context.Context, channel *storage.Notification
 	text := html.EscapeString(FormatMessage(payload))
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", settings.BotToken)
 
-	body, _ := json.Marshal(map[string]interface{}{
+	body, _ := json.Marshal(map[string]any{
 		"chat_id":    settings.ChatID,
 		"text":       text,
 		"parse_mode": "HTML",

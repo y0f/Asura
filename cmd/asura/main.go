@@ -2,28 +2,24 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/y0f/Asura/internal/api"
-	"github.com/y0f/Asura/internal/checker"
-	"github.com/y0f/Asura/internal/config"
-	"github.com/y0f/Asura/internal/incident"
-	"github.com/y0f/Asura/internal/monitor"
-	"github.com/y0f/Asura/internal/notifier"
-	"github.com/y0f/Asura/internal/storage"
-	"github.com/y0f/Asura/internal/totp"
+	"github.com/y0f/asura/internal/checker"
+	"github.com/y0f/asura/internal/config"
+	"github.com/y0f/asura/internal/incident"
+	"github.com/y0f/asura/internal/monitor"
+	"github.com/y0f/asura/internal/notifier"
+	"github.com/y0f/asura/internal/server"
+	"github.com/y0f/asura/internal/storage"
 )
 
 var version = "dev"
@@ -44,7 +40,11 @@ func main() {
 	}
 
 	if *setup {
-		key, hash := generateAPIKey()
+		key, hash, err := generateAPIKey()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
 		fmt.Println()
 		fmt.Printf("  API Key : %s\n", key)
 		fmt.Printf("  Hash    : %s\n", hash)
@@ -61,7 +61,11 @@ func main() {
 	}
 
 	if *setupTOTP != "" || *verifyTOTP != "" || *removeTOTP != "" {
-		handleTOTPCommands(*configPath, *setupTOTP, *verifyTOTP, *removeTOTP, flag.Args())
+		if err := handleTOTPCommands(*configPath, *setupTOTP, *verifyTOTP, *removeTOTP, flag.Args()); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	cfg, err := config.Load(*configPath)
@@ -100,7 +104,7 @@ func main() {
 	retentionWorker := storage.NewRetentionWorker(store, cfg.Database.RetentionDays, cfg.Database.RequestLogRetentionDays, cfg.Database.RetentionPeriod, logger)
 	go retentionWorker.Run(ctx)
 
-	srv := api.NewServer(cfg, store, pipeline, dispatcher, logger, version)
+	srv := server.NewServer(cfg, store, pipeline, dispatcher, logger, version)
 	go srv.RequestLogWriter().Run(ctx)
 	go runRollupWorker(ctx, store, logger)
 	httpServer := startHTTPServer(cfg, srv, logger, cancel)
@@ -180,17 +184,6 @@ func startHTTPServer(cfg *config.Config, handler http.Handler, logger *slog.Logg
 	return httpServer
 }
 
-func generateAPIKey() (key, hash string) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		fmt.Fprintf(os.Stderr, "error: failed to generate random bytes: %v\n", err)
-		os.Exit(1)
-	}
-	key = "ak_" + hex.EncodeToString(b)
-	hash = config.HashAPIKey(key)
-	return key, hash
-}
-
 func setupLogger(cfg config.LoggingConfig) *slog.Logger {
 	level := slog.LevelInfo
 	switch strings.ToLower(cfg.Level) {
@@ -228,112 +221,6 @@ func runRollupWorker(ctx context.Context, store storage.Store, logger *slog.Logg
 				logger.Error("request log rollup failed", "date", yesterday, "error", err)
 			}
 		}
-	}
-}
-
-func handleTOTPCommands(configPath, setupName, verifyName, removeName string, args []string) {
-	cfg, err := config.Load(configPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-
-	store, err := storage.NewSQLiteStore(cfg.Database.Path, 1)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: failed to open database: %v\n", err)
-		os.Exit(1)
-	}
-	defer store.Close()
-	ctx := context.Background()
-
-	switch {
-	case setupName != "":
-		handleSetupTOTP(ctx, store, cfg, setupName)
-	case verifyName != "":
-		handleVerifyTOTP(ctx, store, verifyName, args)
-	case removeName != "":
-		handleRemoveTOTP(ctx, store, removeName)
-	}
-
-	os.Exit(0)
-}
-
-func handleSetupTOTP(ctx context.Context, store storage.Store, cfg *config.Config, name string) {
-	apiKey := cfg.LookupAPIKeyByName(name)
-	if apiKey == nil {
-		fmt.Fprintf(os.Stderr, "error: API key %q not found in config\n", name)
-		os.Exit(1)
-	}
-	if !apiKey.TOTP {
-		fmt.Fprintf(os.Stderr, "error: API key %q does not have totp: true in config\n", name)
-		os.Exit(1)
-	}
-	if existing, _ := store.GetTOTPKey(ctx, name); existing != nil {
-		fmt.Fprintf(os.Stderr, "error: TOTP already configured for %q — remove first with --remove-totp %s\n", name, name)
-		os.Exit(1)
-	}
-
-	secret, err := totp.GenerateSecret()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	encoded := totp.EncodeSecret(secret)
-	if err := store.CreateTOTPKey(ctx, &storage.TOTPKey{APIKeyName: name, Secret: encoded}); err != nil {
-		fmt.Fprintf(os.Stderr, "error: failed to store TOTP key: %v\n", err)
-		os.Exit(1)
-	}
-
-	uri := totp.FormatKeyURI("Asura", name, secret)
-	fmt.Println()
-	fmt.Printf("  TOTP configured for %q\n", name)
-	fmt.Println()
-	fmt.Printf("  Secret : %s\n", encoded)
-	fmt.Printf("  URI    : %s\n", uri)
-	fmt.Println()
-	printQR(uri)
-	fmt.Println("  Scan the QR code or enter the secret in your authenticator app.")
-	fmt.Println("  Verify with: asura --verify-totp", name, "CODE")
-	fmt.Println()
-}
-
-func handleVerifyTOTP(ctx context.Context, store storage.Store, name string, args []string) {
-	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "usage: asura --verify-totp %s CODE\n", name)
-		os.Exit(1)
-	}
-	totpKey, err := store.GetTOTPKey(ctx, name)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: no TOTP key found for %q\n", name)
-		os.Exit(1)
-	}
-	secret, err := totp.DecodeSecret(totpKey.Secret)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: failed to decode TOTP secret: %v\n", err)
-		os.Exit(1)
-	}
-	if totp.Validate(secret, args[0], time.Now()) {
-		fmt.Println("valid")
-		os.Exit(0)
-	}
-	fmt.Println("invalid")
-	os.Exit(1)
-}
-
-func handleRemoveTOTP(ctx context.Context, store storage.Store, name string) {
-	if err := store.DeleteTOTPKey(ctx, name); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("TOTP removed for %q\n", name)
-}
-
-func printQR(data string) {
-	cmd := exec.Command("qrencode", "-t", "ANSIUTF8", data)
-	cmd.Stdout = os.Stdout
-	if err := cmd.Run(); err != nil {
-		fmt.Println("  (install qrencode for a scannable QR code: apt install qrencode)")
-		fmt.Println()
 	}
 }
 

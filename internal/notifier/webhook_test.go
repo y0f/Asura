@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 func TestWebhookSender(t *testing.T) {

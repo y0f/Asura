@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 type SlackSettings struct {
@@ -34,9 +34,9 @@ func (s *SlackSender) Send(ctx context.Context, channel *storage.NotificationCha
 
 	text := escapeSlackMrkdwn(FormatMessage(payload))
 
-	msg := map[string]interface{}{
+	msg := map[string]any{
 		"text": text,
-		"blocks": []map[string]interface{}{
+		"blocks": []map[string]any{
 			{
 				"type": "section",
 				"text": map[string]string{

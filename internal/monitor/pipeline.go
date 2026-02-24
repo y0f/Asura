@@ -9,11 +9,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/y0f/Asura/internal/assertion"
-	"github.com/y0f/Asura/internal/checker"
-	"github.com/y0f/Asura/internal/diff"
-	"github.com/y0f/Asura/internal/incident"
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/assertion"
+	"github.com/y0f/asura/internal/checker"
+	"github.com/y0f/asura/internal/diff"
+	"github.com/y0f/asura/internal/incident"
+	"github.com/y0f/asura/internal/storage"
 )
 
 // Pipeline orchestrates the full monitoring flow:

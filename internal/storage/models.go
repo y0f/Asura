@@ -208,11 +208,11 @@ type Pagination struct {
 
 // PaginatedResult wraps a list response with metadata.
 type PaginatedResult struct {
-	Data       interface{} `json:"data"`
-	Total      int64       `json:"total"`
-	Page       int         `json:"page"`
-	PerPage    int         `json:"per_page"`
-	TotalPages int         `json:"total_pages"`
+	Data       any   `json:"data"`
+	Total      int64 `json:"total"`
+	Page       int   `json:"page"`
+	PerPage    int   `json:"per_page"`
+	TotalPages int   `json:"total_pages"`
 }
 
 // Heartbeat tracks a heartbeat monitor's ping state.

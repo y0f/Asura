@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 // Sender sends a notification via a specific channel type.

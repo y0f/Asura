@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/storage"
 )
 
 const defaultDockerSocket = "/var/run/docker.sock"

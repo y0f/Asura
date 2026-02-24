@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-var privateRanges []*net.IPNet
+var _privateRanges []*net.IPNet
 
 func init() {
 	for _, cidr := range []string{
@@ -31,7 +31,7 @@ func init() {
 		"fe80::/10",
 	} {
 		_, ipNet, _ := net.ParseCIDR(cidr)
-		privateRanges = append(privateRanges, ipNet)
+		_privateRanges = append(_privateRanges, ipNet)
 	}
 }
 
@@ -40,7 +40,7 @@ func IsPrivateIP(ip net.IP) bool {
 	if ip4 := ip.To4(); ip4 != nil {
 		ip = ip4
 	}
-	for _, r := range privateRanges {
+	for _, r := range _privateRanges {
 		if r.Contains(ip) {
 			return true
 		}

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/y0f/Asura/internal/safenet"
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/safenet"
+	"github.com/y0f/asura/internal/storage"
 )
 
 type DomainChecker struct {
@@ -78,14 +78,14 @@ func queryWhois(ctx context.Context, domain, server string, timeout time.Duratio
 	start := time.Now()
 	conn, err := dialFn(ctx, "tcp", server+":43")
 	if err != nil {
-		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS connection failed: %v", err)
+		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS connection failed: %w", err)
 	}
 	defer conn.Close()
 
 	conn.SetDeadline(time.Now().Add(timeout))
 
 	if _, err = fmt.Fprintf(conn, "%s\r\n", domain); err != nil {
-		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS query failed: %v", err)
+		return "", time.Since(start).Milliseconds(), fmt.Errorf("WHOIS query failed: %w", err)
 	}
 
 	scanner := bufio.NewScanner(conn)
@@ -103,7 +103,7 @@ func queryWhois(ctx context.Context, domain, server string, timeout time.Duratio
 	elapsed := time.Since(start).Milliseconds()
 
 	if body == "" && scanner.Err() != nil {
-		return "", elapsed, fmt.Errorf("WHOIS read failed: %v", scanner.Err())
+		return "", elapsed, fmt.Errorf("WHOIS read failed: %w", scanner.Err())
 	}
 	return body, elapsed, nil
 }
@@ -147,7 +147,7 @@ func extractTLD(domain string) string {
 	return "." + parts[len(parts)-1]
 }
 
-var whoisServers = map[string]string{
+var _whoisServers = map[string]string{
 	".com":   "whois.verisign-grs.com",
 	".net":   "whois.verisign-grs.com",
 	".org":   "whois.pir.org",
@@ -181,13 +181,13 @@ var whoisServers = map[string]string{
 }
 
 func whoisServerForTLD(tld string) string {
-	if s, ok := whoisServers[tld]; ok {
+	if s, ok := _whoisServers[tld]; ok {
 		return s
 	}
 	return ""
 }
 
-var expiryPatterns = []*regexp.Regexp{
+var _expiryPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)Registry Expiry Date:\s*(.+)`),
 	regexp.MustCompile(`(?i)Registrar Registration Expiration Date:\s*(.+)`),
 	regexp.MustCompile(`(?i)Expir(?:y|ation) Date:\s*(.+)`),
@@ -198,7 +198,7 @@ var expiryPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)Valid Until:\s*(.+)`),
 }
 
-var dateFormats = []string{
+var _dateFormats = []string{
 	time.RFC3339,
 	"2006-01-02T15:04:05Z",
 	"2006-01-02T15:04:05-07:00",
@@ -213,13 +213,13 @@ var dateFormats = []string{
 }
 
 func parseWhoisExpiry(response string) (time.Time, error) {
-	for _, re := range expiryPatterns {
+	for _, re := range _expiryPatterns {
 		match := re.FindStringSubmatch(response)
 		if match == nil || len(match) < 2 {
 			continue
 		}
 		dateStr := strings.TrimSpace(match[1])
-		for _, format := range dateFormats {
+		for _, format := range _dateFormats {
 			t, err := time.Parse(format, dateStr)
 			if err == nil {
 				return t, nil

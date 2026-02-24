@@ -10,8 +10,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/y0f/Asura/internal/safenet"
-	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/asura/internal/safenet"
+	"github.com/y0f/asura/internal/storage"
 )
 
 type MQTTChecker struct {
@@ -112,12 +112,12 @@ func mqttTLSUpgrade(ctx context.Context, conn net.Conn, target string) (net.Conn
 
 func mqttHandshake(conn net.Conn, clientID string, settings storage.MQTTSettings) error {
 	if _, err := conn.Write(buildConnectPacket(clientID, settings.Username, settings.Password)); err != nil {
-		return fmt.Errorf("MQTT CONNECT send failed: %v", err)
+		return fmt.Errorf("MQTT CONNECT send failed: %w", err)
 	}
 
 	connackBuf := make([]byte, 4)
 	if _, err := readFull(conn, connackBuf); err != nil {
-		return fmt.Errorf("MQTT CONNACK read failed: %v", err)
+		return fmt.Errorf("MQTT CONNACK read failed: %w", err)
 	}
 
 	if connackBuf[0]>>4 != 2 {
@@ -132,12 +132,12 @@ func mqttHandshake(conn net.Conn, clientID string, settings storage.MQTTSettings
 
 func mqttSubscribe(conn net.Conn, topic string) error {
 	if _, err := conn.Write(buildSubscribePacket(1, topic)); err != nil {
-		return fmt.Errorf("MQTT SUBSCRIBE send failed: %v", err)
+		return fmt.Errorf("MQTT SUBSCRIBE send failed: %w", err)
 	}
 
 	subackBuf := make([]byte, 5)
 	if _, err := readFull(conn, subackBuf); err != nil {
-		return fmt.Errorf("MQTT SUBACK read failed: %v", err)
+		return fmt.Errorf("MQTT SUBACK read failed: %w", err)
 	}
 
 	if subackBuf[0]>>4 != 9 {
