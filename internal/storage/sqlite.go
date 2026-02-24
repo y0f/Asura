@@ -158,12 +158,16 @@ func (s *SQLiteStore) CreateMonitor(ctx context.Context, m *Monitor) error {
 	if m.GroupID != nil {
 		groupID = *m.GroupID
 	}
+	var proxyID interface{}
+	if m.ProxyID != nil {
+		proxyID = *m.ProxyID
+	}
 	res, err := tx.ExecContext(ctx,
-		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, upside_down, resend_interval, group_id, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO monitors (name, description, type, target, interval_secs, timeout_secs, enabled, tags, settings, assertions, track_changes, failure_threshold, success_threshold, upside_down, resend_interval, group_id, proxy_id, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, now,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, proxyID, now, now,
 	)
 	if err != nil {
 		return err
@@ -192,7 +196,7 @@ func (s *SQLiteStore) GetMonitor(ctx context.Context, id int64) (*Monitor, error
 	row := s.readDB.QueryRowContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.proxy_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -231,7 +235,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.proxy_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -274,14 +278,18 @@ func (s *SQLiteStore) UpdateMonitor(ctx context.Context, m *Monitor) error {
 	if m.GroupID != nil {
 		groupID = *m.GroupID
 	}
+	var proxyID interface{}
+	if m.ProxyID != nil {
+		proxyID = *m.ProxyID
+	}
 	_, err := s.writeDB.ExecContext(ctx,
 		`UPDATE monitors SET name=?, description=?, type=?, target=?, interval_secs=?, timeout_secs=?, enabled=?,
 		 tags=?, settings=?, assertions=?, track_changes=?, failure_threshold=?, success_threshold=?,
-		 upside_down=?, resend_interval=?, group_id=?, updated_at=?
+		 upside_down=?, resend_interval=?, group_id=?, proxy_id=?, updated_at=?
 		 WHERE id=?`,
 		m.Name, m.Description, m.Type, m.Target, m.Interval, m.Timeout, boolToInt(m.Enabled),
 		string(tags), string(m.Settings), string(m.Assertions), boolToInt(m.TrackChanges),
-		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, now, m.ID,
+		m.FailureThreshold, m.SuccessThreshold, boolToInt(m.UpsideDown), m.ResendInterval, groupID, proxyID, now, m.ID,
 	)
 	return err
 }
@@ -303,7 +311,7 @@ func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, er
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.proxy_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0)
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
@@ -1977,7 +1985,7 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,
 		        m.tags, m.settings, m.assertions, m.track_changes, m.failure_threshold, m.success_threshold,
-		        m.upside_down, m.resend_interval, m.group_id, m.created_at, m.updated_at,
+		        m.upside_down, m.resend_interval, m.group_id, m.proxy_id, m.created_at, m.updated_at,
 		        COALESCE(ms.status, 'pending'), ms.last_check_at, COALESCE(ms.consec_fails, 0), COALESCE(ms.consec_successes, 0),
 		        spm.sort_order, spm.group_name
 		 FROM status_page_monitors spm
@@ -1997,12 +2005,12 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 		var tagsStr, settingsStr, assertionsStr string
 		var createdAt, updatedAt string
 		var lastCheck sql.NullString
-		var groupID sql.NullInt64
+		var groupID, proxyID sql.NullInt64
 		var spmSortOrder int
 		var spmGroupName string
 		err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 			&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-			&m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
+			&m.UpsideDown, &m.ResendInterval, &groupID, &proxyID, &createdAt, &updatedAt,
 			&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses,
 			&spmSortOrder, &spmGroupName)
 		if err != nil {
@@ -2011,6 +2019,10 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 		if groupID.Valid {
 			gid := groupID.Int64
 			m.GroupID = &gid
+		}
+		if proxyID.Valid {
+			pid := proxyID.Int64
+			m.ProxyID = &pid
 		}
 		m.CreatedAt = parseTime(createdAt)
 		m.UpdatedAt = parseTime(updatedAt)
@@ -2048,6 +2060,81 @@ func (s *SQLiteStore) ListStatusPageMonitorsWithStatus(ctx context.Context, page
 	return monitors, spms, nil
 }
 
+// --- Proxies ---
+
+func (s *SQLiteStore) CreateProxy(ctx context.Context, p *Proxy) error {
+	now := formatTime(time.Now())
+	res, err := s.writeDB.ExecContext(ctx,
+		`INSERT INTO proxies (name, protocol, host, port, auth_user, auth_pass, enabled, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.Name, p.Protocol, p.Host, p.Port, p.AuthUser, p.AuthPass, boolToInt(p.Enabled), now, now)
+	if err != nil {
+		return err
+	}
+	id, _ := res.LastInsertId()
+	p.ID = id
+	p.CreatedAt = parseTime(now)
+	p.UpdatedAt = parseTime(now)
+	return nil
+}
+
+func (s *SQLiteStore) GetProxy(ctx context.Context, id int64) (*Proxy, error) {
+	var p Proxy
+	var createdAt, updatedAt string
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, name, protocol, host, port, auth_user, auth_pass, enabled, created_at, updated_at
+		 FROM proxies WHERE id=?`, id).
+		Scan(&p.ID, &p.Name, &p.Protocol, &p.Host, &p.Port, &p.AuthUser, &p.AuthPass, &p.Enabled, &createdAt, &updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	p.CreatedAt = parseTime(createdAt)
+	p.UpdatedAt = parseTime(updatedAt)
+	return &p, nil
+}
+
+func (s *SQLiteStore) ListProxies(ctx context.Context) ([]*Proxy, error) {
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT id, name, protocol, host, port, auth_user, auth_pass, enabled, created_at, updated_at
+		 FROM proxies ORDER BY name COLLATE NOCASE`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var proxies []*Proxy
+	for rows.Next() {
+		var p Proxy
+		var createdAt, updatedAt string
+		if err := rows.Scan(&p.ID, &p.Name, &p.Protocol, &p.Host, &p.Port, &p.AuthUser, &p.AuthPass, &p.Enabled, &createdAt, &updatedAt); err != nil {
+			return nil, err
+		}
+		p.CreatedAt = parseTime(createdAt)
+		p.UpdatedAt = parseTime(updatedAt)
+		proxies = append(proxies, &p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if proxies == nil {
+		proxies = []*Proxy{}
+	}
+	return proxies, nil
+}
+
+func (s *SQLiteStore) UpdateProxy(ctx context.Context, p *Proxy) error {
+	now := formatTime(time.Now())
+	_, err := s.writeDB.ExecContext(ctx,
+		`UPDATE proxies SET name=?, protocol=?, host=?, port=?, auth_user=?, auth_pass=?, enabled=?, updated_at=? WHERE id=?`,
+		p.Name, p.Protocol, p.Host, p.Port, p.AuthUser, p.AuthPass, boolToInt(p.Enabled), now, p.ID)
+	return err
+}
+
+func (s *SQLiteStore) DeleteProxy(ctx context.Context, id int64) error {
+	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM proxies WHERE id=?", id)
+	return err
+}
+
 // --- Helpers ---
 
 func boolToInt(b bool) int {
@@ -2073,10 +2160,10 @@ func scanMonitor(row scanner) (*Monitor, error) {
 	var tagsStr, settingsStr, assertionsStr string
 	var createdAt, updatedAt string
 	var lastCheck sql.NullString
-	var groupID sql.NullInt64
+	var groupID, proxyID sql.NullInt64
 	err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Type, &m.Target, &m.Interval, &m.Timeout, &m.Enabled,
 		&tagsStr, &settingsStr, &assertionsStr, &m.TrackChanges, &m.FailureThreshold, &m.SuccessThreshold,
-		&m.UpsideDown, &m.ResendInterval, &groupID, &createdAt, &updatedAt,
+		&m.UpsideDown, &m.ResendInterval, &groupID, &proxyID, &createdAt, &updatedAt,
 		&m.Status, &lastCheck, &m.ConsecFails, &m.ConsecSuccesses)
 	if err != nil {
 		return nil, err
@@ -2084,6 +2171,10 @@ func scanMonitor(row scanner) (*Monitor, error) {
 	if groupID.Valid {
 		gid := groupID.Int64
 		m.GroupID = &gid
+	}
+	if proxyID.Valid {
+		pid := proxyID.Int64
+		m.ProxyID = &pid
 	}
 	m.CreatedAt = parseTime(createdAt)
 	m.UpdatedAt = parseTime(updatedAt)

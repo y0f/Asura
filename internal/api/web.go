@@ -223,6 +223,12 @@ var templateFuncs = template.FuncMap{
 			return "Heartbeat"
 		case "docker":
 			return "Docker"
+		case "domain":
+			return "Domain"
+		case "grpc":
+			return "gRPC"
+		case "mqtt":
+			return "MQTT"
 		default:
 			return t
 		}
@@ -309,6 +315,8 @@ func (s *Server) loadTemplates() {
 		"request_logs.html",
 		"status_pages.html",
 		"status_page_form.html",
+		"proxies.html",
+		"proxy_form.html",
 	}
 
 	for _, page := range pages {

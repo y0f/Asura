@@ -1,0 +1,66 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "content"}}
+{{$p := .Data}}
+<div>
+    <h1 class="text-[15px] font-medium text-white mb-5">{{.Title}}</h1>
+
+    <form method="POST" action="{{if $p.ID}}{{.BasePath}}/proxies/{{$p.ID}}{{else}}{{.BasePath}}/proxies{{end}}" class="max-w-2xl space-y-4">
+        <div class="border border-line rounded-lg p-5 space-y-4">
+            <div>
+                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Name</label>
+                <input type="text" name="name" value="{{$p.Name}}" required
+                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors"
+                       placeholder="My Proxy">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Protocol</label>
+                    <select name="protocol"
+                            class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                        <option value="http" {{if eq $p.Protocol "http"}}selected{{end}}>HTTP</option>
+                        <option value="socks5" {{if eq $p.Protocol "socks5"}}selected{{end}}>SOCKS5</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Host</label>
+                    <input type="text" name="host" value="{{$p.Host}}" required
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors"
+                           placeholder="proxy.example.com">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Port</label>
+                    <input type="number" name="port" value="{{$p.Port}}" min="1" max="65535" required
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Auth Username</label>
+                    <input type="text" name="auth_user" value="{{$p.AuthUser}}" placeholder="Optional"
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Auth Password</label>
+                    <input type="password" name="auth_pass" value="{{$p.AuthPass}}" placeholder="Optional"
+                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                </div>
+            </div>
+
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" name="enabled" {{if $p.Enabled}}checked{{end}}
+                       class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                <span class="text-[12px] text-muted-light">Enabled</span>
+            </label>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="submit" class="px-5 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+                {{if $p.ID}}Update{{else}}Create{{end}}
+            </button>
+            <a href="{{.BasePath}}/proxies" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</a>
+        </div>
+    </form>
+</div>
+{{end}}

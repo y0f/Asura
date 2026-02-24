@@ -3,6 +3,7 @@ package monitor
 import (
 	"container/heap"
 	"context"
+	"fmt"
 	"log/slog"
 	"sync"
 	"sync/atomic"
@@ -102,6 +103,8 @@ func (s *Scheduler) loadMonitors(ctx context.Context) {
 		return
 	}
 
+	s.resolveProxyURLs(ctx, monitors)
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -199,6 +202,40 @@ func (s *Scheduler) GetMultiplier(monitorID int64) float64 {
 
 	base := int64(mon.Interval) * int64(time.Second)
 	return float64(eff) / float64(base)
+}
+
+// resolveProxyURLs populates ProxyURL for monitors that have a ProxyID set.
+func (s *Scheduler) resolveProxyURLs(ctx context.Context, monitors []*storage.Monitor) {
+	proxyIDs := make(map[int64]struct{})
+	for _, m := range monitors {
+		if m.ProxyID != nil {
+			proxyIDs[*m.ProxyID] = struct{}{}
+		}
+	}
+	if len(proxyIDs) == 0 {
+		return
+	}
+
+	proxyCache := make(map[int64]string)
+	for id := range proxyIDs {
+		p, err := s.store.GetProxy(ctx, id)
+		if err != nil || !p.Enabled {
+			continue
+		}
+		var proxyURL string
+		if p.AuthUser != "" {
+			proxyURL = fmt.Sprintf("%s://%s:%s@%s:%d", p.Protocol, p.AuthUser, p.AuthPass, p.Host, p.Port)
+		} else {
+			proxyURL = fmt.Sprintf("%s://%s:%d", p.Protocol, p.Host, p.Port)
+		}
+		proxyCache[id] = proxyURL
+	}
+
+	for _, m := range monitors {
+		if m.ProxyID != nil {
+			m.ProxyURL = proxyCache[*m.ProxyID]
+		}
+	}
 }
 
 // UpdateInterval sets the effective interval for a monitor and adjusts the heap.

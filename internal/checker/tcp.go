@@ -27,10 +27,15 @@ func (c *TCPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 	}
 
 	timeout := time.Duration(monitor.Timeout) * time.Second
-	dialer := net.Dialer{Timeout: timeout, Control: safenet.MaybeDialControl(c.AllowPrivate)}
+	baseDial := (&net.Dialer{Timeout: timeout, Control: safenet.MaybeDialControl(c.AllowPrivate)}).DialContext
+
+	dialFn := baseDial
+	if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
+		dialFn = socks
+	}
 
 	start := time.Now()
-	conn, err := dialer.DialContext(ctx, "tcp", monitor.Target)
+	conn, err := dialFn(ctx, "tcp", monitor.Target)
 	elapsed := time.Since(start).Milliseconds()
 
 	if err != nil {

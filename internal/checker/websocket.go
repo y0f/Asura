@@ -32,15 +32,22 @@ func (c *WebSocketChecker) Check(ctx context.Context, monitor *storage.Monitor) 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	baseDial := (&net.Dialer{
+		Timeout: timeout,
+		Control: safenet.MaybeDialControl(c.AllowPrivate),
+	}).DialContext
+
+	transport := &http.Transport{DialContext: baseDial}
+	if monitor.ProxyURL != "" {
+		if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
+			transport.DialContext = socks
+		} else if pu := HTTPProxyURL(monitor.ProxyURL); pu != nil {
+			transport.Proxy = http.ProxyURL(pu)
+		}
+	}
+
 	opts := &websocket.DialOptions{
-		HTTPClient: &http.Client{
-			Transport: &http.Transport{
-				DialContext: (&net.Dialer{
-					Timeout: timeout,
-					Control: safenet.MaybeDialControl(c.AllowPrivate),
-				}).DialContext,
-			},
-		},
+		HTTPClient: &http.Client{Transport: transport},
 	}
 	if len(settings.Headers) > 0 {
 		header := http.Header{}

@@ -884,6 +884,119 @@ func TestTOTPKeyCRUD(t *testing.T) {
 	})
 }
 
+func TestProxyCRUD(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	// Create
+	p := &Proxy{
+		Name:     "Test Proxy",
+		Protocol: "http",
+		Host:     "proxy.example.com",
+		Port:     8080,
+		AuthUser: "user",
+		AuthPass: "pass",
+		Enabled:  true,
+	}
+	err := store.CreateProxy(ctx, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.ID == 0 {
+		t.Fatal("expected non-zero ID")
+	}
+
+	// Get
+	got, err := store.GetProxy(ctx, p.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "Test Proxy" {
+		t.Fatalf("expected 'Test Proxy', got %q", got.Name)
+	}
+	if got.Protocol != "http" {
+		t.Fatalf("expected 'http', got %q", got.Protocol)
+	}
+	if got.Host != "proxy.example.com" {
+		t.Fatalf("expected 'proxy.example.com', got %q", got.Host)
+	}
+	if got.Port != 8080 {
+		t.Fatalf("expected 8080, got %d", got.Port)
+	}
+	if got.AuthUser != "user" {
+		t.Fatalf("expected 'user', got %q", got.AuthUser)
+	}
+	if got.AuthPass != "pass" {
+		t.Fatalf("expected 'pass', got %q", got.AuthPass)
+	}
+
+	// List
+	proxies, err := store.ListProxies(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(proxies) != 1 {
+		t.Fatalf("expected 1 proxy, got %d", len(proxies))
+	}
+
+	// Update
+	p.Name = "Updated Proxy"
+	p.Protocol = "socks5"
+	p.Port = 1080
+	err = store.UpdateProxy(ctx, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetProxy(ctx, p.ID)
+	if got.Name != "Updated Proxy" {
+		t.Fatalf("expected 'Updated Proxy', got %q", got.Name)
+	}
+	if got.Protocol != "socks5" {
+		t.Fatalf("expected 'socks5', got %q", got.Protocol)
+	}
+	if got.Port != 1080 {
+		t.Fatalf("expected 1080, got %d", got.Port)
+	}
+
+	// Assign proxy to monitor
+	m := &Monitor{
+		Name:             "Proxied Monitor",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		Tags:             []string{},
+		FailureThreshold: 3,
+		SuccessThreshold: 1,
+		ProxyID:          &p.ID,
+	}
+	err = store.CreateMonitor(ctx, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mon, _ := store.GetMonitor(ctx, m.ID)
+	if mon.ProxyID == nil || *mon.ProxyID != p.ID {
+		t.Fatalf("expected proxy_id=%d, got %v", p.ID, mon.ProxyID)
+	}
+
+	// Delete proxy
+	err = store.DeleteProxy(ctx, p.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxies, _ = store.ListProxies(ctx)
+	if len(proxies) != 0 {
+		t.Fatalf("expected 0 proxies, got %d", len(proxies))
+	}
+
+	// Not found
+	_, err = store.GetProxy(ctx, p.ID)
+	if err == nil {
+		t.Fatal("expected error for deleted proxy")
+	}
+}
+
 func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

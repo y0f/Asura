@@ -26,6 +26,9 @@ type monitorFormData struct {
 	WS                   storage.WebSocketSettings
 	Cmd                  storage.CommandSettings
 	Docker               storage.DockerSettings
+	Domain               storage.DomainSettings
+	GRPC                 storage.GRPCSettings
+	MQTT                 storage.MQTTSettings
 	FollowRedirects      bool
 	MaxRedirects         int
 	HeadersJSON          template.JS
@@ -36,6 +39,7 @@ type monitorFormData struct {
 	Groups               []*storage.MonitorGroup
 	NotificationChannels []*storage.NotificationChannel
 	SelectedChannelIDs   []int64
+	Proxies              []*storage.Proxy
 }
 
 func monitorToFormData(mon *storage.Monitor) *monitorFormData {
@@ -80,6 +84,12 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 		json.Unmarshal(mon.Settings, &fd.Cmd)
 	case "docker":
 		json.Unmarshal(mon.Settings, &fd.Docker)
+	case "domain":
+		json.Unmarshal(mon.Settings, &fd.Domain)
+	case "grpc":
+		json.Unmarshal(mon.Settings, &fd.GRPC)
+	case "mqtt":
+		json.Unmarshal(mon.Settings, &fd.MQTT)
 	}
 
 	fd.FollowRedirects = fd.HTTP.FollowRedirects == nil || *fd.HTTP.FollowRedirects
@@ -186,6 +196,32 @@ func assembleSettings(r *http.Request, monType string) json.RawMessage {
 			ContainerName: r.FormValue("settings_container_name"),
 			SocketPath:    r.FormValue("settings_socket_path"),
 			CheckHealth:   r.FormValue("settings_check_health") == "on",
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "domain":
+		s := storage.DomainSettings{}
+		if v := r.FormValue("settings_domain_warn_days"); v != "" {
+			s.WarnDaysBefore, _ = strconv.Atoi(v)
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "grpc":
+		s := storage.GRPCSettings{
+			ServiceName:   r.FormValue("settings_grpc_service"),
+			UseTLS:        r.FormValue("settings_grpc_tls") == "on",
+			SkipTLSVerify: r.FormValue("settings_grpc_skip_verify") == "on",
+		}
+		b, _ := json.Marshal(s)
+		return b
+	case "mqtt":
+		s := storage.MQTTSettings{
+			ClientID:      r.FormValue("settings_mqtt_client_id"),
+			Username:      r.FormValue("settings_mqtt_username"),
+			Password:      r.FormValue("settings_mqtt_password"),
+			Topic:         r.FormValue("settings_mqtt_topic"),
+			ExpectMessage: r.FormValue("settings_mqtt_expect"),
+			UseTLS:        r.FormValue("settings_mqtt_tls") == "on",
 		}
 		b, _ := json.Marshal(s)
 		return b
@@ -373,6 +409,7 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 
 	groups, _ := s.store.ListMonitorGroups(r.Context())
 	channels, _ := s.store.ListNotificationChannels(r.Context())
+	proxies, _ := s.store.ListProxies(r.Context())
 
 	idStr := r.PathValue("id")
 	if idStr != "" {
@@ -390,12 +427,14 @@ func (s *Server) handleWebMonitorForm(w http.ResponseWriter, r *http.Request) {
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		fd.SelectedChannelIDs, _ = s.store.GetMonitorNotificationChannelIDs(r.Context(), id)
 		pd.Data = fd
 	} else {
 		fd := monitorToFormData(nil)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		pd.Data = fd
 	}
 
@@ -410,11 +449,13 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 	if err := validateMonitor(mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
 		channels, _ := s.store.ListNotificationChannels(r.Context())
+		proxies, _ := s.store.ListProxies(r.Context())
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
@@ -424,12 +465,14 @@ func (s *Server) handleWebMonitorCreate(w http.ResponseWriter, r *http.Request) 
 	if err := s.store.CreateMonitor(r.Context(), mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
 		channels, _ := s.store.ListNotificationChannels(r.Context())
+		proxies, _ := s.store.ListProxies(r.Context())
 		s.logger.Error("web: create monitor", "error", err)
 		pd := s.newPageData(r, "New Monitor", "monitors")
 		pd.Error = "Failed to create monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
@@ -463,11 +506,13 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 	if err := validateMonitor(mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
 		channels, _ := s.store.ListNotificationChannels(r.Context())
+		proxies, _ := s.store.ListProxies(r.Context())
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
@@ -477,12 +522,14 @@ func (s *Server) handleWebMonitorUpdate(w http.ResponseWriter, r *http.Request) 
 	if err := s.store.UpdateMonitor(r.Context(), mon); err != nil {
 		groups, _ := s.store.ListMonitorGroups(r.Context())
 		channels, _ := s.store.ListNotificationChannels(r.Context())
+		proxies, _ := s.store.ListProxies(r.Context())
 		s.logger.Error("web: update monitor", "error", err)
 		pd := s.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = "Failed to update monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
+		fd.Proxies = proxies
 		fd.SelectedChannelIDs = channelIDs
 		pd.Data = fd
 		s.render(w, "monitor_form.html", pd)
@@ -591,6 +638,13 @@ func (s *Server) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) {
 		gid, err := strconv.ParseInt(v, 10, 64)
 		if err == nil && gid > 0 {
 			mon.GroupID = &gid
+		}
+	}
+
+	if v := r.FormValue("proxy_id"); v != "" {
+		pid, err := strconv.ParseInt(v, 10, 64)
+		if err == nil && pid > 0 {
+			mon.ProxyID = &pid
 		}
 	}
 

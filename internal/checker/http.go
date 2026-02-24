@@ -58,15 +58,25 @@ func (c *HTTPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	applyBodyAndHeaders(req, settings)
 	applyAuthentication(req, settings)
 
+	baseDial := (&net.Dialer{
+		Timeout: time.Duration(monitor.Timeout) * time.Second,
+		Control: safenet.MaybeDialControl(c.AllowPrivate),
+	}).DialContext
+
 	transport := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout: time.Duration(monitor.Timeout) * time.Second,
-			Control: safenet.MaybeDialControl(c.AllowPrivate),
-		}).DialContext,
+		DialContext:       baseDial,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: settings.SkipTLSVerify,
 		},
 		DisableKeepAlives: true,
+	}
+
+	if monitor.ProxyURL != "" {
+		if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
+			transport.DialContext = socks
+		} else if pu := HTTPProxyURL(monitor.ProxyURL); pu != nil {
+			transport.Proxy = http.ProxyURL(pu)
+		}
 	}
 
 	maxRedirects := resolveMaxRedirects(settings)

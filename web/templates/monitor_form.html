@@ -67,6 +67,9 @@
                         <option value="websocket">WebSocket</option>
                         <option value="command">Command</option>
                         <option value="docker">Docker</option>
+                        <option value="domain">Domain</option>
+                        <option value="grpc">gRPC</option>
+                        <option value="mqtt">MQTT</option>
                         <option value="heartbeat">Heartbeat</option>
                     </select>
                 </div>
@@ -114,6 +117,19 @@
                     <option value="">No group</option>
                     {{range $fd.Groups}}
                     <option value="{{.ID}}" {{if and $mon.GroupID (eq (deref $mon.GroupID) .ID)}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            {{end}}
+
+            {{if $fd.Proxies}}
+            <div>
+                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Proxy</label>
+                <select name="proxy_id"
+                        class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                    <option value="">No proxy</option>
+                    {{range $fd.Proxies}}
+                    <option value="{{.ID}}" {{if and $mon.ProxyID (eq (deref $mon.ProxyID) .ID)}}selected{{end}}>{{.Name}} ({{.Protocol}}://{{.Host}}:{{.Port}})</option>
                     {{end}}
                 </select>
             </div>
@@ -403,6 +419,78 @@
                             <input type="checkbox" name="settings_check_health" {{if $fd.Docker.CheckHealth}}checked{{end}}
                                    class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
                             <span class="text-[12px] text-muted-light">Check container health status</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Domain Settings -->
+                <div x-show="monitorType === 'domain'" x-cloak class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Warning Days Before Expiry</label>
+                        <input type="number" name="settings_domain_warn_days" value="{{if $fd.Domain.WarnDaysBefore}}{{$fd.Domain.WarnDaysBefore}}{{else}}30{{end}}" min="1" max="365"
+                               class="w-full max-w-[200px] px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                        <p class="text-[10px] text-muted mt-1">Mark as degraded when domain expires within this many days</p>
+                    </div>
+                </div>
+
+                <!-- gRPC Settings -->
+                <div x-show="monitorType === 'grpc'" x-cloak class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Service Name</label>
+                        <input type="text" name="settings_grpc_service" value="{{$fd.GRPC.ServiceName}}" placeholder="Leave empty for overall health"
+                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        <p class="text-[10px] text-muted mt-1">gRPC service to check (empty = all services)</p>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="settings_grpc_tls" {{if $fd.GRPC.UseTLS}}checked{{end}}
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Use TLS</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="settings_grpc_skip_verify" {{if $fd.GRPC.SkipTLSVerify}}checked{{end}}
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Skip TLS verification</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- MQTT Settings -->
+                <div x-show="monitorType === 'mqtt'" x-cloak class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Client ID</label>
+                            <input type="text" name="settings_mqtt_client_id" value="{{$fd.MQTT.ClientID}}" placeholder="asura-monitor"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Topic</label>
+                            <input type="text" name="settings_mqtt_topic" value="{{$fd.MQTT.Topic}}" placeholder="Optional subscribe topic"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Username</label>
+                            <input type="text" name="settings_mqtt_username" value="{{$fd.MQTT.Username}}" placeholder="Optional"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Password</label>
+                            <input type="password" name="settings_mqtt_password" value="{{$fd.MQTT.Password}}" placeholder="Optional"
+                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Expected Message</label>
+                        <input type="text" name="settings_mqtt_expect" value="{{$fd.MQTT.ExpectMessage}}" placeholder="Optional message content to expect"
+                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                    </div>
+                    <div class="flex items-center flex-wrap gap-5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="settings_mqtt_tls" {{if $fd.MQTT.UseTLS}}checked{{end}}
+                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                            <span class="text-[12px] text-muted-light">Use TLS</span>
                         </label>
                     </div>
                 </div>

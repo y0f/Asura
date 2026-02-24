@@ -23,7 +23,7 @@
     <div class="flex gap-1.5 mb-4 overflow-x-auto pb-1">
         <a href="{{$.BasePath}}/monitors{{if .Data.Search}}?q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if not .Data.Type}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
         {{$search := .Data.Search}}{{$curType := .Data.Type}}
-        {{range $type := (list "http" "tcp" "dns" "icmp" "tls" "websocket" "command" "heartbeat" "docker")}}
+        {{range $type := (list "http" "tcp" "dns" "icmp" "tls" "websocket" "command" "heartbeat" "docker" "domain" "grpc" "mqtt")}}
         <a href="{{$.BasePath}}/monitors?type={{$type}}{{if $search}}&q={{$search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $curType $type}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">{{typeLabel $type}}</a>
         {{end}}
     </div>

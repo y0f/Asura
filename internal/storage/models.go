@@ -24,11 +24,13 @@ type Monitor struct {
 	UpsideDown       bool            `json:"upside_down"`
 	ResendInterval   int             `json:"resend_interval"`
 	GroupID          *int64          `json:"group_id,omitempty"`
+	ProxyID          *int64          `json:"proxy_id,omitempty"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 
 	// Transient fields (not stored in monitors table)
 	NotificationChannelIDs []int64 `json:"notification_channel_ids,omitempty"`
+	ProxyURL               string  `json:"-"` // resolved at check time
 
 	// Computed fields (not stored directly)
 	Status          string     `json:"status,omitempty"`
@@ -89,6 +91,28 @@ type DockerSettings struct {
 	ContainerName string `json:"container_name"`
 	SocketPath    string `json:"socket_path,omitempty"`
 	CheckHealth   bool   `json:"check_health,omitempty"`
+}
+
+// DomainSettings holds domain expiry (WHOIS) check configuration.
+type DomainSettings struct {
+	WarnDaysBefore int `json:"warn_days_before,omitempty"`
+}
+
+// GRPCSettings holds gRPC health check configuration.
+type GRPCSettings struct {
+	ServiceName   string `json:"service_name,omitempty"`
+	UseTLS        bool   `json:"use_tls,omitempty"`
+	SkipTLSVerify bool   `json:"skip_tls_verify,omitempty"`
+}
+
+// MQTTSettings holds MQTT connection check configuration.
+type MQTTSettings struct {
+	ClientID      string `json:"client_id,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Password      string `json:"password,omitempty"`
+	Topic         string `json:"topic,omitempty"`
+	ExpectMessage string `json:"expect_message,omitempty"`
+	UseTLS        bool   `json:"use_tls,omitempty"`
 }
 
 // CheckResult stores the outcome of a single check execution.
@@ -318,6 +342,20 @@ type TOTPKey struct {
 	APIKeyName string    `json:"api_key_name"`
 	Secret     string    `json:"-"`
 	CreatedAt  time.Time `json:"created_at"`
+}
+
+// Proxy represents a configured proxy server.
+type Proxy struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Protocol  string    `json:"protocol"` // http, socks5
+	Host      string    `json:"host"`
+	Port      int       `json:"port"`
+	AuthUser  string    `json:"auth_user,omitempty"`
+	AuthPass  string    `json:"-"`
+	Enabled   bool      `json:"enabled"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Session represents a server-side web UI session.

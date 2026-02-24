@@ -30,16 +30,26 @@ func (c *DNSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 		recordType = "A"
 	}
 
+	baseDial := (&net.Dialer{
+		Timeout: time.Duration(monitor.Timeout) * time.Second,
+		Control: safenet.MaybeDialControl(c.AllowPrivate),
+	}).DialContext
+
+	dialFn := baseDial
+	if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
+		dialFn = socks
+	}
+
 	resolver := net.DefaultResolver
 	if settings.Server != "" {
 		resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: time.Duration(monitor.Timeout) * time.Second,
-					Control: safenet.MaybeDialControl(c.AllowPrivate),
+				proto := "udp"
+				if monitor.ProxyURL != "" {
+					proto = "tcp"
 				}
-				return d.DialContext(ctx, "udp", settings.Server+":53")
+				return dialFn(ctx, proto, settings.Server+":53")
 			},
 		}
 	}

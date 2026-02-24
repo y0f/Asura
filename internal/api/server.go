@@ -160,6 +160,14 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 		mux.Handle("GET "+s.p("/logs"), webAuth(http.HandlerFunc(s.handleWebRequestLogs)))
 
+		// Proxies
+		mux.Handle("GET "+s.p("/proxies"), webAuth(http.HandlerFunc(s.handleWebProxies)))
+		mux.Handle("GET "+s.p("/proxies/new"), webAuth(http.HandlerFunc(s.handleWebProxyForm)))
+		mux.Handle("GET "+s.p("/proxies/{id}/edit"), webAuth(http.HandlerFunc(s.handleWebProxyForm)))
+		mux.Handle("POST "+s.p("/proxies"), webPerm("monitors.write", s.handleWebProxyCreate))
+		mux.Handle("POST "+s.p("/proxies/{id}"), webPerm("monitors.write", s.handleWebProxyUpdate))
+		mux.Handle("POST "+s.p("/proxies/{id}/delete"), webPerm("monitors.write", s.handleWebProxyDelete))
+
 		// Status pages admin
 		mux.Handle("GET "+s.p("/status-pages"), webAuth(http.HandlerFunc(s.handleWebStatusPages)))
 		mux.Handle("GET "+s.p("/status-pages/new"), webAuth(http.HandlerFunc(s.handleWebStatusPageForm)))
@@ -215,6 +223,13 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("POST "+s.p("/api/v1/maintenance"), maintWrite(http.HandlerFunc(s.handleCreateMaintenance)))
 	mux.Handle("PUT "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleUpdateMaintenance)))
 	mux.Handle("DELETE "+s.p("/api/v1/maintenance/{id}"), maintWrite(http.HandlerFunc(s.handleDeleteMaintenance)))
+
+	// Proxies API
+	mux.Handle("GET "+s.p("/api/v1/proxies"), monRead(http.HandlerFunc(s.handleListProxies)))
+	mux.Handle("GET "+s.p("/api/v1/proxies/{id}"), monRead(http.HandlerFunc(s.handleGetProxy)))
+	mux.Handle("POST "+s.p("/api/v1/proxies"), monWrite(http.HandlerFunc(s.handleCreateProxy)))
+	mux.Handle("PUT "+s.p("/api/v1/proxies/{id}"), monWrite(http.HandlerFunc(s.handleUpdateProxy)))
+	mux.Handle("DELETE "+s.p("/api/v1/proxies/{id}"), monWrite(http.HandlerFunc(s.handleDeleteProxy)))
 
 	// Status pages API
 	mux.Handle("GET "+s.p("/api/v1/status-pages"), monRead(http.HandlerFunc(s.handleListStatusPages)))

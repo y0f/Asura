@@ -125,6 +125,13 @@ type Store interface {
 	ListStatusPageMonitors(ctx context.Context, pageID int64) ([]StatusPageMonitor, error)
 	ListStatusPageMonitorsWithStatus(ctx context.Context, pageID int64) ([]*Monitor, []StatusPageMonitor, error)
 
+	// Proxies
+	CreateProxy(ctx context.Context, p *Proxy) error
+	GetProxy(ctx context.Context, id int64) (*Proxy, error)
+	ListProxies(ctx context.Context) ([]*Proxy, error)
+	UpdateProxy(ctx context.Context, p *Proxy) error
+	DeleteProxy(ctx context.Context, id int64) error
+
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
 

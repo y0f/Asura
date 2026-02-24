@@ -39,30 +39,38 @@ func (c *TLSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 
 	host, _, _ := net.SplitHostPort(target)
 
-	dialer := &tls.Dialer{
-		NetDialer: &net.Dialer{
-			Timeout: time.Duration(monitor.Timeout) * time.Second,
-			Control: safenet.MaybeDialControl(c.AllowPrivate),
-		},
-		Config: &tls.Config{
-			ServerName: host,
-		},
+	baseDial := (&net.Dialer{
+		Timeout: time.Duration(monitor.Timeout) * time.Second,
+		Control: safenet.MaybeDialControl(c.AllowPrivate),
+	}).DialContext
+
+	dialFn := baseDial
+	if socks := ProxyDialer(monitor.ProxyURL, baseDial); socks != nil {
+		dialFn = socks
 	}
 
 	start := time.Now()
-	conn, err := dialer.DialContext(ctx, "tcp", target)
-	elapsed := time.Since(start).Milliseconds()
-
+	rawConn, err := dialFn(ctx, "tcp", target)
 	if err != nil {
 		return &Result{
 			Status:       "down",
-			ResponseTime: elapsed,
+			ResponseTime: time.Since(start).Milliseconds(),
 			Message:      fmt.Sprintf("TLS connection failed: %v", err),
 		}, nil
 	}
-	defer conn.Close()
 
-	tlsConn := conn.(*tls.Conn)
+	tlsConn := tls.Client(rawConn, &tls.Config{ServerName: host})
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		rawConn.Close()
+		return &Result{
+			Status:       "down",
+			ResponseTime: time.Since(start).Milliseconds(),
+			Message:      fmt.Sprintf("TLS handshake failed: %v", err),
+		}, nil
+	}
+	defer tlsConn.Close()
+	elapsed := time.Since(start).Milliseconds()
+
 	state := tlsConn.ConnectionState()
 
 	if len(state.PeerCertificates) == 0 {

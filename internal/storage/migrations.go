@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 16
+const schemaVersion = 17
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS monitors (
 	upside_down     INTEGER NOT NULL DEFAULT 0,
 	resend_interval INTEGER NOT NULL DEFAULT 0,
 	group_id        INTEGER DEFAULT NULL,
+	proxy_id        INTEGER DEFAULT NULL REFERENCES proxies(id) ON DELETE SET NULL,
 	created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
 	updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
@@ -226,6 +227,19 @@ CREATE TABLE IF NOT EXISTS totp_keys (
 	secret       TEXT NOT NULL,
 	created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+
+CREATE TABLE IF NOT EXISTS proxies (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL,
+	protocol   TEXT    NOT NULL DEFAULT 'http',
+	host       TEXT    NOT NULL,
+	port       INTEGER NOT NULL,
+	auth_user  TEXT    NOT NULL DEFAULT '',
+	auth_pass  TEXT    NOT NULL DEFAULT '',
+	enabled    INTEGER NOT NULL DEFAULT 1,
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
 `
 
 // migrations holds incremental schema changes after the baseline.
@@ -244,5 +258,21 @@ var migrations = []struct {
 	secret       TEXT NOT NULL,
 	created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );`,
+	},
+	{
+		version: 17,
+		sql: `CREATE TABLE IF NOT EXISTS proxies (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL,
+	protocol   TEXT    NOT NULL DEFAULT 'http',
+	host       TEXT    NOT NULL,
+	port       INTEGER NOT NULL,
+	auth_user  TEXT    NOT NULL DEFAULT '',
+	auth_pass  TEXT    NOT NULL DEFAULT '',
+	enabled    INTEGER NOT NULL DEFAULT 1,
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+ALTER TABLE monitors ADD COLUMN proxy_id INTEGER DEFAULT NULL REFERENCES proxies(id) ON DELETE SET NULL;`,
 	},
 }

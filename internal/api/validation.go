@@ -12,7 +12,8 @@ import (
 var validMonitorTypes = map[string]bool{
 	"http": true, "tcp": true, "dns": true,
 	"icmp": true, "tls": true, "websocket": true, "command": true,
-	"heartbeat": true, "docker": true,
+	"heartbeat": true, "docker": true, "domain": true,
+	"grpc": true, "mqtt": true,
 }
 
 var validIncidentStatuses = map[string]bool{
@@ -39,7 +40,7 @@ func validateMonitor(m *storage.Monitor) error {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
 	if !validMonitorTypes[m.Type] {
-		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat, docker")
+		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat, docker, domain, grpc, mqtt")
 	}
 	if m.Type == "heartbeat" {
 		return nil
@@ -173,6 +174,28 @@ func validateStatusPage(sp *storage.StatusPage) error {
 		return fmt.Errorf("description must be at most 1000 characters")
 	}
 	sp.CustomCSS = sanitizeCSS(sp.CustomCSS)
+	return nil
+}
+
+func validateProxy(p *storage.Proxy) error {
+	if strings.TrimSpace(p.Name) == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(p.Name) > 255 {
+		return fmt.Errorf("name must be at most 255 characters")
+	}
+	if p.Protocol != "http" && p.Protocol != "socks5" {
+		return fmt.Errorf("protocol must be http or socks5")
+	}
+	if strings.TrimSpace(p.Host) == "" {
+		return fmt.Errorf("host is required")
+	}
+	if len(p.Host) > 255 {
+		return fmt.Errorf("host must be at most 255 characters")
+	}
+	if p.Port < 1 || p.Port > 65535 {
+		return fmt.Errorf("port must be between 1 and 65535")
+	}
 	return nil
 }
 
