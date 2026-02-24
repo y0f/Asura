@@ -2,24 +2,14 @@
 
 Thanks for your interest in contributing. This guide covers the basics.
 
-## Getting Started
-
-```bash
-git clone https://github.com/y0f/Asura.git
-cd asura
-make build
-make test
-```
+## Development Workflow
 
 Requires Go 1.22+.
 
-## Development Workflow
-
-1. Fork the repo and create a branch from `master`
+1. Fork the repo and create a branch from `main`
 2. Make your changes
-3. Run `make test` and `make lint`
-4. Commit with a clear message (see below)
-5. Open a pull request
+3. Commit with a clear message (see below)
+4. Open a pull request
 
 ## Commit Messages
 
