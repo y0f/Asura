@@ -54,6 +54,11 @@ type AuthConfig struct {
 	APIKeys []APIKeyConfig `yaml:"api_keys"`
 	Session SessionConfig  `yaml:"session"`
 	Login   LoginConfig    `yaml:"login"`
+	TOTP    TOTPConfig     `yaml:"totp"`
+}
+
+type TOTPConfig struct {
+	Required bool `yaml:"required"`
 }
 
 type SessionConfig struct {
@@ -72,6 +77,7 @@ type APIKeyConfig struct {
 	Role        string   `yaml:"role,omitempty"`
 	SuperAdmin  bool     `yaml:"super_admin,omitempty"`
 	Permissions []string `yaml:"permissions,omitempty"`
+	TOTP        bool     `yaml:"totp,omitempty"`
 }
 
 var AllPermissions = []string{

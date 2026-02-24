@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 15
+const schemaVersion = 16
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -219,6 +219,13 @@ CREATE INDEX IF NOT EXISTS idx_incidents_resolved_at ON incidents(status, resolv
 CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);
 CREATE INDEX IF NOT EXISTS idx_request_logs_client_ip ON request_logs(client_ip, created_at);
 CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(monitor_id, id DESC);
+
+CREATE TABLE IF NOT EXISTS totp_keys (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	api_key_name TEXT NOT NULL UNIQUE,
+	secret       TEXT NOT NULL,
+	created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
 `
 
 // migrations holds incremental schema changes after the baseline.
@@ -228,4 +235,14 @@ CREATE INDEX IF NOT EXISTS idx_check_results_monitor_latest ON check_results(mon
 var migrations = []struct {
 	version int
 	sql     string
-}{}
+}{
+	{
+		version: 16,
+		sql: `CREATE TABLE IF NOT EXISTS totp_keys (
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	api_key_name TEXT NOT NULL UNIQUE,
+	secret       TEXT NOT NULL,
+	created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);`,
+	},
+}

@@ -75,6 +75,7 @@ auth:
     - name: "admin"
       hash: "${ASURA_ADMIN_KEY_HASH}"
       role: "admin"          # Full read/write access
+      totp: true             # Require TOTP two-factor for web login
 
     - name: "dashboard"
       hash: "${ASURA_READ_KEY_HASH}"
@@ -84,6 +85,13 @@ auth:
   session:
     lifetime: 24h            # How long sessions last (default: 24h)
     cookie_secure: true      # Set Secure flag on cookie (default: true, disable for HTTP-only dev)
+
+  # TOTP two-factor authentication
+  # When required: true, all API keys must have totp: true to log in via web UI.
+  # Set up: asura --setup-totp <key-name>
+  # Remove: asura --remove-totp <key-name>
+  # totp:
+  #   required: false
 
   # Login rate limiting (per IP)
   login:

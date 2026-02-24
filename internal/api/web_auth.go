@@ -12,7 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/y0f/Asura/internal/config"
 	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/Asura/internal/totp"
 )
 
 const sessionCookie = "asura_session"
@@ -56,6 +58,142 @@ func (s *Server) handleWebLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if apiKey.TOTP {
+		_, err := s.store.GetTOTPKey(r.Context(), apiKey.Name)
+		if err != nil {
+			s.render(w, "login.html", pageData{
+				BasePath: s.cfg.Server.BasePath,
+				Error:    "TOTP enabled but not configured. Run: asura --setup-totp " + apiKey.Name,
+			})
+			return
+		}
+		token := s.createTOTPChallenge(apiKey.Name, apiKey.Hash, ip)
+		s.render(w, "login_totp.html", pageData{
+			BasePath: s.cfg.Server.BasePath,
+			Data:     map[string]string{"ChallengeToken": token},
+		})
+		return
+	}
+
+	if s.cfg.Auth.TOTP.Required {
+		s.render(w, "login.html", pageData{
+			BasePath: s.cfg.Server.BasePath,
+			Error:    "Two-factor authentication is required. Contact your administrator.",
+		})
+		return
+	}
+
+	s.createSessionAndLogin(w, r, apiKey, ip)
+}
+
+type totpChallenge struct {
+	apiKeyName string
+	keyHash    string
+	ipAddress  string
+	createdAt  time.Time
+}
+
+func (s *Server) createTOTPChallenge(apiKeyName, keyHash, ip string) string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	token := hex.EncodeToString(b)
+
+	s.totpMu.Lock()
+	s.totpChallenges[token] = &totpChallenge{
+		apiKeyName: apiKeyName,
+		keyHash:    keyHash,
+		ipAddress:  ip,
+		createdAt:  time.Now(),
+	}
+	s.totpMu.Unlock()
+	return token
+}
+
+func (s *Server) consumeTOTPChallenge(token string) *totpChallenge {
+	s.totpMu.Lock()
+	defer s.totpMu.Unlock()
+	ch, ok := s.totpChallenges[token]
+	if !ok {
+		return nil
+	}
+	delete(s.totpChallenges, token)
+	if time.Since(ch.createdAt) > 5*time.Minute {
+		return nil
+	}
+	return ch
+}
+
+func (s *Server) cleanupTOTPChallenges() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		s.totpMu.Lock()
+		for k, ch := range s.totpChallenges {
+			if time.Since(ch.createdAt) > 5*time.Minute {
+				delete(s.totpChallenges, k)
+			}
+		}
+		s.totpMu.Unlock()
+	}
+}
+
+func (s *Server) handleWebTOTPLogin(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, s.cfg.Server.BasePath+"/login", http.StatusSeeOther)
+}
+
+func (s *Server) handleWebTOTPLoginPost(w http.ResponseWriter, r *http.Request) {
+	ip := extractIP(r, s.cfg.TrustedNets())
+
+	if !s.loginRL.allow(ip) {
+		s.auditLogin("login_rate_limited", "", ip)
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."})
+		return
+	}
+
+	challengeToken := r.FormValue("challenge")
+	code := r.FormValue("code")
+
+	ch := s.consumeTOTPChallenge(challengeToken)
+	if ch == nil {
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Session expired. Please sign in again."})
+		return
+	}
+
+	apiKey := s.cfg.LookupAPIKeyByName(ch.apiKeyName)
+	if apiKey == nil || apiKey.Hash != ch.keyHash {
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "API key no longer valid. Please sign in again."})
+		return
+	}
+
+	totpKey, err := s.store.GetTOTPKey(r.Context(), apiKey.Name)
+	if err != nil {
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "TOTP configuration error."})
+		return
+	}
+
+	secret, err := totp.DecodeSecret(totpKey.Secret)
+	if err != nil {
+		s.logger.Error("decode totp secret", "error", err)
+		s.render(w, "login.html", pageData{BasePath: s.cfg.Server.BasePath, Error: "Internal error"})
+		return
+	}
+
+	if !totp.Validate(secret, code, time.Now()) {
+		s.auditLogin("login_totp_failed", apiKey.Name, ip)
+		newToken := s.createTOTPChallenge(apiKey.Name, apiKey.Hash, ip)
+		s.render(w, "login_totp.html", pageData{
+			BasePath: s.cfg.Server.BasePath,
+			Error:    "Invalid code. Please try again.",
+			Data:     map[string]string{"ChallengeToken": newToken},
+		})
+		return
+	}
+
+	s.auditLogin("login_success_totp", apiKey.Name, ip)
+	s.createSessionAndLogin(w, r, apiKey, ip)
+}
+
+func (s *Server) createSessionAndLogin(w http.ResponseWriter, r *http.Request, apiKey *config.APIKeyConfig, ip string) {
 	token, err := generateSessionToken()
 	if err != nil {
 		s.logger.Error("generate session token", "error", err)

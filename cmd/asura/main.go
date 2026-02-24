@@ -22,6 +22,7 @@ import (
 	"github.com/y0f/Asura/internal/monitor"
 	"github.com/y0f/Asura/internal/notifier"
 	"github.com/y0f/Asura/internal/storage"
+	"github.com/y0f/Asura/internal/totp"
 )
 
 var version = "dev"
@@ -31,6 +32,9 @@ func main() {
 	hashKey := flag.String("hash-key", "", "hash an API key and exit")
 	setup := flag.Bool("setup", false, "generate an API key and exit")
 	showVersion := flag.Bool("version", false, "print version and exit")
+	setupTOTP := flag.String("setup-totp", "", "set up TOTP for an API key name and exit")
+	verifyTOTP := flag.String("verify-totp", "", "verify a TOTP code for an API key and exit")
+	removeTOTP := flag.String("remove-totp", "", "remove TOTP secret for an API key and exit")
 	flag.Parse()
 
 	if *showVersion {
@@ -53,6 +57,10 @@ func main() {
 	if *hashKey != "" {
 		fmt.Println(config.HashAPIKey(*hashKey))
 		os.Exit(0)
+	}
+
+	if *setupTOTP != "" || *verifyTOTP != "" || *removeTOTP != "" {
+		handleTOTPCommands(*configPath, *setupTOTP, *verifyTOTP, *removeTOTP, flag.Args())
 	}
 
 	cfg, err := config.Load(*configPath)
@@ -220,6 +228,93 @@ func runRollupWorker(ctx context.Context, store storage.Store, logger *slog.Logg
 			}
 		}
 	}
+}
+
+func handleTOTPCommands(configPath, setupName, verifyName, removeName string, args []string) {
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	store, err := storage.NewSQLiteStore(cfg.Database.Path, 1)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer store.Close()
+	ctx := context.Background()
+
+	switch {
+	case setupName != "":
+		apiKey := cfg.LookupAPIKeyByName(setupName)
+		if apiKey == nil {
+			fmt.Fprintf(os.Stderr, "error: API key %q not found in config\n", setupName)
+			os.Exit(1)
+		}
+		if !apiKey.TOTP {
+			fmt.Fprintf(os.Stderr, "error: API key %q does not have totp: true in config\n", setupName)
+			os.Exit(1)
+		}
+		if existing, _ := store.GetTOTPKey(ctx, setupName); existing != nil {
+			fmt.Fprintf(os.Stderr, "error: TOTP already configured for %q — remove first with --remove-totp %s\n", setupName, setupName)
+			os.Exit(1)
+		}
+
+		secret, err := totp.GenerateSecret()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		encoded := totp.EncodeSecret(secret)
+		if err := store.CreateTOTPKey(ctx, &storage.TOTPKey{APIKeyName: setupName, Secret: encoded}); err != nil {
+			fmt.Fprintf(os.Stderr, "error: failed to store TOTP key: %v\n", err)
+			os.Exit(1)
+		}
+
+		uri := totp.FormatKeyURI("Asura", setupName, secret)
+		fmt.Println()
+		fmt.Printf("  TOTP configured for %q\n", setupName)
+		fmt.Println()
+		fmt.Printf("  Secret : %s\n", encoded)
+		fmt.Printf("  URI    : %s\n", uri)
+		fmt.Println()
+		fmt.Println("  Enter the secret or URI in your authenticator app.")
+		fmt.Println("  Verify with: asura --verify-totp", setupName, "CODE")
+		fmt.Println()
+
+	case verifyName != "":
+		if len(args) == 0 {
+			fmt.Fprintf(os.Stderr, "usage: asura --verify-totp %s CODE\n", verifyName)
+			os.Exit(1)
+		}
+		code := args[0]
+		totpKey, err := store.GetTOTPKey(ctx, verifyName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: no TOTP key found for %q\n", verifyName)
+			os.Exit(1)
+		}
+		secret, err := totp.DecodeSecret(totpKey.Secret)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: failed to decode TOTP secret: %v\n", err)
+			os.Exit(1)
+		}
+		if totp.Validate(secret, code, time.Now()) {
+			fmt.Println("valid")
+			os.Exit(0)
+		}
+		fmt.Println("invalid")
+		os.Exit(1)
+
+	case removeName != "":
+		if err := store.DeleteTOTPKey(ctx, removeName); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("TOTP removed for %q\n", removeName)
+	}
+
+	os.Exit(0)
 }
 
 func purgeStaleSessionsOnStartup(ctx context.Context, store storage.Store, cfg *config.Config, logger *slog.Logger) {

@@ -312,6 +312,14 @@ type DailyUptime struct {
 	UptimePct   float64 `json:"uptime_pct"`
 }
 
+// TOTPKey stores a TOTP secret for an API key.
+type TOTPKey struct {
+	ID         int64     `json:"id"`
+	APIKeyName string    `json:"api_key_name"`
+	Secret     string    `json:"-"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 // Session represents a server-side web UI session.
 type Session struct {
 	ID         int64     `json:"id"`

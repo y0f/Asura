@@ -317,6 +317,7 @@ func (s *Server) loadTemplates() {
 	}
 
 	s.templates["login.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "login.html"))
+	s.templates["login_totp.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "login_totp.html"))
 	s.templates["status_page.html"] = template.Must(template.New("").Funcs(templateFuncs).ParseFS(templateFS, "status_page.html"))
 }
 
@@ -330,6 +331,8 @@ func (s *Server) render(w http.ResponseWriter, tmpl string, data pageData) {
 	layoutName := "layout"
 	if tmpl == "login.html" {
 		layoutName = "login"
+	} else if tmpl == "login_totp.html" {
+		layoutName = "login_totp"
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

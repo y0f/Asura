@@ -30,6 +30,8 @@ type Server struct {
 	reqLogWriter      *RequestLogWriter
 	statusSlugsMu     sync.RWMutex
 	statusSlugs       map[string]int64
+	totpMu            sync.Mutex
+	totpChallenges    map[string]*totpChallenge
 }
 
 func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeline, dispatcher *notifier.Dispatcher, logger *slog.Logger, version string) *Server {
@@ -44,7 +46,10 @@ func NewServer(cfg *config.Config, store storage.Store, pipeline *monitor.Pipeli
 		cspFrameDirective: buildFrameAncestorsDirective(cfg.Server.FrameAncestors),
 		reqLogWriter:      NewRequestLogWriter(store, logger),
 		statusSlugs:       make(map[string]int64),
+		totpChallenges:    make(map[string]*totpChallenge),
 	}
+
+	go s.cleanupTOTPChallenges()
 
 	s.loadTemplates()
 	s.refreshStatusSlugs()
@@ -109,6 +114,8 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		// Web UI
 		mux.HandleFunc("GET "+s.p("/login"), s.handleWebLogin)
 		mux.HandleFunc("POST "+s.p("/login"), s.handleWebLoginPost)
+		mux.HandleFunc("GET "+s.p("/login/totp"), s.handleWebTOTPLogin)
+		mux.HandleFunc("POST "+s.p("/login/totp"), s.handleWebTOTPLoginPost)
 		webAuth := s.webAuth
 		webPerm := func(perm string, h http.HandlerFunc) http.Handler {
 			return webAuth(s.webRequirePerm(perm, http.HandlerFunc(h)))

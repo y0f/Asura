@@ -827,6 +827,63 @@ func TestMigrationIdempotent(t *testing.T) {
 	}
 }
 
+func TestTOTPKeyCRUD(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	t.Run("CreateAndGet", func(t *testing.T) {
+		key := &TOTPKey{
+			APIKeyName: "admin",
+			Secret:     "JBSWY3DPEHPK3PXP",
+		}
+		if err := store.CreateTOTPKey(ctx, key); err != nil {
+			t.Fatal(err)
+		}
+		if key.ID == 0 {
+			t.Fatal("expected non-zero ID")
+		}
+
+		got, err := store.GetTOTPKey(ctx, "admin")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.APIKeyName != "admin" {
+			t.Fatalf("expected api_key_name 'admin', got %q", got.APIKeyName)
+		}
+		if got.Secret != "JBSWY3DPEHPK3PXP" {
+			t.Fatalf("expected secret preserved, got %q", got.Secret)
+		}
+	})
+
+	t.Run("GetNotFound", func(t *testing.T) {
+		_, err := store.GetTOTPKey(ctx, "nonexistent")
+		if err == nil {
+			t.Fatal("expected error for nonexistent TOTP key")
+		}
+	})
+
+	t.Run("DuplicateConstraint", func(t *testing.T) {
+		key := &TOTPKey{
+			APIKeyName: "admin",
+			Secret:     "DIFFERENT",
+		}
+		err := store.CreateTOTPKey(ctx, key)
+		if err == nil {
+			t.Fatal("expected error for duplicate api_key_name")
+		}
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		if err := store.DeleteTOTPKey(ctx, "admin"); err != nil {
+			t.Fatal(err)
+		}
+		_, err := store.GetTOTPKey(ctx, "admin")
+		if err == nil {
+			t.Fatal("expected error after deletion")
+		}
+	})
+}
+
 func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

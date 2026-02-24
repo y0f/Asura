@@ -401,6 +401,53 @@ func TestResolvedExternalURL(t *testing.T) {
 	})
 }
 
+func TestTOTPConfig(t *testing.T) {
+	t.Run("defaults to false", func(t *testing.T) {
+		cfg := Defaults()
+		if cfg.Auth.TOTP.Required {
+			t.Fatal("expected TOTP.Required to default to false")
+		}
+	})
+
+	t.Run("parse from YAML", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "config.yaml")
+		data := `
+server:
+  listen: "0.0.0.0:8090"
+database:
+  path: "test.db"
+auth:
+  api_keys:
+    - name: "admin"
+      hash: "abc123"
+      role: "admin"
+      totp: true
+    - name: "viewer"
+      hash: "def456"
+      role: "readonly"
+  totp:
+    required: true
+`
+		if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := Load(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cfg.Auth.TOTP.Required {
+			t.Fatal("expected TOTP.Required true")
+		}
+		if !cfg.Auth.APIKeys[0].TOTP {
+			t.Fatal("expected admin key TOTP true")
+		}
+		if cfg.Auth.APIKeys[1].TOTP {
+			t.Fatal("expected viewer key TOTP false")
+		}
+	})
+}
+
 func TestLoad(t *testing.T) {
 	t.Run("valid YAML", func(t *testing.T) {
 		dir := t.TempDir()

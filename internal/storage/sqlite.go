@@ -74,6 +74,13 @@ func runMigrations(db *sql.DB) error {
 		return fmt.Errorf("read schema version: %w", err)
 	}
 
+	if len(migrations) > 0 {
+		minRequired := migrations[0].version - 1
+		if currentVersion < minRequired {
+			return fmt.Errorf("database schema v%d is too old (minimum v%d); upgrade through v1.0.0 first", currentVersion, minRequired)
+		}
+	}
+
 	for _, m := range migrations {
 		if m.version <= currentVersion {
 			continue
@@ -97,11 +104,7 @@ func runMigrations(db *sql.DB) error {
 	}
 
 	if currentVersion < schemaVersion {
-		minRequired := schemaVersion
-		if len(migrations) > 0 {
-			minRequired = migrations[0].version - 1
-		}
-		return fmt.Errorf("database schema v%d is too old (minimum v%d); upgrade through v1.0.0 first", currentVersion, minRequired)
+		return fmt.Errorf("database schema v%d is too old (minimum v%d); upgrade through v1.0.0 first", currentVersion, schemaVersion)
 	}
 
 	return nil
@@ -1262,6 +1265,42 @@ func (s *SQLiteStore) InsertAudit(ctx context.Context, entry *AuditEntry) error 
 		`INSERT INTO audit_log (action, entity, entity_id, api_key_name, detail, created_at)
 		 VALUES (?, ?, ?, ?, ?, ?)`,
 		entry.Action, entry.Entity, entry.EntityID, entry.APIKeyName, entry.Detail, now)
+	return err
+}
+
+// --- Sessions ---
+
+// --- TOTP Keys ---
+
+func (s *SQLiteStore) CreateTOTPKey(ctx context.Context, key *TOTPKey) error {
+	now := formatTime(time.Now())
+	res, err := s.writeDB.ExecContext(ctx,
+		`INSERT INTO totp_keys (api_key_name, secret, created_at) VALUES (?, ?, ?)`,
+		key.APIKeyName, key.Secret, now)
+	if err != nil {
+		return err
+	}
+	id, _ := res.LastInsertId()
+	key.ID = id
+	key.CreatedAt = parseTime(now)
+	return nil
+}
+
+func (s *SQLiteStore) GetTOTPKey(ctx context.Context, apiKeyName string) (*TOTPKey, error) {
+	var key TOTPKey
+	var createdAt string
+	err := s.readDB.QueryRowContext(ctx,
+		`SELECT id, api_key_name, secret, created_at FROM totp_keys WHERE api_key_name=?`, apiKeyName).
+		Scan(&key.ID, &key.APIKeyName, &key.Secret, &createdAt)
+	if err != nil {
+		return nil, err
+	}
+	key.CreatedAt = parseTime(createdAt)
+	return &key, nil
+}
+
+func (s *SQLiteStore) DeleteTOTPKey(ctx context.Context, apiKeyName string) error {
+	_, err := s.writeDB.ExecContext(ctx, "DELETE FROM totp_keys WHERE api_key_name=?", apiKeyName)
 	return err
 }
 

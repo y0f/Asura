@@ -90,6 +90,11 @@ type Store interface {
 	// Audit
 	InsertAudit(ctx context.Context, entry *AuditEntry) error
 
+	// TOTP keys
+	CreateTOTPKey(ctx context.Context, key *TOTPKey) error
+	GetTOTPKey(ctx context.Context, apiKeyName string) (*TOTPKey, error)
+	DeleteTOTPKey(ctx context.Context, apiKeyName string) error
+
 	// Sessions
 	CreateSession(ctx context.Context, s *Session) error
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (*Session, error)
