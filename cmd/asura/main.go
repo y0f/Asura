@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -279,7 +280,8 @@ func handleTOTPCommands(configPath, setupName, verifyName, removeName string, ar
 		fmt.Printf("  Secret : %s\n", encoded)
 		fmt.Printf("  URI    : %s\n", uri)
 		fmt.Println()
-		fmt.Println("  Enter the secret or URI in your authenticator app.")
+		printQR(uri)
+		fmt.Println("  Scan the QR code or enter the secret in your authenticator app.")
 		fmt.Println("  Verify with: asura --verify-totp", setupName, "CODE")
 		fmt.Println()
 
@@ -315,6 +317,15 @@ func handleTOTPCommands(configPath, setupName, verifyName, removeName string, ar
 	}
 
 	os.Exit(0)
+}
+
+func printQR(data string) {
+	cmd := exec.Command("qrencode", "-t", "ANSIUTF8", data)
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		fmt.Println("  (install qrencode for a scannable QR code: apt install qrencode)")
+		fmt.Println()
+	}
 }
 
 func purgeStaleSessionsOnStartup(ctx context.Context, store storage.Store, cfg *config.Config, logger *slog.Logger) {
