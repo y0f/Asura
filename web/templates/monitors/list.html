@@ -21,10 +21,10 @@
     </form>
 
     <div class="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-        <a href="{{$.BasePath}}/monitors{{if .Data.Search}}?q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if not .Data.Type}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
+        <a href="{{$.BasePath}}/monitors{{if .Data.Search}}?q={{.Data.Search}}{{end}}" class="filter-tab {{if not .Data.Type}}filter-active{{else}}filter-inactive{{end}}">All</a>
         {{$search := .Data.Search}}{{$curType := .Data.Type}}
         {{range $type := (list "http" "tcp" "dns" "icmp" "tls" "websocket" "command" "heartbeat" "docker" "domain" "grpc" "mqtt")}}
-        <a href="{{$.BasePath}}/monitors?type={{$type}}{{if $search}}&q={{$search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $curType $type}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">{{typeLabel $type}}</a>
+        <a href="{{$.BasePath}}/monitors?type={{$type}}{{if $search}}&q={{$search}}{{end}}" class="filter-tab {{if eq $curType $type}}filter-active{{else}}filter-inactive{{end}}">{{typeLabel $type}}</a>
         {{end}}
     </div>
 
@@ -35,11 +35,11 @@
             <table class="w-full min-w-[640px]">
                 <thead>
                     <tr class="border-b border-line text-left">
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Monitor</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Type</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Status</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Last Check</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest text-right">Actions</th>
+                        <th class="th">Monitor</th>
+                        <th class="th">Type</th>
+                        <th class="th">Status</th>
+                        <th class="th">Last Check</th>
+                        <th class="th text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">

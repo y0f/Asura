@@ -33,6 +33,50 @@
   --line-light-rgb: 34 34 48;
 }
 
+/* ── Component classes ────────────────────────────────────────────────────── */
+@layer components {
+  .form-label {
+    @apply block text-[11px] text-muted uppercase tracking-widest mb-1.5;
+  }
+  .form-label-sm {
+    @apply block text-[10px] text-muted uppercase tracking-widest mb-1;
+  }
+  .form-input {
+    @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors;
+  }
+  select.form-select {
+    @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1rem;
+    padding-right: 2rem;
+  }
+  .form-checkbox {
+    @apply w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0;
+  }
+  .btn-primary {
+    @apply px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors;
+  }
+  .th {
+    @apply px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest;
+  }
+  .filter-tab {
+    @apply px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap;
+  }
+  .filter-active {
+    @apply text-brand border-brand/30 bg-brand/[0.04];
+  }
+  .filter-inactive {
+    @apply text-muted border-line hover:text-muted-light;
+  }
+  .stat-label {
+    @apply text-[10px] text-muted uppercase tracking-widest mb-1;
+  }
+}
+
 /* ── Light mode: status text colours for contrast on pastel bg ───────────── */
 :root:not(.dark) .text-emerald-400 { color: rgb(4 120 87); }
 :root:not(.dark) .text-red-400     { color: rgb(185 28 28); }

@@ -13,18 +13,18 @@
     <form method="POST" action="{{if $sp}}{{.BasePath}}/status-pages/{{$sp.ID}}{{else}}{{.BasePath}}/status-pages{{end}}" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Title</label>
+                <label class="form-label">Title</label>
                 <input type="text" name="title" value="{{if $sp}}{{$sp.Title}}{{end}}" required
-                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors"
+                       class="form-input"
                        placeholder="Service Status">
             </div>
 
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">URL Slug</label>
+                <label class="form-label">URL Slug</label>
                 <div class="flex items-center gap-0">
                     <span class="px-3 py-2 bg-surface-200 border border-r-0 border-line rounded-l text-muted text-[13px]">{{.BasePath}}/</span>
                     <input type="text" name="slug" value="{{if $sp}}{{$sp.Slug}}{{else}}status{{end}}" required
-                           class="flex-1 px-3 py-2 bg-surface border border-line rounded-r text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors"
+                           class="form-input flex-1 rounded-r"
                            placeholder="status" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9]">
                 </div>
                 <p class="mt-1 text-[10px] text-muted">Lowercase letters, numbers, and hyphens only.</p>
@@ -32,9 +32,9 @@
         </div>
 
         <div>
-            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Description</label>
+            <label class="form-label">Description</label>
             <textarea name="description" rows="2"
-                      class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors resize-none"
+                      class="form-input resize-none"
                       placeholder="Current status of our services">{{if $sp}}{{$sp.Description}}{{end}}</textarea>
         </div>
 
@@ -65,9 +65,9 @@
         </div>
 
         <div>
-            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Sort Order</label>
+            <label class="form-label">Sort Order</label>
             <input type="number" name="sort_order" value="{{if $sp}}{{$sp.SortOrder}}{{else}}0{{end}}"
-                   class="w-24 px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                   class="form-input w-24">
         </div>
 
         <div x-data="{search: ''}" class="border border-line rounded-lg p-4">
@@ -108,15 +108,15 @@
                 Advanced
             </button>
             <div x-show="showAdvanced" x-cloak class="mt-3">
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Custom CSS</label>
+                <label class="form-label">Custom CSS</label>
                 <textarea name="custom_css" rows="4"
-                          class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[12px] font-mono focus:outline-none focus:border-brand/30 transition-colors resize-y"
+                          class="form-input text-[12px] font-mono resize-y"
                           placeholder="/* Custom styles for this status page */">{{if $sp}}{{$sp.CustomCSS}}{{end}}</textarea>
             </div>
         </div>
 
         <div class="flex items-center gap-3 pt-2">
-            <button type="submit" class="px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+            <button type="submit" class="btn-primary">
                 {{if $sp}}Update Status Page{{else}}Create Status Page{{end}}
             </button>
             <a href="{{.BasePath}}/status-pages" class="px-4 py-2 border border-line hover:border-line-light text-muted-light text-[13px] rounded transition-colors">Cancel</a>

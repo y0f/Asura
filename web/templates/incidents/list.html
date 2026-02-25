@@ -4,10 +4,10 @@
     <h1 class="text-[15px] font-medium text-white mb-5">Incidents</h1>
 
     <div class="flex gap-1.5 mb-3">
-        <a href="{{.BasePath}}/incidents{{if .Data.Search}}?q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if not .Data.Filter}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
-        <a href="{{.BasePath}}/incidents?status=open{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "open"}}text-red-400 border-red-500/30 bg-red-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Open</a>
-        <a href="{{.BasePath}}/incidents?status=acknowledged{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "acknowledged"}}text-yellow-400 border-yellow-500/30 bg-yellow-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Acknowledged</a>
-        <a href="{{.BasePath}}/incidents?status=resolved{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "resolved"}}text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Resolved</a>
+        <a href="{{.BasePath}}/incidents{{if .Data.Search}}?q={{.Data.Search}}{{end}}" class="filter-tab {{if not .Data.Filter}}filter-active{{else}}filter-inactive{{end}}">All</a>
+        <a href="{{.BasePath}}/incidents?status=open{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="filter-tab {{if eq .Data.Filter "open"}}text-red-400 border-red-500/30 bg-red-500/[0.04]{{else}}filter-inactive{{end}}">Open</a>
+        <a href="{{.BasePath}}/incidents?status=acknowledged{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="filter-tab {{if eq .Data.Filter "acknowledged"}}text-yellow-400 border-yellow-500/30 bg-yellow-500/[0.04]{{else}}filter-inactive{{end}}">Acknowledged</a>
+        <a href="{{.BasePath}}/incidents?status=resolved{{if .Data.Search}}&q={{.Data.Search}}{{end}}" class="filter-tab {{if eq .Data.Filter "resolved"}}text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.04]{{else}}filter-inactive{{end}}">Resolved</a>
     </div>
 
     <form method="GET" action="{{.BasePath}}/incidents" class="mb-4">
@@ -25,12 +25,12 @@
             <table class="w-full min-w-[700px]">
                 <thead>
                     <tr class="border-b border-line text-left">
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Monitor</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Status</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Cause</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Duration</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Started</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest text-right"></th>
+                        <th class="th">Monitor</th>
+                        <th class="th">Status</th>
+                        <th class="th">Cause</th>
+                        <th class="th">Duration</th>
+                        <th class="th">Started</th>
+                        <th class="th text-right"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">

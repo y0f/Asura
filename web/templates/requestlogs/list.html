@@ -6,15 +6,15 @@
     {{if .Data.Stats}}
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Requests</div>
+            <div class="stat-label">Requests</div>
             <div class="text-2xl font-semibold text-white tabular-nums">{{.Data.Stats.TotalRequests}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Visitors</div>
+            <div class="stat-label">Visitors</div>
             <div class="text-2xl font-semibold text-muted-light tabular-nums">{{.Data.Stats.UniqueVisitors}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Avg Latency</div>
+            <div class="stat-label">Avg Latency</div>
             <div class="text-2xl font-semibold text-muted-light tabular-nums">{{formatMs .Data.Stats.AvgLatencyMs}}</div>
         </div>
     </div>
@@ -22,19 +22,19 @@
 
     <div class="flex flex-wrap items-center gap-3 mb-3">
         <div class="flex gap-1.5">
-            <a href="{{.BasePath}}/logs?range=1h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "1h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">1h</a>
-            <a href="{{.BasePath}}/logs?range=12h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "12h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">12h</a>
-            <a href="{{.BasePath}}/logs?range=24h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "24h"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">24h</a>
-            <a href="{{.BasePath}}/logs?range=7d{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.TimeRange "7d"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">7d</a>
+            <a href="{{.BasePath}}/logs?range=1h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.TimeRange "1h"}}filter-active{{else}}filter-inactive{{end}}">1h</a>
+            <a href="{{.BasePath}}/logs?range=12h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.TimeRange "12h"}}filter-active{{else}}filter-inactive{{end}}">12h</a>
+            <a href="{{.BasePath}}/logs?range=24h{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.TimeRange "24h"}}filter-active{{else}}filter-inactive{{end}}">24h</a>
+            <a href="{{.BasePath}}/logs?range=7d{{if .Data.Filter}}&group={{.Data.Filter}}{{end}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.TimeRange "7d"}}filter-active{{else}}filter-inactive{{end}}">7d</a>
         </div>
         <div class="h-4 w-px bg-line"></div>
         <div class="flex gap-1.5">
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if not .Data.Filter}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=web{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "web"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Web</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=api{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "api"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">API</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=badge{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "badge"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Badge</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=auth{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "auth"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Auth</a>
-            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=status{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors {{if eq .Data.Filter "status"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Status</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if not .Data.Filter}}filter-active{{else}}filter-inactive{{end}}">All</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=web{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.Filter "web"}}filter-active{{else}}filter-inactive{{end}}">Web</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=api{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.Filter "api"}}filter-active{{else}}filter-inactive{{end}}">API</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=badge{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.Filter "badge"}}filter-active{{else}}filter-inactive{{end}}">Badge</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=auth{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.Filter "auth"}}filter-active{{else}}filter-inactive{{end}}">Auth</a>
+            <a href="{{.BasePath}}/logs?range={{.Data.TimeRange}}&group=status{{if .Data.ClientIP}}&ip={{.Data.ClientIP}}{{end}}" class="filter-tab {{if eq .Data.Filter "status"}}filter-active{{else}}filter-inactive{{end}}">Status</a>
         </div>
         {{if .Data.TopIPs}}
         <div class="h-4 w-px bg-line"></div>
@@ -58,13 +58,13 @@
             <table class="w-full min-w-[800px]">
                 <thead>
                     <tr class="border-b border-line text-left">
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Time</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Method</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Path</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Status</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Latency</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">IP</th>
-                        <th class="px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest">Group</th>
+                        <th class="th">Time</th>
+                        <th class="th">Method</th>
+                        <th class="th">Path</th>
+                        <th class="th">Status</th>
+                        <th class="th">Latency</th>
+                        <th class="th">IP</th>
+                        <th class="th">Group</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">

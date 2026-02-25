@@ -43,22 +43,22 @@
         <!-- Basic Info -->
         <div class="border border-line rounded-lg p-5 space-y-4">
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Name</label>
+                <label class="form-label">Name</label>
                 <input type="text" name="name" value="{{$mon.Name}}" required
-                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                       class="form-input">
             </div>
 
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Description</label>
+                <label class="form-label">Description</label>
                 <textarea name="description" rows="2" placeholder="Optional description"
-                          class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors resize-y">{{$mon.Description}}</textarea>
+                          class="form-input resize-y">{{$mon.Description}}</textarea>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Type</label>
+                    <label class="form-label">Type</label>
                     <select name="type" x-model="monitorType"
-                            class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                            class="form-select">
                         <option value="http">HTTP</option>
                         <option value="tcp">TCP</option>
                         <option value="dns">DNS</option>
@@ -74,46 +74,46 @@
                     </select>
                 </div>
                 <div x-show="monitorType !== 'heartbeat'">
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5" x-text="monitorType === 'docker' ? 'Container Name / ID' : 'Target'">Target</label>
+                    <label class="form-label" x-text="monitorType === 'docker' ? 'Container Name / ID' : 'Target'">Target</label>
                     <input type="text" name="target" value="{{$mon.Target}}" :placeholder="{http:'https://example.com', tcp:'host:port', dns:'example.com', icmp:'8.8.8.8', tls:'example.com', websocket:'wss://example.com/ws', command:'/usr/bin/check', docker:'nginx, postgres, or container ID', domain:'example.com', grpc:'host:port', mqtt:'broker.example.com:1883'}[monitorType] || 'https://example.com'"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                           class="form-input">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Interval (s)</label>
+                    <label class="form-label">Interval (s)</label>
                     <input type="number" name="interval" value="{{if $mon.Interval}}{{$mon.Interval}}{{else}}60{{end}}" min="5" max="86400"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                           class="form-input tabular-nums">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Timeout (s)</label>
+                    <label class="form-label">Timeout (s)</label>
                     <input type="number" name="timeout" value="{{if $mon.Timeout}}{{$mon.Timeout}}{{else}}10{{end}}" min="1" max="300"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                           class="form-input tabular-nums">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Fail Threshold</label>
+                    <label class="form-label">Fail Threshold</label>
                     <input type="number" name="failure_threshold" value="{{if $mon.FailureThreshold}}{{$mon.FailureThreshold}}{{else}}3{{end}}" min="1"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                           class="form-input tabular-nums">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Pass Threshold</label>
+                    <label class="form-label">Pass Threshold</label>
                     <input type="number" name="success_threshold" value="{{if $mon.SuccessThreshold}}{{$mon.SuccessThreshold}}{{else}}1{{end}}" min="1"
-                           class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                           class="form-input tabular-nums">
                 </div>
             </div>
 
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Tags</label>
+                <label class="form-label">Tags</label>
                 <input type="text" name="tags" value="{{range $i, $t := $mon.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}" placeholder="production, api"
-                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                       class="form-input">
             </div>
 
             {{if $fd.Groups}}
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Group</label>
+                <label class="form-label">Group</label>
                 <select name="group_id"
-                        class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                        class="form-select">
                     <option value="">No group</option>
                     {{range $fd.Groups}}
                     <option value="{{.ID}}" {{if and $mon.GroupID (eq (deref $mon.GroupID) .ID)}}selected{{end}}>{{.Name}}</option>
@@ -124,9 +124,9 @@
 
             {{if $fd.Proxies}}
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Proxy</label>
+                <label class="form-label">Proxy</label>
                 <select name="proxy_id"
-                        class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                        class="form-select">
                     <option value="">No proxy</option>
                     {{range $fd.Proxies}}
                     <option value="{{.ID}}" {{if and $mon.ProxyID (eq (deref $mon.ProxyID) .ID)}}selected{{end}}>{{.Name}} ({{.Protocol}}://{{.Host}}:{{.Port}})</option>
@@ -137,13 +137,13 @@
 
             {{if $fd.NotificationChannels}}
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Notification Channels</label>
+                <label class="form-label">Notification Channels</label>
                 <p class="text-[10px] text-muted mb-2">Select which channels receive alerts for this monitor. Leave all unchecked to use all channels.</p>
                 <div class="space-y-1.5">
                     {{range $fd.NotificationChannels}}
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="notification_channel_ids[]" value="{{.ID}}" {{if inSlice .ID $fd.SelectedChannelIDs}}checked{{end}}
-                               class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                               class="form-checkbox">
                         <span class="text-[12px] text-muted-light">{{.Name}} <span class="text-muted">({{.Type}})</span></span>
                     </label>
                     {{end}}
@@ -154,20 +154,20 @@
             <div class="flex items-center flex-wrap gap-5">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" name="track_changes" {{if $mon.TrackChanges}}checked{{end}}
-                           class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                           class="form-checkbox">
                     <span class="text-[12px] text-muted-light">Track changes</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" name="upside_down" {{if $mon.UpsideDown}}checked{{end}}
-                           class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                           class="form-checkbox">
                     <span class="text-[12px] text-muted-light">Upside-down mode</span>
                 </label>
             </div>
 
             <div>
-                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Resend Notification Interval (s)</label>
+                <label class="form-label">Resend Notification Interval (s)</label>
                 <input type="number" name="resend_interval" value="{{$mon.ResendInterval}}" min="0" placeholder="0 = disabled"
-                       class="w-full max-w-[200px] px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                       class="form-input max-w-[200px] tabular-nums">
                 <p class="text-[10px] text-muted mt-1">Resend notification every N seconds while down (0 = disabled)</p>
             </div>
         </div>
@@ -187,7 +187,7 @@
             <!-- Advanced JSON mode -->
             <div x-show="advancedSettings" x-cloak>
                 <textarea name="settings_json" rows="8" placeholder="{}"
-                          class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] font-mono placeholder-muted focus:outline-none focus:border-brand/30 transition-colors resize-y">{{$fd.SettingsJSON}}</textarea>
+                          class="form-input font-mono resize-y">{{$fd.SettingsJSON}}</textarea>
             </div>
 
             <!-- Form mode -->
@@ -197,9 +197,9 @@
                 <div x-show="monitorType === 'http'" x-cloak class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Method</label>
+                            <label class="form-label">Method</label>
                             <select name="settings_method" x-model="httpMethod"
-                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select">
                                 <option value="GET">GET</option>
                                 <option value="POST">POST</option>
                                 <option value="PUT">PUT</option>
@@ -210,18 +210,18 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Expected Status</label>
+                            <label class="form-label">Expected Status</label>
                             <input type="number" name="settings_expected_status" value="{{if $fd.HTTP.ExpectedStatus}}{{$fd.HTTP.ExpectedStatus}}{{end}}" placeholder="200"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                                   class="form-input tabular-nums">
                         </div>
                     </div>
 
                     <!-- Body Encoding + Body -->
                     <div x-show="httpMethod === 'POST' || httpMethod === 'PUT' || httpMethod === 'PATCH'" x-cloak class="space-y-4">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Body Encoding</label>
+                            <label class="form-label">Body Encoding</label>
                             <select name="settings_body_encoding"
-                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select">
                                 <option value="json" {{if eq $fd.HTTP.BodyEncoding "json"}}selected{{end}}>JSON</option>
                                 <option value="xml" {{if eq $fd.HTTP.BodyEncoding "xml"}}selected{{end}}>XML</option>
                                 <option value="form" {{if eq $fd.HTTP.BodyEncoding "form"}}selected{{end}}>Form</option>
@@ -229,22 +229,22 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Body</label>
+                            <label class="form-label">Body</label>
                             <textarea name="settings_body" rows="3" placeholder="Request body"
-                                      class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] font-mono placeholder-muted focus:outline-none focus:border-brand/30 transition-colors resize-y">{{$fd.HTTP.Body}}</textarea>
+                                      class="form-input font-mono resize-y">{{$fd.HTTP.Body}}</textarea>
                         </div>
                     </div>
 
                     <!-- Headers -->
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Headers</label>
+                        <label class="form-label">Headers</label>
                         <div class="space-y-2">
                             <template x-for="(h, i) in httpHeaders" :key="i">
                                 <div class="flex gap-2">
                                     <input type="text" :name="'settings_header_key[]'" x-model="h.key" placeholder="Header Name"
-                                           class="flex-1 px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input flex-1">
                                     <input type="text" :name="'settings_header_value[]'" x-model="h.value" placeholder="Value"
-                                           class="flex-1 px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input flex-1">
                                     <button type="button" @click="httpHeaders.splice(i, 1)"
                                             class="px-2 text-red-400 hover:text-red-300 transition-colors text-[16px]">&times;</button>
                                 </div>
@@ -257,9 +257,9 @@
                     <!-- Authentication -->
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Authentication</label>
+                            <label class="form-label">Authentication</label>
                             <select name="settings_auth_method" x-model="authMethod"
-                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select">
                                 <option value="none">None</option>
                                 <option value="basic">Basic Auth</option>
                                 <option value="bearer">Bearer Token</option>
@@ -267,28 +267,28 @@
                         </div>
                         <div x-show="authMethod === 'basic'" x-cloak class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Username</label>
+                                <label class="form-label">Username</label>
                                 <input type="text" name="settings_basic_auth_user" value="{{$fd.HTTP.BasicAuthUser}}"
-                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                       class="form-input">
                             </div>
                             <div>
-                                <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Password</label>
+                                <label class="form-label">Password</label>
                                 <input type="password" name="settings_basic_auth_pass" value="{{$fd.HTTP.BasicAuthPass}}"
-                                       class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                       class="form-input">
                             </div>
                         </div>
                         <div x-show="authMethod === 'bearer'" x-cloak>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Token</label>
+                            <label class="form-label">Token</label>
                             <input type="password" name="settings_bearer_token" value="{{$fd.HTTP.BearerToken}}"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                     </div>
 
                     <!-- Max Redirects -->
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Max Redirects</label>
+                        <label class="form-label">Max Redirects</label>
                         <input type="number" name="settings_max_redirects" value="{{$fd.MaxRedirects}}" min="0" max="30"
-                               class="w-full max-w-[200px] px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                               class="form-input max-w-[200px] tabular-nums">
                         <p class="text-[10px] text-muted mt-1">0 = don't follow redirects</p>
                     </div>
 
@@ -296,12 +296,12 @@
                     <div class="flex items-center flex-wrap gap-5">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_skip_tls_verify" {{if $fd.HTTP.SkipTLSVerify}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Ignore TLS/SSL errors</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_cache_buster" {{if $fd.HTTP.CacheBuster}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Cache buster</span>
                         </label>
                     </div>
@@ -310,14 +310,14 @@
                 <!-- TCP Settings -->
                 <div x-show="monitorType === 'tcp'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Send Data</label>
+                        <label class="form-label">Send Data</label>
                         <input type="text" name="settings_send_data" value="{{$fd.TCP.SendData}}" placeholder="Optional data to send"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Expect Data</label>
+                        <label class="form-label">Expect Data</label>
                         <input type="text" name="settings_expect_data" value="{{$fd.TCP.ExpectData}}" placeholder="Expected response"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                 </div>
 
@@ -325,9 +325,9 @@
                 <div x-show="monitorType === 'dns'" x-cloak class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Record Type</label>
+                            <label class="form-label">Record Type</label>
                             <select name="settings_record_type"
-                                    class="form-select w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors">
+                                    class="form-select">
                                 <option value="A" {{if eq $fd.DNS.RecordType "A"}}selected{{end}}>A</option>
                                 <option value="AAAA" {{if eq $fd.DNS.RecordType "AAAA"}}selected{{end}}>AAAA</option>
                                 <option value="CNAME" {{if eq $fd.DNS.RecordType "CNAME"}}selected{{end}}>CNAME</option>
@@ -338,9 +338,9 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">DNS Server</label>
+                            <label class="form-label">DNS Server</label>
                             <input type="text" name="settings_dns_server" value="{{$fd.DNS.Server}}" placeholder="Optional (e.g. 8.8.8.8)"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                     </div>
                 </div>
@@ -348,23 +348,23 @@
                 <!-- TLS Settings -->
                 <div x-show="monitorType === 'tls'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Warning Days Before Expiry</label>
+                        <label class="form-label">Warning Days Before Expiry</label>
                         <input type="number" name="settings_warn_days_before" value="{{if $fd.TLS.WarnDaysBefore}}{{$fd.TLS.WarnDaysBefore}}{{else}}30{{end}}" min="1" max="365"
-                               class="w-full max-w-[200px] px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                               class="form-input max-w-[200px] tabular-nums">
                     </div>
                 </div>
 
                 <!-- WebSocket Settings -->
                 <div x-show="monitorType === 'websocket'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Headers</label>
+                        <label class="form-label">Headers</label>
                         <div class="space-y-2">
                             <template x-for="(h, i) in wsHeaders" :key="i">
                                 <div class="flex gap-2">
                                     <input type="text" :name="'settings_ws_header_key[]'" x-model="h.key" placeholder="Header Name"
-                                           class="flex-1 px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input flex-1">
                                     <input type="text" :name="'settings_ws_header_value[]'" x-model="h.value" placeholder="Value"
-                                           class="flex-1 px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input flex-1">
                                     <button type="button" @click="wsHeaders.splice(i, 1)"
                                             class="px-2 text-red-400 hover:text-red-300 transition-colors text-[16px]">&times;</button>
                                 </div>
@@ -374,28 +374,28 @@
                                 class="mt-2 text-[12px] text-brand hover:text-brand/80 transition-colors">+ Add Header</button>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Send Message</label>
+                        <label class="form-label">Send Message</label>
                         <input type="text" name="settings_send_message" value="{{$fd.WS.SendMessage}}" placeholder="Optional message to send"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Expect Reply</label>
+                        <label class="form-label">Expect Reply</label>
                         <input type="text" name="settings_expect_reply" value="{{$fd.WS.ExpectReply}}" placeholder="Expected reply"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                 </div>
 
                 <!-- Command Settings -->
                 <div x-show="monitorType === 'command'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Command</label>
+                        <label class="form-label">Command</label>
                         <input type="text" name="settings_command" value="{{$fd.Cmd.Command}}" placeholder="/usr/bin/check-health"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Arguments</label>
+                        <label class="form-label">Arguments</label>
                         <input type="text" name="settings_args" value="{{range $i, $a := $fd.Cmd.Args}}{{if $i}}, {{end}}{{$a}}{{end}}" placeholder="--verbose, --timeout=5"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                         <p class="text-[10px] text-muted mt-1">Comma-separated</p>
                     </div>
                 </div>
@@ -403,21 +403,21 @@
                 <!-- Docker Settings -->
                 <div x-show="monitorType === 'docker'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Container Name / ID</label>
+                        <label class="form-label">Container Name / ID</label>
                         <input type="text" name="settings_container_name" value="{{$fd.Docker.ContainerName}}" placeholder="my-container or abc123def"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                         <p class="text-[10px] text-muted mt-1">Overrides target if set</p>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Docker Socket Path</label>
+                        <label class="form-label">Docker Socket Path</label>
                         <input type="text" name="settings_socket_path" value="{{$fd.Docker.SocketPath}}" placeholder="/var/run/docker.sock"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                         <p class="text-[10px] text-muted mt-1">Default: /var/run/docker.sock</p>
                     </div>
                     <div class="flex items-center flex-wrap gap-5">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_check_health" {{if $fd.Docker.CheckHealth}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Check container health status</span>
                         </label>
                     </div>
@@ -426,9 +426,9 @@
                 <!-- Domain Settings -->
                 <div x-show="monitorType === 'domain'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Warning Days Before Expiry</label>
+                        <label class="form-label">Warning Days Before Expiry</label>
                         <input type="number" name="settings_domain_warn_days" value="{{if $fd.Domain.WarnDaysBefore}}{{$fd.Domain.WarnDaysBefore}}{{else}}30{{end}}" min="1" max="365"
-                               class="w-full max-w-[200px] px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors tabular-nums">
+                               class="form-input max-w-[200px] tabular-nums">
                         <p class="text-[10px] text-muted mt-1">Mark as degraded when domain expires within this many days</p>
                     </div>
                 </div>
@@ -436,20 +436,20 @@
                 <!-- gRPC Settings -->
                 <div x-show="monitorType === 'grpc'" x-cloak class="space-y-4">
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Service Name</label>
+                        <label class="form-label">Service Name</label>
                         <input type="text" name="settings_grpc_service" value="{{$fd.GRPC.ServiceName}}" placeholder="Leave empty for overall health"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                         <p class="text-[10px] text-muted mt-1">gRPC service to check (empty = all services)</p>
                     </div>
                     <div class="flex items-center flex-wrap gap-5">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_grpc_tls" {{if $fd.GRPC.UseTLS}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Use TLS</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_grpc_skip_verify" {{if $fd.GRPC.SkipTLSVerify}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Skip TLS verification</span>
                         </label>
                     </div>
@@ -459,37 +459,37 @@
                 <div x-show="monitorType === 'mqtt'" x-cloak class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Client ID</label>
+                            <label class="form-label">Client ID</label>
                             <input type="text" name="settings_mqtt_client_id" value="{{$fd.MQTT.ClientID}}" placeholder="asura-monitor"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Topic</label>
+                            <label class="form-label">Topic</label>
                             <input type="text" name="settings_mqtt_topic" value="{{$fd.MQTT.Topic}}" placeholder="Optional subscribe topic"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Username</label>
+                            <label class="form-label">Username</label>
                             <input type="text" name="settings_mqtt_username" value="{{$fd.MQTT.Username}}" placeholder="Optional"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                         <div>
-                            <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Password</label>
+                            <label class="form-label">Password</label>
                             <input type="password" name="settings_mqtt_password" value="{{$fd.MQTT.Password}}" placeholder="Optional"
-                                   class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                   class="form-input">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[11px] text-muted uppercase tracking-widest mb-1.5">Expected Message</label>
+                        <label class="form-label">Expected Message</label>
                         <input type="text" name="settings_mqtt_expect" value="{{$fd.MQTT.ExpectMessage}}" placeholder="Optional message content to expect"
-                               class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                               class="form-input">
                     </div>
                     <div class="flex items-center flex-wrap gap-5">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="settings_mqtt_tls" {{if $fd.MQTT.UseTLS}}checked{{end}}
-                                   class="w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                   class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Use TLS</span>
                         </label>
                     </div>
@@ -512,7 +512,7 @@
             <!-- Advanced JSON mode -->
             <div x-show="advancedAssertions" x-cloak>
                 <textarea name="assertions_json" rows="6" placeholder="[]"
-                          class="w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] font-mono placeholder-muted focus:outline-none focus:border-brand/30 transition-colors resize-y">{{$fd.AssertionsRaw}}</textarea>
+                          class="form-input font-mono resize-y">{{$fd.AssertionsRaw}}</textarea>
             </div>
 
             <!-- Form mode -->
@@ -531,9 +531,9 @@
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Type</label>
+                                    <label class="form-label-sm">Type</label>
                                     <select :name="'assertion_type_' + i" x-model="a.type"
-                                            class="form-select w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
+                                            class="form-select py-1.5 text-[12px]">
                                         <option value="status_code">Status Code</option>
                                         <option value="body_contains">Body Contains</option>
                                         <option value="body_regex">Body Regex</option>
@@ -545,9 +545,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Operator</label>
+                                    <label class="form-label-sm">Operator</label>
                                     <select :name="'assertion_operator_' + i" x-model="a.operator"
-                                            class="form-select w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors">
+                                            class="form-select py-1.5 text-[12px]">
                                         <template x-for="op in operatorsFor(a.type)" :key="op[0]">
                                             <option :value="op[0]" x-text="op[1]"></option>
                                         </template>
@@ -556,19 +556,19 @@
                             </div>
                             <div class="grid gap-3" :class="needsTarget(a.type) ? 'grid-cols-2' : 'grid-cols-1'">
                                 <div x-show="needsTarget(a.type)">
-                                    <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Target</label>
+                                    <label class="form-label-sm">Target</label>
                                     <input type="text" :name="'assertion_target_' + i" x-model="a.target" placeholder="e.g. $.status or Content-Type"
-                                           class="w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input py-1.5 text-[12px]">
                                 </div>
                                 <div x-show="needsValue(a.operator)">
-                                    <label class="block text-[10px] text-muted uppercase tracking-widest mb-1">Value</label>
+                                    <label class="form-label-sm">Value</label>
                                     <input type="text" :name="'assertion_value_' + i" x-model="a.value" placeholder="Expected value"
-                                           class="w-full px-3 py-1.5 bg-surface border border-line rounded text-white text-[12px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors">
+                                           class="form-input py-1.5 text-[12px]">
                                 </div>
                             </div>
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" :name="'assertion_degraded_' + i" :checked="a.degraded"
-                                       class="w-3 h-3 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0">
+                                       class="form-checkbox w-3 h-3">
                                 <span class="text-[11px] text-muted-light">Soft (mark as degraded instead of down)</span>
                             </label>
                         </div>
@@ -581,7 +581,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <button type="submit" class="px-5 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+            <button type="submit" class="btn-primary px-5">
                 {{if $mon.ID}}Update{{else}}Create{{end}}
             </button>
             <a href="{{.BasePath}}/monitors{{if $mon.ID}}/{{$mon.ID}}{{end}}" class="text-[13px] text-muted hover:text-muted-light transition-colors">Cancel</a>

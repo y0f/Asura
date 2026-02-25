@@ -54,19 +54,19 @@
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Uptime 24h</div>
+            <div class="stat-label">Uptime 24h</div>
             <div class="text-lg font-semibold {{uptimeColor .Data.Uptime24h}} tabular-nums">{{uptimeFmt .Data.Uptime24h}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Uptime 7d</div>
+            <div class="stat-label">Uptime 7d</div>
             <div class="text-lg font-semibold {{uptimeColor .Data.Uptime7d}} tabular-nums">{{uptimeFmt .Data.Uptime7d}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Uptime 30d</div>
+            <div class="stat-label">Uptime 30d</div>
             <div class="text-lg font-semibold {{uptimeColor .Data.Uptime30d}} tabular-nums">{{uptimeFmt .Data.Uptime30d}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Checks 24h</div>
+            <div class="stat-label">Checks 24h</div>
             <div class="text-lg font-semibold text-white tabular-nums">{{.Data.TotalChecks}}</div>
             {{if gt .Data.TotalChecks 0}}
             <div class="flex items-center gap-2 mt-0.5">
@@ -80,15 +80,15 @@
     {{if or (eq $mon.Type "http") (eq $mon.Type "tcp") (eq $mon.Type "dns") (eq $mon.Type "icmp") (eq $mon.Type "websocket")}}
     <div class="grid grid-cols-3 gap-3 mb-5">
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">p50</div>
+            <div class="stat-label">p50</div>
             <div class="text-lg font-semibold text-white tabular-nums font-mono">{{formatFloat .Data.P50}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">p95</div>
+            <div class="stat-label">p95</div>
             <div class="text-lg font-semibold text-white tabular-nums font-mono">{{formatFloat .Data.P95}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">p99</div>
+            <div class="stat-label">p99</div>
             <div class="text-lg font-semibold text-white tabular-nums font-mono">{{formatFloat .Data.P99}}</div>
         </div>
     </div>
@@ -250,7 +250,7 @@
     {{if .Data.LatestCheck.CertExpiry}}
     <div class="border border-line rounded-lg px-4 py-3 mb-5 flex items-center justify-between">
         <div>
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">TLS Certificate</div>
+            <div class="stat-label">TLS Certificate</div>
             <div class="text-[13px] font-medium {{certColor .Data.LatestCheck.CertExpiry}}">{{certDays .Data.LatestCheck.CertExpiry}} days remaining</div>
         </div>
         <div class="text-[11px] text-muted font-mono">{{.Data.LatestCheck.CertExpiry.Format "2006-01-02"}}</div>
@@ -262,14 +262,14 @@
     {{$records := parseDNS .Data.LatestCheck.DNSRecords}}
     {{if $records}}
     <div class="border border-line rounded-lg px-4 py-3 mb-5">
-        <div class="text-[10px] text-muted uppercase tracking-widest mb-2">DNS Records</div>
+        <div class="stat-label mb-2">DNS Records</div>
         <div class="space-y-0.5">{{range $records}}<div class="text-[12px] text-muted-light font-mono">{{.}}</div>{{end}}</div>
     </div>
     {{end}}
     {{end}}
 
     <div class="border border-line rounded-lg px-4 py-3 mb-5">
-        <div class="text-[10px] text-muted uppercase tracking-widest mb-2">Configuration</div>
+        <div class="stat-label mb-2">Configuration</div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]">
             <div><span class="text-muted">Interval</span> <span class="text-muted-light ml-1">{{$mon.Interval}}s</span></div>
             <div><span class="text-muted">Timeout</span> <span class="text-muted-light ml-1">{{$mon.Timeout}}s</span></div>
@@ -294,12 +294,12 @@
             <table class="w-full min-w-[600px]">
                 <thead>
                     <tr class="border-b border-line text-left">
-                        <th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Status</th>
-                        <th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Response</th>
-                        {{if or (eq $mon.Type "http") (eq $mon.Type "websocket")}}<th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Code</th>{{end}}
-                        {{if eq $mon.Type "tls"}}<th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Cert</th>{{end}}
-                        <th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Message</th>
-                        <th class="px-4 py-2 text-[10px] font-medium text-muted uppercase tracking-widest">Time</th>
+                        <th class="th py-2">Status</th>
+                        <th class="th py-2">Response</th>
+                        {{if or (eq $mon.Type "http") (eq $mon.Type "websocket")}}<th class="th py-2">Code</th>{{end}}
+                        {{if eq $mon.Type "tls"}}<th class="th py-2">Cert</th>{{end}}
+                        <th class="th py-2">Message</th>
+                        <th class="th py-2">Time</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">

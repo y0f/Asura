@@ -3,27 +3,27 @@
 <div>
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Monitors</div>
+            <div class="stat-label">Monitors</div>
             <div class="text-2xl font-semibold text-white tabular-nums">{{.Data.Total}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Up</div>
+            <div class="stat-label">Up</div>
             <div class="text-2xl font-semibold text-emerald-400 tabular-nums">{{.Data.Up}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Down</div>
+            <div class="stat-label">Down</div>
             <div class="text-2xl font-semibold {{if gt .Data.Down 0}}text-red-400{{else}}text-muted{{end}} tabular-nums">{{.Data.Down}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Incidents</div>
+            <div class="stat-label">Incidents</div>
             <div class="text-2xl font-semibold {{if gt .Data.OpenIncidents 0}}text-yellow-400{{else}}text-muted{{end}} tabular-nums">{{.Data.OpenIncidents}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Requests 24h</div>
+            <div class="stat-label">Requests 24h</div>
             <div class="text-2xl font-semibold text-muted-light tabular-nums">{{.Data.Requests24h}}</div>
         </div>
         <div class="border border-line rounded-lg px-4 py-3">
-            <div class="text-[10px] text-muted uppercase tracking-widest mb-1">Visitors 24h</div>
+            <div class="stat-label">Visitors 24h</div>
             <div class="text-2xl font-semibold text-muted-light tabular-nums">{{.Data.Visitors24h}}</div>
         </div>
     </div>
@@ -38,19 +38,19 @@
                 <div class="px-4 py-2 border-b border-line flex gap-1.5 overflow-x-auto rounded-t-lg border-x border-t">
                     {{- $bp := $.BasePath -}}
                     {{- $f := .Data.Filter -}}
-                    <a href="{{$bp}}/" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f ""}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">All</a>
-                    <a href="{{$bp}}/?type=http" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "http"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">HTTP</a>
-                    <a href="{{$bp}}/?type=tcp" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "tcp"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">TCP</a>
-                    <a href="{{$bp}}/?type=dns" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "dns"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">DNS</a>
-                    <a href="{{$bp}}/?type=icmp" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "icmp"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">ICMP</a>
-                    <a href="{{$bp}}/?type=tls" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "tls"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">TLS</a>
-                    <a href="{{$bp}}/?type=websocket" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "websocket"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">WS</a>
-                    <a href="{{$bp}}/?type=heartbeat" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "heartbeat"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">HB</a>
-                    <a href="{{$bp}}/?type=command" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "command"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">CMD</a>
-                    <a href="{{$bp}}/?type=docker" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "docker"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">DK</a>
-                    <a href="{{$bp}}/?type=domain" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "domain"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">Domain</a>
-                    <a href="{{$bp}}/?type=grpc" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "grpc"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">gRPC</a>
-                    <a href="{{$bp}}/?type=mqtt" class="px-2 py-0.5 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap {{if eq $f "mqtt"}}text-brand border-brand/30 bg-brand/[0.04]{{else}}text-muted border-line hover:text-muted-light{{end}}">MQTT</a>
+                    <a href="{{$bp}}/" class="filter-tab px-2 py-0.5 {{if eq $f ""}}filter-active{{else}}filter-inactive{{end}}">All</a>
+                    <a href="{{$bp}}/?type=http" class="filter-tab px-2 py-0.5 {{if eq $f "http"}}filter-active{{else}}filter-inactive{{end}}">HTTP</a>
+                    <a href="{{$bp}}/?type=tcp" class="filter-tab px-2 py-0.5 {{if eq $f "tcp"}}filter-active{{else}}filter-inactive{{end}}">TCP</a>
+                    <a href="{{$bp}}/?type=dns" class="filter-tab px-2 py-0.5 {{if eq $f "dns"}}filter-active{{else}}filter-inactive{{end}}">DNS</a>
+                    <a href="{{$bp}}/?type=icmp" class="filter-tab px-2 py-0.5 {{if eq $f "icmp"}}filter-active{{else}}filter-inactive{{end}}">ICMP</a>
+                    <a href="{{$bp}}/?type=tls" class="filter-tab px-2 py-0.5 {{if eq $f "tls"}}filter-active{{else}}filter-inactive{{end}}">TLS</a>
+                    <a href="{{$bp}}/?type=websocket" class="filter-tab px-2 py-0.5 {{if eq $f "websocket"}}filter-active{{else}}filter-inactive{{end}}">WS</a>
+                    <a href="{{$bp}}/?type=heartbeat" class="filter-tab px-2 py-0.5 {{if eq $f "heartbeat"}}filter-active{{else}}filter-inactive{{end}}">HB</a>
+                    <a href="{{$bp}}/?type=command" class="filter-tab px-2 py-0.5 {{if eq $f "command"}}filter-active{{else}}filter-inactive{{end}}">CMD</a>
+                    <a href="{{$bp}}/?type=docker" class="filter-tab px-2 py-0.5 {{if eq $f "docker"}}filter-active{{else}}filter-inactive{{end}}">DK</a>
+                    <a href="{{$bp}}/?type=domain" class="filter-tab px-2 py-0.5 {{if eq $f "domain"}}filter-active{{else}}filter-inactive{{end}}">Domain</a>
+                    <a href="{{$bp}}/?type=grpc" class="filter-tab px-2 py-0.5 {{if eq $f "grpc"}}filter-active{{else}}filter-inactive{{end}}">gRPC</a>
+                    <a href="{{$bp}}/?type=mqtt" class="filter-tab px-2 py-0.5 {{if eq $f "mqtt"}}filter-active{{else}}filter-inactive{{end}}">MQTT</a>
                 </div>
             <div id="monitor-grid" hx-get="{{$bp}}/?page={{.Data.Page}}{{if $f}}&type={{$f}}{{end}}" hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false"
                  class="border border-line border-t-0 rounded-b-lg overflow-hidden">
