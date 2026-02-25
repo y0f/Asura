@@ -4,17 +4,17 @@
   </h1>
   <p align="center">A self-contained Go monitoring service with no external runtime dependencies.</p>
   <p align="center">
-    <a href="https://github.com/y0f/Asura/actions/workflows/ci.yml"><img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <a href="https://goreportcard.com/report/github.com/y0f/Asura?branch=main"><img src="https://goreportcard.com/badge/github.com/y0f/Asura?branch=main" alt="Go Report Card"></a>
-    <a href="https://github.com/y0f/Asura/blob/main/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/y0f/Asura" alt="Go Version"></a>
+    <a href="https://github.com/y0f/asura/actions/workflows/ci.yml"><img src="https://github.com/y0f/asura/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://goreportcard.com/report/github.com/y0f/asura?branch=main"><img src="https://goreportcard.com/badge/github.com/y0f/asura?branch=main" alt="Go Report Card"></a>
+    <a href="https://github.com/y0f/asura/blob/main/go.mod"><img src="https://img.shields.io/github/go-mod/go-version/y0f/asura" alt="Go Version"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-    <a href="https://github.com/y0f/Asura/releases/latest"><img src="https://img.shields.io/github/v/release/y0f/Asura?include_prereleases&sort=semver" alt="Release"></a>
-    <a href="https://github.com/y0f/Asura/pkgs/container/asura"><img src="https://img.shields.io/badge/ghcr.io-asura-blue?logo=docker" alt="Docker"></a>
+    <a href="https://github.com/y0f/asura/releases/latest"><img src="https://img.shields.io/github/v/release/y0f/asura?include_prereleases&sort=semver" alt="Release"></a>
+    <a href="https://github.com/y0f/asura/pkgs/container/asura"><img src="https://img.shields.io/badge/ghcr.io-asura-blue?logo=docker" alt="Docker"></a>
   </p>
   <p align="center">
-    <a href="https://y0f.github.io/Asura/">Documentation</a> &middot;
-    <a href="https://y0f.github.io/Asura/#getting-started">Quick Start</a> &middot;
-    <a href="https://y0f.github.io/Asura/#api">API Docs</a> &middot;
+    <a href="https://y0f.github.io/asura/">Documentation</a> &middot;
+    <a href="https://y0f.github.io/asura/#getting-started">Quick Start</a> &middot;
+    <a href="https://y0f.github.io/asura/#api">API Docs</a> &middot;
     <a href="CONTRIBUTING.md">Contributing</a>
   </p>
 </p>
