@@ -109,8 +109,6 @@ cp config.example.yaml config.yaml     # paste the hash
 
 ## Documentation
 
-Full documentation is available at **[y0f.github.io/Asura](https://y0f.github.io/Asura/)**.
-
 | Topic | Description |
 |---|---|
 | [Getting Started](https://y0f.github.io/Asura/#getting-started) | Install via VPS, Docker, or source |
