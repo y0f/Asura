@@ -1,0 +1,82 @@
+<div class="text-center mb-12">
+  <img src="static/asura.gif" alt="Asura" class="h-16 mx-auto mb-4">
+  <h1 class="!text-3xl !mb-2">Asura</h1>
+  <p class="text-muted-light text-sm !mb-6">A self-contained Go monitoring service with no external runtime dependencies.</p>
+  <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
+    <img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI">
+    <img src="https://goreportcard.com/badge/github.com/y0f/Asura?branch=main" alt="Go Report Card">
+    <img src="https://img.shields.io/github/go-mod/go-version/y0f/Asura" alt="Go Version">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+    <img src="https://img.shields.io/github/v/release/y0f/Asura?include_prereleases&sort=semver" alt="Release">
+  </div>
+</div>
+
+<div class="bg-surface-100 border border-line rounded-lg p-6 mb-8">
+  <p class="!mb-0 text-center">Asura monitors your infrastructure from a single Go binary backed by SQLite.<br>No Postgres. No Redis. No Node.js. Just <code>scp</code> a binary and go.</p>
+</div>
+
+<h2>Why Asura?</h2>
+
+<table>
+  <thead>
+    <tr><th></th><th>Asura</th><th>Typical alternative</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Runtime</strong></td><td>Single static binary</td><td>Node.js / Java / Python runtime</td></tr>
+    <tr><td><strong>Database</strong></td><td>SQLite compiled in</td><td>Requires Postgres, MySQL, or Redis</td></tr>
+    <tr><td><strong>Binary size</strong></td><td>~15 MB</td><td>100–500 MB installed</td></tr>
+    <tr><td><strong>Concurrency</strong></td><td>Goroutine worker pool with channel backpressure</td><td>Event loop or thread pool</td></tr>
+    <tr><td><strong>Deploy</strong></td><td><code>scp</code> binary + run</td><td>Package manager, runtime install, migrations</td></tr>
+    <tr><td><strong>Config</strong></td><td>One YAML file</td><td>Multiple config files, env vars, database setup</td></tr>
+    <tr><td><strong>RAM</strong></td><td>~20 MB idle</td><td>Varies — runtime + database overhead</td></tr>
+  </tbody>
+</table>
+
+<h2>Highlights</h2>
+
+<table>
+  <thead>
+    <tr><th>Feature</th><th></th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>12 protocols</strong></td><td>HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Heartbeat, Domain (WHOIS), gRPC, MQTT</td></tr>
+    <tr><td><strong>Assertion engine</strong></td><td>9 types — status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records</td></tr>
+    <tr><td><strong>Change detection</strong></td><td>Line-level diffs on response bodies</td></tr>
+    <tr><td><strong>Incidents</strong></td><td>Automatic creation, thresholds, ack, recovery</td></tr>
+    <tr><td><strong>Notifications</strong></td><td>Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy</td></tr>
+    <tr><td><strong>Monitor groups</strong></td><td>Organize monitors into named groups with custom sort order</td></tr>
+    <tr><td><strong>Proxy support</strong></td><td>HTTP and SOCKS5 proxies with per-monitor assignment</td></tr>
+    <tr><td><strong>Maintenance</strong></td><td>Recurring windows to suppress alerts</td></tr>
+    <tr><td><strong>Heartbeat monitoring</strong></td><td>Cron jobs, workers, and pipelines report in — silence triggers incidents</td></tr>
+    <tr><td><strong>Web dashboard</strong></td><td>Form-based config, assertion builder, dark/light mode</td></tr>
+    <tr><td><strong>Status pages</strong></td><td>Multiple public status pages with custom slugs and grouping</td></tr>
+    <tr><td><strong>Analytics</strong></td><td>Uptime %, response time percentiles, Prometheus <code>/metrics</code></td></tr>
+    <tr><td><strong>~15 MB binary</strong></td><td>Cross-compiles to <code>linux/amd64</code> and <code>linux/arm64</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Web UI</h2>
+
+<p>Built with HTMX, Tailwind, and Alpine.js — form-based monitor configuration, assertion builder, notification channels, incident timeline, request logs, and multiple status pages.</p>
+
+<img src="https://raw.githubusercontent.com/y0f/Asura/main/assets/webpanel.png" alt="Web UI" class="rounded-lg border border-line mb-6 w-full">
+
+<h2>Quick Start</h2>
+
+<pre><code>git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh</code></pre>
+
+<p>Installs Go (if needed), builds the binary, creates a systemd service and generates an admin key. Under 2 minutes on a fresh Ubuntu box.</p>
+
+<div class="flex flex-wrap gap-3 mt-8">
+  <a href="#getting-started" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand/85 text-sm font-medium rounded-lg transition-colors" style="color: #fff;">
+    Get started
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+  </a>
+  <a href="#api" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
+    API Reference
+  </a>
+  <a href="https://github.com/y0f/Asura" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
+    GitHub
+    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+  </a>
+</div>

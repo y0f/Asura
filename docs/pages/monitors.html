@@ -1,0 +1,223 @@
+<h1>Monitors</h1>
+
+<p>Asura supports 12 protocol types. Each monitor runs on a configurable interval with protocol-specific settings and optional assertions.</p>
+
+<h2>Monitor Fields</h2>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Display name</td></tr>
+    <tr><td><code>description</code></td><td>string</td><td></td><td>Optional description or notes</td></tr>
+    <tr><td><code>type</code></td><td>string</td><td>yes</td><td><code>http</code> <code>tcp</code> <code>dns</code> <code>icmp</code> <code>tls</code> <code>websocket</code> <code>command</code> <code>docker</code> <code>heartbeat</code> <code>domain</code> <code>grpc</code> <code>mqtt</code></td></tr>
+    <tr><td><code>target</code></td><td>string</td><td>yes</td><td>URL, host:port, domain, or command</td></tr>
+    <tr><td><code>interval</code></td><td>int</td><td></td><td>Seconds between checks (default: 60)</td></tr>
+    <tr><td><code>timeout</code></td><td>int</td><td></td><td>Timeout in seconds (default: 10)</td></tr>
+    <tr><td><code>tags</code></td><td>string[]</td><td></td><td>Grouping tags</td></tr>
+    <tr><td><code>group_id</code></td><td>int</td><td></td><td>Monitor group ID (null if ungrouped)</td></tr>
+    <tr><td><code>proxy_id</code></td><td>int</td><td></td><td>Proxy ID for routing checks through a proxy</td></tr>
+    <tr><td><code>notification_channel_ids</code></td><td>int[]</td><td></td><td>Notification channels to route to (empty = all)</td></tr>
+    <tr><td><code>settings</code></td><td>object</td><td></td><td>Protocol-specific (see below)</td></tr>
+    <tr><td><code>assertions</code></td><td>array</td><td></td><td>Assertion rules (see below)</td></tr>
+    <tr><td><code>track_changes</code></td><td>bool</td><td></td><td>Enable content change detection</td></tr>
+    <tr><td><code>failure_threshold</code></td><td>int</td><td></td><td>Failures before incident (default: 3)</td></tr>
+    <tr><td><code>success_threshold</code></td><td>int</td><td></td><td>Successes before recovery (default: 1)</td></tr>
+    <tr><td><code>upside_down</code></td><td>bool</td><td></td><td>Inverted mode — "up" becomes "down" and vice versa</td></tr>
+    <tr><td><code>resend_interval</code></td><td>int</td><td></td><td>Re-send notifications every N checks while down (0 = once)</td></tr>
+  </tbody>
+</table>
+
+<h2>Protocol Settings</h2>
+
+<h3>HTTP</h3>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>method</code></td><td>string</td><td>HTTP method (default: <code>GET</code>)</td></tr>
+    <tr><td><code>headers</code></td><td>map[string]string</td><td>Custom request headers</td></tr>
+    <tr><td><code>body</code></td><td>string</td><td>Request body (for POST/PUT/PATCH)</td></tr>
+    <tr><td><code>body_encoding</code></td><td>string</td><td>Content-Type hint: <code>json</code>, <code>xml</code>, <code>form</code>, or empty for raw</td></tr>
+    <tr><td><code>auth_method</code></td><td>string</td><td><code>none</code>, <code>basic</code>, or <code>bearer</code> (default: inferred)</td></tr>
+    <tr><td><code>basic_auth_user</code></td><td>string</td><td>Basic auth username</td></tr>
+    <tr><td><code>basic_auth_pass</code></td><td>string</td><td>Basic auth password</td></tr>
+    <tr><td><code>bearer_token</code></td><td>string</td><td>Bearer token</td></tr>
+    <tr><td><code>expected_status</code></td><td>int</td><td>Expected HTTP status code (0 = any 2xx/3xx)</td></tr>
+    <tr><td><code>follow_redirects</code></td><td>bool</td><td>Follow redirects (default: true)</td></tr>
+    <tr><td><code>max_redirects</code></td><td>int</td><td>Maximum redirect hops (0 = don't follow, default: 10)</td></tr>
+    <tr><td><code>skip_tls_verify</code></td><td>bool</td><td>Skip TLS certificate verification</td></tr>
+    <tr><td><code>cache_buster</code></td><td>bool</td><td>Append unique query param to bypass caches</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{
+  "method": "POST",
+  "headers": {"X-Custom": "value"},
+  "body": "{\"key\":\"value\"}",
+  "body_encoding": "json",
+  "auth_method": "bearer",
+  "bearer_token": "eyJhbGci...",
+  "expected_status": 200,
+  "max_redirects": 5,
+  "skip_tls_verify": false,
+  "cache_buster": false
+}</code></pre>
+
+<h3>TCP</h3>
+
+<pre><code>{"send_data": "PING\r\n", "expect_data": "PONG"}</code></pre>
+
+<h3>DNS</h3>
+
+<pre><code>{"record_type": "A", "server": "8.8.8.8"}</code></pre>
+
+<h3>TLS</h3>
+
+<pre><code>{"warn_days_before": 30}</code></pre>
+
+<h3>WebSocket</h3>
+
+<pre><code>{"headers": {"Authorization": "Bearer token"}, "send_message": "ping", "expect_reply": "pong"}</code></pre>
+
+<h3>Command</h3>
+
+<pre><code>{"command": "/usr/local/bin/check_health", "args": ["--host", "db.local"]}</code></pre>
+
+<h3>Docker</h3>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>container_name</code></td><td>string</td><td>Container name or ID (overrides target if set)</td></tr>
+    <tr><td><code>socket_path</code></td><td>string</td><td>Docker socket path (default: <code>/var/run/docker.sock</code>)</td></tr>
+    <tr><td><code>check_health</code></td><td>bool</td><td>Use container health status instead of just running state</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{"container_name": "nginx", "socket_path": "/var/run/docker.sock", "check_health": true}</code></pre>
+
+<p>Status mapping:</p>
+<ul>
+  <li><strong>up</strong>: container running (or healthy when <code>check_health</code> is enabled)</li>
+  <li><strong>degraded</strong>: container running, health status is <code>starting</code></li>
+  <li><strong>down</strong>: container stopped/exited, not found, or unhealthy</li>
+</ul>
+
+<p><strong>Setup — systemd (native install):</strong></p>
+
+<pre><code>sudo usermod -aG docker asura
+sudo systemctl restart asura</code></pre>
+
+<p><strong>Setup — Docker:</strong> Mount the host socket:</p>
+
+<pre><code>volumes:
+  - /var/run/docker.sock:/var/run/docker.sock</code></pre>
+
+<h3>Domain (WHOIS)</h3>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>warn_days_before</code></td><td>int</td><td>Days before expiry to mark as degraded (default: 30)</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{"warn_days_before": 30}</code></pre>
+
+<p>Target is a domain name (e.g. <code>example.com</code>). Queries the appropriate WHOIS server for the TLD, parses the expiry date, and reports status based on remaining days.</p>
+
+<h3>gRPC</h3>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>service_name</code></td><td>string</td><td>gRPC service to health-check (empty = all)</td></tr>
+    <tr><td><code>use_tls</code></td><td>bool</td><td>Use TLS (default: false)</td></tr>
+    <tr><td><code>skip_tls_verify</code></td><td>bool</td><td>Skip TLS certificate verification</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{"service_name": "my.service.v1", "use_tls": true}</code></pre>
+
+<p>Uses the standard <code>grpc.health.v1.Health/Check</code> protocol. Default port: 50051 (plaintext), 443 (TLS).</p>
+
+<h3>MQTT</h3>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>client_id</code></td><td>string</td><td>MQTT client ID (auto-generated if empty)</td></tr>
+    <tr><td><code>username</code></td><td>string</td><td>Authentication username</td></tr>
+    <tr><td><code>password</code></td><td>string</td><td>Authentication password</td></tr>
+    <tr><td><code>topic</code></td><td>string</td><td>Topic to subscribe to (optional)</td></tr>
+    <tr><td><code>use_tls</code></td><td>bool</td><td>Use TLS (default: false)</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{"username": "monitor", "password": "secret", "topic": "health/status", "use_tls": true}</code></pre>
+
+<p>Connects using MQTT 3.1.1. Default port: 1883 (plaintext), 8883 (TLS). Optionally subscribes to a topic to verify permissions.</p>
+
+<h2>Heartbeat Monitoring</h2>
+
+<p>Create a heartbeat monitor to track cron jobs, workers, or pipelines. If they stop pinging, Asura fires an incident.</p>
+
+<pre><code># Create heartbeat monitor
+curl -X POST https://example.com/asura/api/v1/monitors \
+  -H "X-API-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Nightly Backup","type":"heartbeat","interval":3600,"settings":{"grace":300}}'</code></pre>
+
+<p>Response includes the ping token:</p>
+
+<pre><code>{
+  "monitor": { "id": 1, "name": "Nightly Backup", "type": "heartbeat", ... },
+  "heartbeat": { "token": "a1b2c3d4e5f6...", "grace": 300, "status": "pending" }
+}</code></pre>
+
+<p>Ping from your script (no auth needed):</p>
+
+<pre><code>curl -X POST https://example.com/asura/api/v1/heartbeat/a1b2c3d4e5f6...</code></pre>
+
+<p>If no ping arrives within <code>interval + grace</code> seconds, the monitor goes down and an incident is created.</p>
+
+<h2>Assertions</h2>
+
+<p>Evaluated after each check. Failed assertions mark a monitor <code>down</code> or <code>degraded</code>.</p>
+
+<table>
+  <thead>
+    <tr><th>Type</th><th>Description</th><th>Operators</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>status_code</code></td><td>HTTP status code</td><td>eq, neq, gt, lt, gte, lte</td></tr>
+    <tr><td><code>body_contains</code></td><td>Body text search</td><td>contains, not_contains</td></tr>
+    <tr><td><code>body_regex</code></td><td>Body regex match</td><td>matches, not_matches</td></tr>
+    <tr><td><code>json_path</code></td><td>JSON value at dot-path</td><td>eq, neq, gt, lt, contains, exists</td></tr>
+    <tr><td><code>header</code></td><td>Response header value</td><td>eq, neq, contains, exists</td></tr>
+    <tr><td><code>response_time</code></td><td>Response time (ms)</td><td>lt, lte, gt, gte</td></tr>
+    <tr><td><code>cert_expiry</code></td><td>Days until cert expires</td><td>gt, gte, lt, lte</td></tr>
+    <tr><td><code>dns_record</code></td><td>DNS record value</td><td>contains, eq</td></tr>
+  </tbody>
+</table>
+
+<pre><code>{
+  "assertions": [
+    {"type": "status_code", "operator": "eq", "value": "200"},
+    {"type": "response_time", "operator": "lt", "value": "2000"},
+    {"type": "json_path", "target": "status", "operator": "eq", "value": "ok"},
+    {"type": "response_time", "operator": "lt", "value": "5000", "degraded": true}
+  ]
+}</code></pre>

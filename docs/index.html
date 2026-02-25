@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asura Docs</title>
+  <link rel="icon" href="static/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/docs.css">
+  <script>
+    (function() {
+      var t = localStorage.getItem('docs-theme');
+      if (t === 'light') document.documentElement.classList.remove('dark');
+      else document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <script src="static/alpine.min.js" defer></script>
+  <script src="static/htmx.min.js"></script>
+</head>
+<body class="bg-surface font-sans text-white min-h-screen antialiased">
+  <div class="noise-bg"></div>
+  <div class="glow-bg"></div>
+
+  <div x-data="docsNav()" x-init="init()" class="relative z-10 flex min-h-screen">
+    <!-- Mobile header -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-surface-50/95 backdrop-blur border-b border-line px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button @click="mobileOpen = !mobileOpen" class="text-muted-light hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <img src="static/asura.gif" alt="Asura" class="h-6">
+        <span class="text-sm font-semibold">Docs</span>
+      </div>
+      <button @click="toggleTheme()" class="text-muted hover:text-white transition-colors">
+        <svg x-show="dark" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
+        <svg x-show="!dark" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile overlay -->
+    <div x-show="mobileOpen" @click="mobileOpen = false" class="lg:hidden fixed inset-0 bg-black/50 z-40" x-transition.opacity></div>
+
+    <!-- Sidebar -->
+    <aside :class="mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+           class="fixed top-0 left-0 bottom-0 w-64 bg-surface-50/80 backdrop-blur border-r border-line z-50 lg:z-30 transition-transform duration-200 flex flex-col overflow-y-auto">
+      <div class="p-5 flex items-center gap-3 border-b border-line">
+        <img src="static/asura.gif" alt="Asura" class="h-8">
+        <div>
+          <div class="text-sm font-semibold">Asura</div>
+          <div class="text-[10px] text-muted uppercase tracking-widest">Documentation</div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1">
+        <template x-for="item in navItems" :key="item.page">
+          <a :href="'#' + item.page"
+             :class="active === item.page ? 'bg-brand/10 text-brand border-brand/20' : 'text-muted-light hover:text-white hover:bg-surface-200/50 border-transparent'"
+             class="flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg border transition-colors cursor-pointer"
+             @click="navigate(item.page); mobileOpen = false">
+            <span x-html="item.icon" class="w-4 h-4 shrink-0"></span>
+            <span x-text="item.label"></span>
+          </a>
+        </template>
+      </nav>
+
+      <div class="p-4 border-t border-line space-y-3">
+        <button @click="toggleTheme()" class="hidden lg:flex items-center gap-2 text-[12px] text-muted hover:text-white transition-colors w-full px-3 py-1.5 rounded hover:bg-surface-200/50">
+          <svg x-show="dark" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
+          <svg x-show="!dark" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+          <span x-text="dark ? 'Light mode' : 'Dark mode'"></span>
+        </button>
+        <a href="https://github.com/y0f/Asura" target="_blank" class="flex items-center gap-2 text-[12px] text-muted hover:text-white transition-colors px-3 py-1.5 rounded hover:bg-surface-200/50">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 lg:ml-64 pt-14 lg:pt-0">
+      <div class="max-w-4xl mx-auto px-6 py-10 lg:py-14">
+        <div id="content" class="prose-docs">
+          <div class="flex items-center justify-center py-20">
+            <div class="text-muted text-sm">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .noise-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700' width='700' height='700'%3E%3Cdefs%3E%3Cfilter id='nnnoise-filter' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' seed='15' stitchTiles='stitch' x='0%25' y='0%25' width='100%25' height='100%25' result='turbulence'/%3E%3CfeSpecularLighting surfaceScale='5' specularConstant='0.8' specularExponent='20' lighting-color='white' x='0%25' y='0%25' width='100%25' height='100%25' in='turbulence' result='specularLighting'%3E%3CfeDistantLight azimuth='3' elevation='96'/%3E%3C/feSpecularLighting%3E%3CfeColorMatrix type='saturate' values='0' x='0%25' y='0%25' width='100%25' height='100%25' in='specularLighting' result='colormatrix'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='700' height='700' fill='black'/%3E%3Crect width='700' height='700' fill='white' filter='url(%23nnnoise-filter)'/%3E%3C/svg%3E");
+      background-size: 400px; opacity: 0.045;
+    }
+    .glow-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 90% 45% at 50% -5%, rgba(0,128,255,0.08) 0%, transparent 70%);
+    }
+    [x-cloak] { display: none !important; }
+  </style>
+
+  <script>
+    function docsNav() {
+      return {
+        active: 'home',
+        dark: true,
+        mobileOpen: false,
+        navItems: [
+          { page: 'home', label: 'Home', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>' },
+          { page: 'getting-started', label: 'Getting Started', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>' },
+          { page: 'configuration', label: 'Configuration', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>' },
+          { page: 'monitors', label: 'Monitors', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>' },
+          { page: 'api', label: 'API Reference', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>' },
+          { page: 'notifications', label: 'Notifications', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>' },
+          { page: 'deployment', label: 'Deployment', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>' },
+          { page: 'architecture', label: 'Architecture', icon: '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm6 0a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H9a1 1 0 01-1-1V4zm7-1a1 1 0 00-1 1v12a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2z"/></svg>' },
+        ],
+        init() {
+          this.dark = document.documentElement.classList.contains('dark');
+          var hash = location.hash.replace('#', '') || 'home';
+          this.loadPage(hash);
+          window.addEventListener('hashchange', () => {
+            var h = location.hash.replace('#', '') || 'home';
+            this.loadPage(h);
+          });
+        },
+        navigate(page) {
+          location.hash = page;
+        },
+        loadPage(page) {
+          this.active = page;
+          var el = document.getElementById('content');
+          fetch('pages/' + page + '.html')
+            .then(r => r.ok ? r.text() : '<p class="text-red-400">Page not found.</p>')
+            .then(html => {
+              el.innerHTML = html;
+              window.scrollTo(0, 0);
+            })
+            .catch(() => {
+              el.innerHTML = '<p class="text-red-400">Failed to load page.</p>';
+            });
+        },
+        toggleTheme() {
+          this.dark = !this.dark;
+          document.documentElement.classList.toggle('dark', this.dark);
+          localStorage.setItem('docs-theme', this.dark ? 'dark' : 'light');
+        }
+      };
+    }
+  </script>
+</body>
+</html>

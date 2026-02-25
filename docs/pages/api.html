@@ -1,0 +1,223 @@
+<h1>API Reference</h1>
+
+<p>All endpoints return JSON. Authenticate with the <code>X-API-Key</code> header. When <code>base_path</code> is configured, all paths are prefixed (e.g. <code>/asura/api/v1/health</code>).</p>
+
+<p>Pagination: <code>?page=1&amp;per_page=20</code> on all list endpoints.</p>
+
+<h2>Health <span class="text-muted text-[11px] font-normal">(no auth)</span></h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/health</code></td><td>Status, uptime</td></tr>
+  </tbody>
+</table>
+
+<h2>Metrics <span class="text-muted text-[11px] font-normal">(read auth)</span></h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/metrics</code></td><td>Prometheus exposition format</td></tr>
+  </tbody>
+</table>
+
+<h2>Monitors</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors</code></td><td>List</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/monitors</code></td><td>Create</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}</code></td><td>Get</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/monitors/{id}</code></td><td>Update</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/monitors/{id}</code></td><td>Delete</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/pause</code></td><td>Pause</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/resume</code></td><td>Resume</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/checks</code></td><td>Check history</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/metrics</code></td><td>Analytics</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/changes</code></td><td>Content changes</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/chart</code></td><td>Response time chart data</td></tr>
+  </tbody>
+</table>
+
+<p>See <a href="#monitors">Monitors</a> for the full field reference and protocol settings.</p>
+
+<h2>Status Pages</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/status-pages</code></td><td>List all status pages</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/status-pages/{id}</code></td><td>Get status page with assigned monitors</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/status-pages</code></td><td>Create a new status page</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/status-pages/{id}</code></td><td>Update a status page</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/status-pages/{id}</code></td><td>Delete a status page</td></tr>
+  </tbody>
+</table>
+
+<p>Each status page has its own <code>slug</code> (URL path), <code>title</code>, <code>description</code>, and monitor set. Monitors are assigned per-page with optional <code>sort_order</code> and <code>group_name</code> for display grouping. The page is served at <code>/{slug}</code>.</p>
+
+<p>The public API for a specific page is available at <code>GET /api/v1/status-pages/{id}/public</code> (no auth required). Returns public fields only.</p>
+
+<h2>Status Badges</h2>
+
+<p>Available for any monitor assigned to an enabled status page.</p>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/status</code></td><td>Status badge (up/down/degraded)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/uptime</code></td><td>30-day uptime percentage</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/response</code></td><td>24h median response time</td></tr>
+  </tbody>
+</table>
+
+<p>Embed in a README:</p>
+
+<pre><code>![Status](https://example.com/asura/api/v1/badge/1/status)
+![Uptime](https://example.com/asura/api/v1/badge/1/uptime)</code></pre>
+
+<h2>Monitor Groups</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/groups</code></td><td>List</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/groups</code></td><td>Create</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/groups/{id}</code></td><td>Update</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/groups/{id}</code></td><td>Delete</td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Group name (max 255 chars)</td></tr>
+    <tr><td><code>sort_order</code></td><td>int</td><td></td><td>Display order (default: 0)</td></tr>
+  </tbody>
+</table>
+
+<p>Assign monitors to a group by setting <code>group_id</code> on the monitor. Deleting a group ungroups its monitors.</p>
+
+<h2>Proxies</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/proxies</code></td><td>List</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/proxies</code></td><td>Create</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/proxies/{id}</code></td><td>Get</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/proxies/{id}</code></td><td>Update</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/proxies/{id}</code></td><td>Delete</td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Display name (max 255 chars)</td></tr>
+    <tr><td><code>protocol</code></td><td>string</td><td>yes</td><td><code>http</code> or <code>socks5</code></td></tr>
+    <tr><td><code>host</code></td><td>string</td><td>yes</td><td>Proxy hostname or IP</td></tr>
+    <tr><td><code>port</code></td><td>int</td><td>yes</td><td>Proxy port (1-65535)</td></tr>
+    <tr><td><code>auth_user</code></td><td>string</td><td></td><td>Authentication username</td></tr>
+    <tr><td><code>auth_pass</code></td><td>string</td><td></td><td>Authentication password</td></tr>
+    <tr><td><code>enabled</code></td><td>bool</td><td></td><td>Whether proxy is active (default: true)</td></tr>
+  </tbody>
+</table>
+
+<p>Assign a proxy to a monitor by setting <code>proxy_id</code>. HTTP proxies work with HTTP monitors; SOCKS5 proxies work with all protocol types.</p>
+
+<h2>Incidents</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/incidents</code></td><td>List (filter: monitor_id, status)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/incidents/{id}</code></td><td>Get with timeline</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/incidents/{id}/ack</code></td><td>Acknowledge</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/incidents/{id}/resolve</code></td><td>Resolve</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/incidents/{id}</code></td><td>Delete</td></tr>
+  </tbody>
+</table>
+
+<h2>Notifications</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/notifications</code></td><td>List</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/notifications</code></td><td>Create</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/notifications/{id}</code></td><td>Update</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/notifications/{id}</code></td><td>Delete</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/notifications/{id}/test</code></td><td>Test</td></tr>
+  </tbody>
+</table>
+
+<p>Types: <code>webhook</code> <code>email</code> <code>telegram</code> <code>discord</code> <code>slack</code> <code>ntfy</code></p>
+
+<p>Events: <code>incident.created</code> <code>incident.acknowledged</code> <code>incident.resolved</code> <code>content.changed</code></p>
+
+<p>See <a href="#notifications">Notifications</a> for per-type settings and webhook signing.</p>
+
+<h2>Maintenance Windows</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/maintenance</code></td><td>List</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/maintenance</code></td><td>Create</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/maintenance/{id}</code></td><td>Update</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/maintenance/{id}</code></td><td>Delete</td></tr>
+  </tbody>
+</table>
+
+<p><code>recurring</code> values: <code>""</code> (one-time), <code>"daily"</code>, <code>"weekly"</code>, <code>"monthly"</code></p>
+
+<h2>Request Logs</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/request-logs</code></td><td>List (filter: group, method, status_code, range)</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/request-logs/stats</code></td><td>Aggregate stats (requests, visitors, latency)</td></tr>
+  </tbody>
+</table>
+
+<h2>Other</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/overview</code></td><td>Status summary</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/tags</code></td><td>All tags</td></tr>
+  </tbody>
+</table>

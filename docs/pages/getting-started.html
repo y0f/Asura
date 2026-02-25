@@ -1,0 +1,72 @@
+<h1>Getting Started</h1>
+
+<p>Asura runs as a single static binary with an embedded SQLite database. No runtime, no external database, no container required.</p>
+
+<h2>VPS Install (recommended)</h2>
+
+<pre><code>git clone https://github.com/y0f/Asura.git
+cd Asura
+sudo bash install.sh</code></pre>
+
+<p>The install script:</p>
+<ul>
+  <li>Installs Go if not present</li>
+  <li>Builds a static binary (<code>CGO_ENABLED=0</code>)</li>
+  <li>Creates a systemd service</li>
+  <li>Generates an admin API key</li>
+</ul>
+
+<p>Under 2 minutes on a fresh Ubuntu box.</p>
+
+<blockquote>By default, Asura binds to <code>127.0.0.1:8090</code> and is <strong>not</strong> accessible from the internet. Set up a <a href="#deployment">reverse proxy</a> to expose it.</blockquote>
+
+<pre><code>systemctl status asura
+curl http://127.0.0.1:8090/api/v1/health</code></pre>
+
+<h2>Docker Compose</h2>
+
+<pre><code>git clone https://github.com/y0f/Asura.git
+cd Asura
+cp config.example.yaml config.yaml
+# set your API key hash and database.path to /app/data/asura.db
+docker compose up -d</code></pre>
+
+<h2>From Source</h2>
+
+<pre><code>make build
+./asura --setup                        # generates key + hash
+cp config.example.yaml config.yaml     # paste the hash
+./asura -config config.yaml</code></pre>
+
+<h2>Cross-compile + Deploy</h2>
+
+<pre><code>make release
+scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura</code></pre>
+
+<h2>Manual Setup</h2>
+
+<p>For full control over the installation process:</p>
+
+<pre><code># Build
+make build
+sudo install -m 755 asura /usr/local/bin/asura
+
+# Generate API key
+asura --setup
+
+# System user + directories
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin asura
+sudo mkdir -p /etc/asura /var/lib/asura
+sudo chown asura:asura /var/lib/asura
+sudo chmod 700 /var/lib/asura
+
+# Config
+sudo cp config.example.yaml /etc/asura/config.yaml
+# set hash, database.path, base_path, trusted_proxies
+sudo chmod 640 /etc/asura/config.yaml
+sudo chown root:asura /etc/asura/config.yaml
+
+# Systemd
+sudo cp asura.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now asura</code></pre>

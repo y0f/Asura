@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-rgb: 0 128 255;
+  --text-primary-rgb: 20 20 43;
+  --surface-rgb: 248 249 255;
+  --surface-50-rgb: 240 242 255;
+  --surface-100-rgb: 234 236 248;
+  --surface-200-rgb: 226 228 240;
+  --surface-300-rgb: 216 218 234;
+  --muted-rgb: 107 111 138;
+  --muted-light-rgb: 45 48 88;
+  --line-rgb: 224 226 240;
+  --line-light-rgb: 208 210 228;
+}
+
+.dark {
+  --brand-rgb: 0 128 255;
+  --text-primary-rgb: 255 255 255;
+  --surface-rgb: 9 9 11;
+  --surface-50-rgb: 14 14 18;
+  --surface-100-rgb: 19 19 24;
+  --surface-200-rgb: 26 26 34;
+  --surface-300-rgb: 34 34 48;
+  --muted-rgb: 67 70 86;
+  --muted-light-rgb: 167 170 188;
+  --line-rgb: 26 26 34;
+  --line-light-rgb: 34 34 48;
+}
+
+@layer components {
+  .prose-docs h1 {
+    @apply text-2xl font-semibold text-white mb-6;
+  }
+  .prose-docs h2 {
+    @apply text-xl font-semibold text-white mt-10 mb-4;
+  }
+  .prose-docs h3 {
+    @apply text-base font-semibold text-white mt-8 mb-3;
+  }
+  .prose-docs h4 {
+    @apply text-sm font-semibold text-white mt-6 mb-2;
+  }
+  .prose-docs p {
+    @apply text-[13px] leading-relaxed text-muted-light mb-4;
+  }
+  .prose-docs a {
+    @apply text-brand hover:underline;
+  }
+  .prose-docs ul {
+    @apply list-disc list-inside text-[13px] text-muted-light mb-4 space-y-1;
+  }
+  .prose-docs ol {
+    @apply list-decimal list-inside text-[13px] text-muted-light mb-4 space-y-1;
+  }
+  .prose-docs li {
+    @apply leading-relaxed;
+  }
+  .prose-docs code {
+    @apply font-mono text-[12px] bg-surface-200 px-1.5 py-0.5 rounded text-brand;
+  }
+  .prose-docs pre {
+    @apply bg-surface-100 border border-line rounded-lg p-4 mb-4 overflow-x-auto;
+  }
+  .prose-docs pre code {
+    @apply bg-transparent px-0 py-0 text-muted-light;
+  }
+  .prose-docs table {
+    @apply w-full text-[13px] mb-6 border-collapse;
+  }
+  .prose-docs thead th {
+    @apply text-left text-[10px] font-medium text-muted uppercase tracking-widest px-3 py-2 border-b border-line bg-surface-50;
+  }
+  .prose-docs tbody td {
+    @apply px-3 py-2 border-b border-line text-muted-light;
+  }
+  .prose-docs tbody tr:hover {
+    @apply bg-surface-50/50;
+  }
+  .prose-docs blockquote {
+    @apply border-l-2 border-brand/30 pl-4 my-4 text-[13px] text-muted italic;
+  }
+  .prose-docs hr {
+    @apply border-line my-8;
+  }
+  .prose-docs strong {
+    @apply text-white font-medium;
+  }
+}
+
+:root:not(.dark) .text-emerald-400 { color: rgb(4 120 87); }
+:root:not(.dark) .text-red-400     { color: rgb(185 28 28); }
+:root:not(.dark) .text-yellow-400  { color: rgb(161 98 7); }

@@ -1,0 +1,127 @@
+<h1>Configuration</h1>
+
+<p>All options are set in <code>config.yaml</code>. See <a href="https://github.com/y0f/Asura/blob/main/config.example.yaml" target="_blank">config.example.yaml</a> for the full reference. Environment variables expand via <code>${VAR_NAME}</code>.</p>
+
+<h2>Sections</h2>
+
+<table>
+  <thead>
+    <tr><th>Section</th><th>Controls</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>server</code></td><td>Listen address, TLS, timeouts, CORS, rate limiting, base path, external URL, trusted proxies, web UI toggle, frame embedding</td></tr>
+    <tr><td><code>database</code></td><td>SQLite path, read pool size, retention policy, request log retention</td></tr>
+    <tr><td><code>auth</code></td><td>API keys (SHA-256 hashed), roles, session lifetime, login rate limiting</td></tr>
+    <tr><td><code>monitor</code></td><td>Worker count, default intervals, thresholds, adaptive scheduling</td></tr>
+    <tr><td><code>logging</code></td><td>Level (debug/info/warn/error), format (text/json)</td></tr>
+  </tbody>
+</table>
+
+<h2>Server Settings</h2>
+
+<table>
+  <thead>
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>listen</code></td><td><code>127.0.0.1:8090</code></td><td>Address to bind. Use <code>127.0.0.1:PORT</code> in production</td></tr>
+    <tr><td><code>base_path</code></td><td><code>""</code></td><td>URL prefix for all routes (e.g. <code>/asura</code>)</td></tr>
+    <tr><td><code>external_url</code></td><td>auto</td><td>Public URL for notification links</td></tr>
+    <tr><td><code>trusted_proxies</code></td><td><code>[]</code></td><td>IPs/CIDRs whose <code>X-Real-IP</code>/<code>X-Forwarded-For</code> headers are trusted</td></tr>
+    <tr><td><code>rate_limit_per_sec</code></td><td><code>10</code></td><td>Per-IP request rate limit</td></tr>
+    <tr><td><code>web_ui_enabled</code></td><td><code>true</code></td><td>Set <code>false</code> for API-only mode</td></tr>
+  </tbody>
+</table>
+
+<h2>Monitor Settings</h2>
+
+<table>
+  <thead>
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>workers</code></td><td><code>10</code></td><td>Concurrent check workers</td></tr>
+    <tr><td><code>default_interval</code></td><td><code>60s</code></td><td>Default check interval for new monitors</td></tr>
+    <tr><td><code>default_timeout</code></td><td><code>10s</code></td><td>Default check timeout</td></tr>
+    <tr><td><code>adaptive_intervals</code></td><td><code>true</code></td><td>Dynamically adjust check frequency based on monitor stability</td></tr>
+  </tbody>
+</table>
+
+<h3>Adaptive Intervals</h3>
+
+<p>When enabled, the scheduler adjusts the effective check interval per monitor based on its recent behavior:</p>
+
+<ul>
+  <li><strong>Stable monitors</strong> (60+ consecutive successes) gradually slow down to 2x their base interval, reducing unnecessary checks</li>
+  <li><strong>Flapping monitors</strong> (failure after being slowed down) snap back to 0.5x the base interval for faster detection</li>
+  <li><strong>Recovering monitors</strong> return to the normal base interval until stability is confirmed</li>
+  <li><strong>Actively failing monitors</strong> stay at the normal base interval</li>
+</ul>
+
+<p>The base interval configured per monitor is never modified — adaptive intervals only adjust the scheduler's internal timing. Disable with <code>adaptive_intervals: false</code>.</p>
+
+<h2>Authentication</h2>
+
+<p>Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in <code>config.yaml</code> — there is no user registration or database-stored auth.</p>
+
+<h3>Generating a Key</h3>
+
+<pre><code>./asura --setup</code></pre>
+
+<p>Output:</p>
+
+<pre><code>  API Key : ak_a8f3e7b2c1d9...
+  Hash    : fa223e3e1c4b96...
+
+  Put the hash in config.yaml under auth.api_keys[].hash
+  Save the API key -- it cannot be recovered.</code></pre>
+
+<p>The <code>ak_</code> prefix makes keys identifiable in logs and config without exposing the secret.</p>
+
+<h3>Hashing an Existing Key</h3>
+
+<pre><code>./asura --hash-key "your-secret-key"
+# Output: 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae</code></pre>
+
+<h3>Config Example</h3>
+
+<pre><code>auth:
+  api_keys:
+    - name: "admin"
+      hash: "2c26b46b68ffc..."
+      role: "admin"</code></pre>
+
+<h3>Roles</h3>
+
+<table>
+  <thead>
+    <tr><th>Role</th><th>Access</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>admin</code></td><td>Full read/write access to all resources</td></tr>
+    <tr><td><code>readonly</code></td><td>Read-only access (monitors, incidents, notifications, maintenance, metrics)</td></tr>
+  </tbody>
+</table>
+
+<h3>Custom Permissions</h3>
+
+<p>Instead of a role, you can grant specific permissions:</p>
+
+<pre><code>auth:
+  api_keys:
+    - name: "ci-bot"
+      hash: "..."
+      permissions:
+        - "monitors.read"
+        - "monitors.write"
+        - "incidents.read"</code></pre>
+
+<p>Available permissions: <code>monitors.read</code>, <code>monitors.write</code>, <code>incidents.read</code>, <code>incidents.write</code>, <code>notifications.read</code>, <code>notifications.write</code>, <code>maintenance.read</code>, <code>maintenance.write</code>, <code>metrics.read</code>.</p>
+
+<h3>Using Your Key</h3>
+
+<p><strong>API</strong>: Pass the raw key (not the hash) in the <code>X-API-Key</code> header:</p>
+
+<pre><code>curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitors</code></pre>
+
+<p><strong>Web UI</strong>: Enter the key on the login page. A session cookie is created (24h, HttpOnly, Secure). Login attempts are rate-limited per IP. Multiple keys with different roles are supported — key names appear in the audit log.</p>
