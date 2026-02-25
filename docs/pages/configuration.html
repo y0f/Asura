@@ -1,6 +1,6 @@
 <h1>Configuration</h1>
 
-<p>All options are set in <code>config.yaml</code>. See <a href="https://github.com/y0f/Asura/blob/main/config.example.yaml" target="_blank">config.example.yaml</a> for the full reference. Environment variables expand via <code>${VAR_NAME}</code>.</p>
+<p>Everything lives in <code>config.yaml</code>. See <a href="https://github.com/y0f/Asura/blob/main/config.example.yaml" target="_blank">config.example.yaml</a> for the full reference. Environment variables expand via <code>${VAR_NAME}</code>.</p>
 
 <h2>Sections</h2>
 
@@ -62,7 +62,7 @@
 
 <h2>Authentication</h2>
 
-<p>Asura uses API keys authenticated via SHA-256 hashes. Keys are configured in <code>config.yaml</code> — there is no user registration or database-stored auth.</p>
+<p>API keys hashed with SHA-256, stored in <code>config.yaml</code>. No user registration, no database-stored auth.</p>
 
 <h3>Generating a Key</h3>
 
@@ -76,7 +76,7 @@
   Put the hash in config.yaml under auth.api_keys[].hash
   Save the API key -- it cannot be recovered.</code></pre>
 
-<p>The <code>ak_</code> prefix makes keys identifiable in logs and config without exposing the secret.</p>
+<p>The <code>ak_</code> prefix makes keys easy to spot in logs without leaking the secret.</p>
 
 <h3>Hashing an Existing Key</h3>
 
@@ -124,4 +124,4 @@
 
 <pre><code>curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitors</code></pre>
 
-<p><strong>Web UI</strong>: Enter the key on the login page. A session cookie is created (24h, HttpOnly, Secure). Login attempts are rate-limited per IP. Multiple keys with different roles are supported — key names appear in the audit log.</p>
+<p><strong>Web UI</strong>: Enter the key on the login page. Creates a session cookie (24h, HttpOnly, Secure). Login is rate-limited per IP. You can have multiple keys with different roles.</p>

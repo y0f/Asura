@@ -1,6 +1,6 @@
 <div class="text-center mb-12">
   <img src="static/asura.gif" alt="Asura" class="h-7 mx-auto mb-4">
-  <p class="text-muted-light text-sm !mb-6">A self-contained Go monitoring service with no external runtime dependencies.</p>
+  <p class="text-muted-light text-sm !mb-6">Uptime monitoring packed into a single Go binary with embedded SQLite.</p>
   <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
     <img src="https://github.com/y0f/Asura/actions/workflows/ci.yml/badge.svg" alt="CI">
     <img src="https://goreportcard.com/badge/github.com/y0f/Asura?branch=main" alt="Go Report Card">
@@ -38,7 +38,7 @@
     <tr><th>Feature</th><th></th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>12 protocols</strong></td><td>HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Heartbeat, Domain (WHOIS), gRPC, MQTT</td></tr>
+    <tr><td><strong>11 protocols</strong></td><td>HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Domain (WHOIS), gRPC, MQTT</td></tr>
     <tr><td><strong>Assertion engine</strong></td><td>9 types — status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records</td></tr>
     <tr><td><strong>Change detection</strong></td><td>Line-level diffs on response bodies</td></tr>
     <tr><td><strong>Incidents</strong></td><td>Automatic creation, thresholds, ack, recovery</td></tr>
@@ -56,7 +56,7 @@
 
 <h2>Web UI</h2>
 
-<p>Built with HTMX, Tailwind, and Alpine.js — form-based monitor configuration, assertion builder, notification channels, incident timeline, request logs, and multiple status pages.</p>
+<p>HTMX + Tailwind + Alpine.js. Configure monitors, build assertions, manage notifications, browse incidents, and set up status pages — all from the browser.</p>
 
 <img src="https://raw.githubusercontent.com/y0f/Asura/main/assets/webpanel.png" alt="Web UI" class="rounded-lg border border-line mb-6 w-full">
 
@@ -64,7 +64,7 @@
 
 <pre><code>git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh</code></pre>
 
-<p>Installs Go (if needed), builds the binary, creates a systemd service and generates an admin key. Under 2 minutes on a fresh Ubuntu box.</p>
+<p>Handles everything — Go install, build, systemd service, admin key. Takes a couple minutes on a fresh Ubuntu box.</p>
 
 <div class="flex flex-wrap gap-3 mt-8">
   <a href="#getting-started" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand/85 text-sm font-medium rounded-lg transition-colors" style="color: #fff;">

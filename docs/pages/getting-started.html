@@ -1,6 +1,6 @@
 <h1>Getting Started</h1>
 
-<p>Asura runs as a single static binary with an embedded SQLite database. No runtime, no external database, no container required.</p>
+<p>One binary, one config file. No runtime, no external database, no container required.</p>
 
 <h2>VPS Install (recommended)</h2>
 
@@ -16,7 +16,7 @@ sudo bash install.sh</code></pre>
   <li>Generates an admin API key</li>
 </ul>
 
-<p>Under 2 minutes on a fresh Ubuntu box.</p>
+<p>Takes a couple minutes on a fresh Ubuntu box.</p>
 
 <blockquote>By default, Asura binds to <code>127.0.0.1:8090</code> and is <strong>not</strong> accessible from the internet. Set up a <a href="#deployment">reverse proxy</a> to expose it.</blockquote>
 
@@ -45,7 +45,7 @@ scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura</code></pre>
 
 <h2>Manual Setup</h2>
 
-<p>For full control over the installation process:</p>
+<p>If you want to set everything up yourself:</p>
 
 <pre><code># Build
 make build

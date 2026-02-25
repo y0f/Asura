@@ -1,6 +1,6 @@
 <h1>Notifications</h1>
 
-<p>Asura supports 6 notification channels. Each channel can be scoped to specific event types and routed to specific monitors.</p>
+<p>6 notification channels. Each one can be scoped to specific event types and routed to specific monitors.</p>
 
 <p>Events: <code>incident.created</code>, <code>incident.acknowledged</code>, <code>incident.resolved</code>, <code>content.changed</code></p>
 
@@ -84,7 +84,7 @@
 
 <h2>Per-Monitor Routing</h2>
 
-<p>By default, all notification channels receive all events. To route specific monitors to specific channels, set <code>notification_channel_ids</code> on the monitor:</p>
+<p>By default every channel gets every event. To limit which channels a monitor sends to, set <code>notification_channel_ids</code>:</p>
 
 <pre><code>curl -X PUT https://example.com/asura/api/v1/monitors/1 \
   -H "X-API-Key: $KEY" \

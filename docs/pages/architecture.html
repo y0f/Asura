@@ -1,6 +1,6 @@
 <h1>Architecture</h1>
 
-<p>Asura is a single Go binary with an embedded SQLite database. All components communicate through Go channels with backpressure.</p>
+<p>Single binary, channel-based pipeline, SQLite storage. Everything talks through Go channels with backpressure.</p>
 
 <h2>Pipeline</h2>
 
@@ -25,9 +25,7 @@
 
 <h2>Worker Pool</h2>
 
-<p>A fixed-size goroutine pool (configurable via <code>monitor.workers</code>, default 10) reads from the job channel and runs checks concurrently. Each worker executes the protocol-specific checker, measures response time, and evaluates assertions.</p>
-
-<p>The job channel has bounded capacity for backpressure — if all workers are busy, the scheduler blocks until a slot opens.</p>
+<p>Fixed-size goroutine pool (default 10, set via <code>monitor.workers</code>). Workers pull jobs off the channel, run the protocol checker, measure response time, and evaluate assertions. Bounded channel capacity means the scheduler blocks when all workers are busy.</p>
 
 <h2>Result Processor</h2>
 
@@ -43,9 +41,7 @@
 
 <h2>Dispatcher</h2>
 
-<p>Routes events to notification channels. Each channel type (webhook, email, telegram, discord, slack, ntfy) has its own sender implementation behind the <code>Notifier</code> interface.</p>
-
-<p>Dispatch respects per-monitor routing: if a monitor has <code>notification_channel_ids</code> set, only those channels receive its events. Otherwise, all channels with matching event types fire.</p>
+<p>Routes events to notification channels. Each channel type has its own sender behind the <code>Notifier</code> interface. If a monitor has <code>notification_channel_ids</code> set, only those channels fire. Otherwise all matching channels get the event.</p>
 
 <h2>Storage</h2>
 
@@ -56,11 +52,11 @@
   <li><strong>Read pool</strong>: Multiple concurrent readers via <code>readerPool()</code> — all SELECT queries</li>
 </ul>
 
-<p>This separation allows reads to never block on writes. The <code>Store</code> interface has 141 methods covering monitors, checks, incidents, notifications, maintenance, status pages, groups, proxies, request logs, and metrics.</p>
+<p>Reads never block on writes. The <code>Store</code> interface has 141 methods covering everything from monitors to request logs.</p>
 
 <h2>Checker Registry</h2>
 
-<p>Protocol checkers are registered at startup via a registry pattern. Each checker implements the <code>Checker</code> interface with a <code>Check(ctx, monitor)</code> method. Currently 11 registered implementations:</p>
+<p>Each checker implements <code>Checker</code> with a <code>Check(ctx, monitor)</code> method and gets registered at startup. 11 implementations:</p>
 
 <table>
   <thead>
