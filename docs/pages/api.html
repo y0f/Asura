@@ -210,6 +210,29 @@
   </tbody>
 </table>
 
+<h2>Export / Import</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/export</code></td><td>Export full configuration as JSON</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/import</code></td><td>Import configuration from JSON</td></tr>
+  </tbody>
+</table>
+
+<p>Export downloads all monitors, groups, proxies, notification channels, maintenance windows, and status pages as a portable JSON file. Relationships are stored by name (not ID) so imports work across instances.</p>
+
+<p>Query parameters:</p>
+<ul>
+  <li><code>GET /api/v1/export?redact_secrets=true</code> — strips notification channel settings and proxy credentials</li>
+  <li><code>POST /api/v1/import?mode=merge</code> — skip entities that already exist (default)</li>
+  <li><code>POST /api/v1/import?mode=replace</code> — overwrite all</li>
+</ul>
+
+<p>The import response returns counts of created, skipped, and errored entities.</p>
+
 <h2>Other</h2>
 
 <table>

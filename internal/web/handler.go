@@ -364,6 +364,7 @@ func (h *Handler) loadTemplates() {
 		"status/form.html",
 		"proxies/list.html",
 		"proxies/form.html",
+		"settings/index.html",
 	}
 
 	for _, page := range pages {
