@@ -127,12 +127,14 @@ func parseNotificationEvents(r *http.Request) []string {
 		"event_incident_created",
 		"event_incident_resolved",
 		"event_incident_acknowledged",
+		"event_incident_reminder",
 		"event_content_changed",
 	}
 	eventValues := []string{
 		"incident.created",
 		"incident.resolved",
 		"incident.acknowledged",
+		"incident.reminder",
 		"content.changed",
 	}
 	for i, key := range eventKeys {

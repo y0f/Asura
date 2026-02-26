@@ -5,7 +5,7 @@
     editId: 0,
     advancedNotifSettings: false,
     formData: {name:'', type:'webhook', enabled:true, settings_json:'{}'},
-    events: {created:true, resolved:true, acknowledged:false, changed:false},
+    events: {created:true, resolved:true, acknowledged:false, reminder:true, changed:false},
     webhook: {url:'', secret:''},
     telegram: {bot_token:'', chat_id:''},
     discord: {webhook_url:''},
@@ -16,7 +16,7 @@
         this.editId = 0;
         this.advancedNotifSettings = false;
         this.formData = {name:'', type:'webhook', enabled:true, settings_json:'{}'};
-        this.events = {created:true, resolved:true, acknowledged:false, changed:false};
+        this.events = {created:true, resolved:true, acknowledged:false, reminder:true, changed:false};
         this.webhook = {url:'', secret:''};
         this.telegram = {bot_token:'', chat_id:''};
         this.discord = {webhook_url:''};
@@ -31,12 +31,13 @@
         this.formData.type = ch.type;
         this.formData.enabled = ch.enabled;
         this.formData.settings_json = JSON.stringify(ch.settings || {});
-        this.events = {created:false, resolved:false, acknowledged:false, changed:false};
+        this.events = {created:false, resolved:false, acknowledged:false, reminder:false, changed:false};
         if (ch.events) {
             ch.events.forEach(e => {
                 if (e === 'incident.created') this.events.created = true;
                 if (e === 'incident.resolved') this.events.resolved = true;
                 if (e === 'incident.acknowledged') this.events.acknowledged = true;
+                if (e === 'incident.reminder') this.events.reminder = true;
                 if (e === 'content.changed') this.events.changed = true;
             });
         }
@@ -288,6 +289,11 @@
                             <input type="checkbox" name="event_incident_acknowledged" :checked="events.acknowledged"
                                    class="form-checkbox">
                             <span class="text-[12px] text-muted-light">Incident Acknowledged</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="event_incident_reminder" :checked="events.reminder"
+                                   class="form-checkbox">
+                            <span class="text-[12px] text-muted-light">Incident Reminder</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="event_content_changed" :checked="events.changed"

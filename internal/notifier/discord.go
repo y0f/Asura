@@ -34,9 +34,10 @@ func (s *DiscordSender) Send(ctx context.Context, channel *storage.NotificationC
 
 	// Discord webhook format with embed
 	color := 0x2ECC71 // green
-	if payload.EventType == "incident.created" {
+	switch payload.EventType {
+	case "incident.created", "incident.reminder":
 		color = 0xE74C3C // red
-	} else if payload.EventType == "incident.acknowledged" {
+	case "incident.acknowledged":
 		color = 0xF39C12 // yellow
 	}
 

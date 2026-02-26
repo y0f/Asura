@@ -53,7 +53,8 @@ func (w *HeartbeatWatcher) check(ctx context.Context) {
 
 	for _, hb := range expired {
 		if hb.Status == "down" {
-			continue // already marked down, incident already exists
+			w.resendIfNeeded(ctx, hb)
+			continue
 		}
 
 		w.logger.Info("heartbeat expired", "monitor_id", hb.MonitorID)
@@ -89,6 +90,27 @@ func (w *HeartbeatWatcher) check(ctx context.Context) {
 		}
 		if created && !inMaintenance {
 			w.pipeline.emitNotification("incident.created", inc, mon, nil)
+			w.pipeline.lastNotified.Store(mon.ID, time.Now())
 		}
 	}
+}
+
+func (w *HeartbeatWatcher) resendIfNeeded(ctx context.Context, hb *storage.Heartbeat) {
+	mon, err := w.store.GetMonitor(ctx, hb.MonitorID)
+	if err != nil || mon.ResendInterval <= 0 {
+		return
+	}
+	if !w.pipeline.shouldResend(mon) {
+		return
+	}
+	inMaintenance, _ := w.store.IsMonitorInMaintenance(ctx, mon.ID, time.Now())
+	if inMaintenance {
+		return
+	}
+	inc, err := w.store.GetOpenIncident(ctx, mon.ID)
+	if err != nil || inc == nil {
+		return
+	}
+	w.pipeline.emitNotification("incident.reminder", inc, mon, nil)
+	w.pipeline.lastNotified.Store(mon.ID, time.Now())
 }

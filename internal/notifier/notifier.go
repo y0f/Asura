@@ -185,6 +185,11 @@ func FormatMessage(p *Payload) string {
 			return fmt.Sprintf("[ALERT] Incident #%d opened for %s: %s",
 				p.Incident.ID, p.Incident.MonitorName, p.Incident.Cause)
 		}
+	case "incident.reminder":
+		if p.Incident != nil {
+			return fmt.Sprintf("[REMINDER] Incident #%d still open for %s: %s",
+				p.Incident.ID, p.Incident.MonitorName, p.Incident.Cause)
+		}
 	case "incident.acknowledged":
 		if p.Incident != nil {
 			return fmt.Sprintf("[ACK] Incident #%d for %s acknowledged by %s",

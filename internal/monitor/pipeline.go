@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log/slog"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -30,6 +31,7 @@ type Pipeline struct {
 	workers              int
 	adaptiveIntervals    bool
 	droppedNotifications atomic.Int64
+	lastNotified         sync.Map // map[int64]time.Time — tracks last resend per monitor
 }
 
 // NotificationEvent is emitted when something noteworthy happens.
@@ -228,24 +230,51 @@ func (p *Pipeline) processIncidents(ctx context.Context, mon *storage.Monitor, f
 	inMaintenance, _ := p.store.IsMonitorInMaintenance(ctx, mon.ID, time.Now())
 
 	if finalStatus != "up" && status.ConsecFails >= mon.FailureThreshold {
-		inc, created, err := p.incMgr.ProcessFailure(ctx, mon.ID, mon.Name, message)
-		if err != nil {
-			p.logger.Error("process failure", "error", err)
-			return
-		}
-		if created && !inMaintenance {
-			p.emitNotification("incident.created", inc, mon, nil)
-		}
+		p.processFailure(ctx, mon, message, inMaintenance)
 	} else if finalStatus == "up" && status.ConsecSuccesses >= mon.SuccessThreshold {
-		inc, resolved, err := p.incMgr.ProcessRecovery(ctx, mon.ID)
-		if err != nil {
-			p.logger.Error("process recovery", "error", err)
-			return
-		}
-		if resolved && !inMaintenance {
-			p.emitNotification("incident.resolved", inc, mon, nil)
-		}
+		p.processRecovery(ctx, mon, inMaintenance)
 	}
+}
+
+func (p *Pipeline) processFailure(ctx context.Context, mon *storage.Monitor, message string, inMaintenance bool) {
+	inc, created, err := p.incMgr.ProcessFailure(ctx, mon.ID, mon.Name, message)
+	if err != nil {
+		p.logger.Error("process failure", "error", err)
+		return
+	}
+	if inMaintenance {
+		return
+	}
+	if created {
+		p.emitNotification("incident.created", inc, mon, nil)
+		p.lastNotified.Store(mon.ID, time.Now())
+	} else if p.shouldResend(mon) {
+		p.emitNotification("incident.reminder", inc, mon, nil)
+		p.lastNotified.Store(mon.ID, time.Now())
+	}
+}
+
+func (p *Pipeline) processRecovery(ctx context.Context, mon *storage.Monitor, inMaintenance bool) {
+	inc, resolved, err := p.incMgr.ProcessRecovery(ctx, mon.ID)
+	if err != nil {
+		p.logger.Error("process recovery", "error", err)
+		return
+	}
+	if resolved && !inMaintenance {
+		p.emitNotification("incident.resolved", inc, mon, nil)
+	}
+	p.lastNotified.Delete(mon.ID)
+}
+
+func (p *Pipeline) shouldResend(mon *storage.Monitor) bool {
+	if mon.ResendInterval <= 0 {
+		return false
+	}
+	v, ok := p.lastNotified.Load(mon.ID)
+	if !ok {
+		return true
+	}
+	return time.Since(v.(time.Time)) >= time.Duration(mon.ResendInterval)*time.Second
 }
 
 func (p *Pipeline) handleContentChange(ctx context.Context, mon *storage.Monitor, oldHash, newHash, newBody string, status *storage.MonitorStatus) {

@@ -376,6 +376,227 @@ func TestProcessIncidents(t *testing.T) {
 	})
 }
 
+func TestResendNotificationInterval(t *testing.T) {
+	logger := discardLogger()
+	store := testStore(t)
+	ctx := context.Background()
+
+	mon := &storage.Monitor{
+		Name:             "Resend Test",
+		Type:             "http",
+		Target:           "https://example.com",
+		Interval:         60,
+		Timeout:          10,
+		Enabled:          true,
+		FailureThreshold: 2,
+		SuccessThreshold: 1,
+		ResendInterval:   10,
+	}
+	if err := store.CreateMonitor(ctx, mon); err != nil {
+		t.Fatal(err)
+	}
+
+	registry := checker.NewRegistry()
+	incMgr := incident.NewManager(store, logger)
+	p := NewPipeline(store, registry, incMgr, 1, false, logger)
+
+	drainNotifications := func() {
+		for {
+			select {
+			case <-p.notifyChan:
+			default:
+				return
+			}
+		}
+	}
+
+	t.Run("initial failure sends incident.created", func(t *testing.T) {
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 2,
+		}
+		p.processIncidents(ctx, mon, "down", status, "connection refused")
+
+		select {
+		case ev := <-p.notifyChan:
+			if ev.EventType != "incident.created" {
+				t.Fatalf("expected incident.created, got %s", ev.EventType)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("expected notification event")
+		}
+	})
+
+	t.Run("subsequent failure before interval sends nothing", func(t *testing.T) {
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 3,
+		}
+		p.processIncidents(ctx, mon, "down", status, "still down")
+
+		select {
+		case ev := <-p.notifyChan:
+			t.Fatalf("expected no notification before resend interval, got %s", ev.EventType)
+		case <-time.After(100 * time.Millisecond):
+			// good — no notification
+		}
+	})
+
+	t.Run("subsequent failure after interval sends incident.reminder", func(t *testing.T) {
+		// Manually backdate the lastNotified timestamp
+		p.lastNotified.Store(mon.ID, time.Now().Add(-11*time.Second))
+
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 4,
+		}
+		p.processIncidents(ctx, mon, "down", status, "still down")
+
+		select {
+		case ev := <-p.notifyChan:
+			if ev.EventType != "incident.reminder" {
+				t.Fatalf("expected incident.reminder, got %s", ev.EventType)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("expected reminder notification")
+		}
+	})
+
+	t.Run("resend disabled when interval is zero", func(t *testing.T) {
+		drainNotifications()
+
+		noResendMon := &storage.Monitor{
+			Name:             "No Resend",
+			Type:             "http",
+			Target:           "https://example2.com",
+			Interval:         60,
+			Timeout:          10,
+			Enabled:          true,
+			FailureThreshold: 1,
+			SuccessThreshold: 1,
+			ResendInterval:   0,
+		}
+		if err := store.CreateMonitor(ctx, noResendMon); err != nil {
+			t.Fatal(err)
+		}
+
+		// Create incident first
+		status := &storage.MonitorStatus{
+			MonitorID:   noResendMon.ID,
+			ConsecFails: 1,
+		}
+		p.processIncidents(ctx, noResendMon, "down", status, "initial failure")
+		drainNotifications()
+
+		// Subsequent failure should NOT resend
+		status.ConsecFails = 2
+		p.processIncidents(ctx, noResendMon, "down", status, "still down")
+
+		select {
+		case ev := <-p.notifyChan:
+			t.Fatalf("expected no notification with resend_interval=0, got %s", ev.EventType)
+		case <-time.After(100 * time.Millisecond):
+			// good
+		}
+	})
+
+	t.Run("recovery clears resend tracking", func(t *testing.T) {
+		drainNotifications()
+
+		status := &storage.MonitorStatus{
+			MonitorID:       mon.ID,
+			ConsecSuccesses: 1,
+		}
+		p.processIncidents(ctx, mon, "up", status, "")
+		drainNotifications()
+
+		// Verify lastNotified was cleared
+		_, exists := p.lastNotified.Load(mon.ID)
+		if exists {
+			t.Fatal("expected lastNotified to be cleared after recovery")
+		}
+	})
+
+	t.Run("maintenance suppresses resend", func(t *testing.T) {
+		drainNotifications()
+
+		now := time.Now()
+		mw := &storage.MaintenanceWindow{
+			Name:      "Resend Maintenance",
+			StartTime: now.Add(-1 * time.Hour),
+			EndTime:   now.Add(1 * time.Hour),
+		}
+		if err := store.CreateMaintenanceWindow(ctx, mw); err != nil {
+			t.Fatal(err)
+		}
+
+		// Create fresh incident
+		status := &storage.MonitorStatus{
+			MonitorID:   mon.ID,
+			ConsecFails: 2,
+		}
+		p.processIncidents(ctx, mon, "down", status, "maint failure")
+		drainNotifications()
+
+		// Backdate to trigger resend
+		p.lastNotified.Store(mon.ID, time.Now().Add(-11*time.Second))
+		status.ConsecFails = 3
+		p.processIncidents(ctx, mon, "down", status, "maint still down")
+
+		select {
+		case ev := <-p.notifyChan:
+			t.Fatalf("expected no resend during maintenance, got %s", ev.EventType)
+		case <-time.After(100 * time.Millisecond):
+			// good
+		}
+	})
+}
+
+func TestShouldResend(t *testing.T) {
+	logger := discardLogger()
+	store := testStore(t)
+	registry := checker.NewRegistry()
+	incMgr := incident.NewManager(store, logger)
+	p := NewPipeline(store, registry, incMgr, 1, false, logger)
+
+	t.Run("returns false when resend_interval is zero", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 1, ResendInterval: 0}
+		if p.shouldResend(mon) {
+			t.Fatal("expected false for zero interval")
+		}
+	})
+
+	t.Run("returns false when resend_interval is negative", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 2, ResendInterval: -1}
+		if p.shouldResend(mon) {
+			t.Fatal("expected false for negative interval")
+		}
+	})
+
+	t.Run("returns true when never notified", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 3, ResendInterval: 60}
+		if !p.shouldResend(mon) {
+			t.Fatal("expected true when never notified")
+		}
+	})
+
+	t.Run("returns false when recently notified", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 4, ResendInterval: 60}
+		p.lastNotified.Store(mon.ID, time.Now())
+		if p.shouldResend(mon) {
+			t.Fatal("expected false when recently notified")
+		}
+	})
+
+	t.Run("returns true when interval elapsed", func(t *testing.T) {
+		mon := &storage.Monitor{ID: 5, ResendInterval: 10}
+		p.lastNotified.Store(mon.ID, time.Now().Add(-11*time.Second))
+		if !p.shouldResend(mon) {
+			t.Fatal("expected true when interval elapsed")
+		}
+	})
+}
+
 func TestSchedulerDispatch(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()

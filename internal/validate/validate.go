@@ -30,6 +30,7 @@ var _validNotificationEvents = map[string]bool{
 	"incident.created":      true,
 	"incident.acknowledged": true,
 	"incident.resolved":     true,
+	"incident.reminder":     true,
 	"content.changed":       true,
 }
 
@@ -73,6 +74,12 @@ func validateMonitorLimits(m *storage.Monitor) error {
 	}
 	if m.SuccessThreshold < 1 {
 		return fmt.Errorf("success_threshold must be at least 1")
+	}
+	if m.ResendInterval < 0 {
+		return fmt.Errorf("resend_interval must be non-negative")
+	}
+	if m.ResendInterval > 86400 {
+		return fmt.Errorf("resend_interval must be at most 86400 seconds")
 	}
 	for _, tag := range m.Tags {
 		if len(tag) > 50 {

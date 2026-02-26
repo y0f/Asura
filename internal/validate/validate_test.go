@@ -49,6 +49,10 @@ func TestValidateMonitor(t *testing.T) {
 				m.Tags[i] = "t"
 			}
 		}, "at most 20 tags"},
+		{"resend interval zero", func(m *storage.Monitor) { m.ResendInterval = 0 }, ""},
+		{"resend interval valid", func(m *storage.Monitor) { m.ResendInterval = 300 }, ""},
+		{"resend interval negative", func(m *storage.Monitor) { m.ResendInterval = -1 }, "resend_interval must be non-negative"},
+		{"resend interval too high", func(m *storage.Monitor) { m.ResendInterval = 86401 }, "resend_interval must be at most 86400"},
 		{"invalid settings json", func(m *storage.Monitor) { m.Settings = json.RawMessage("not json") }, "valid JSON object"},
 		{"invalid assertions json", func(m *storage.Monitor) { m.Assertions = json.RawMessage("not json") }, "valid JSON array"},
 		{"valid settings", func(m *storage.Monitor) { m.Settings = json.RawMessage(`{"method":"GET"}`) }, ""},
@@ -88,6 +92,15 @@ func TestValidateNotificationChannel(t *testing.T) {
 				Name: "Hook", Type: "webhook",
 				Settings: json.RawMessage(`{"url":"https://example.com"}`),
 				Events:   []string{"incident.created"},
+			},
+			"",
+		},
+		{
+			"valid reminder event",
+			&storage.NotificationChannel{
+				Name: "Hook", Type: "webhook",
+				Settings: json.RawMessage(`{"url":"https://example.com"}`),
+				Events:   []string{"incident.created", "incident.reminder"},
 			},
 			"",
 		},
