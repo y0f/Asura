@@ -60,13 +60,13 @@
                     <a href="{{$.BasePath}}/monitors/{{.ID}}"
                        class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 transition-colors group">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-1.5 h-1.5 rounded-full flex-shrink-0 {{statusDot .Status}} {{if eq .Status "down"}}animate-pulse-dot{{end}}"></div>
+                            <div class="w-1.5 h-1.5 rounded-full shrink-0 {{statusDot .Status}} {{if eq .Status "down"}}animate-pulse-dot{{end}}"></div>
                             <div class="min-w-0">
                                 <div class="text-[13px] text-muted-light group-hover:text-white transition-colors truncate">{{.Name}}</div>
                                 <div class="text-[11px] text-muted truncate font-mono">{{typeLabel .Type}} · {{.Target}}</div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3 flex-shrink-0 ml-3">
+                        <div class="flex items-center gap-3 shrink-0 ml-3">
                             {{$rt := index $.Data.ResponseTimes .ID}}
                             {{if gt $rt 0}}<span class="text-[11px] text-muted tabular-nums font-mono">{{formatMs $rt}}</span>{{end}}
                             <span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border {{statusBg .Status}}">{{.Status}}</span>

@@ -1,80 +1,78 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* ── Theme variables ──────────────────────────────────────────────────────── */
-/* Light mode — pastel blue palette */
-:root {
-  --brand-rgb: 0 128 255;
-  --text-primary-rgb: 20 20 43;
-  --surface-rgb: 248 249 255;
-  --surface-50-rgb: 240 242 255;
-  --surface-100-rgb: 234 236 248;
-  --surface-200-rgb: 226 228 240;
-  --surface-300-rgb: 216 218 234;
-  --muted-rgb: 107 111 138;
-  --muted-light-rgb: 45 48 88;
-  --line-rgb: 224 226 240;
-  --line-light-rgb: 208 210 228;
+@source inline("bg-emerald-500 bg-yellow-500 bg-red-500 bg-emerald-400 bg-red-400 bg-yellow-400 bg-gray-500 text-emerald-400 text-red-400 text-yellow-400 text-gray-500 text-gray-400 text-blue-400 bg-emerald-500/10 bg-red-500/10 bg-yellow-500/10 bg-gray-500/10 border-emerald-500/20 border-red-500/20 border-yellow-500/20 border-gray-500/20 bg-muted/20");
+
+@theme {
+  --color-white: rgb(20 20 43);
+  --color-brand: rgb(0 128 255);
+  --color-surface: rgb(248 249 255);
+  --color-surface-50: rgb(240 242 255);
+  --color-surface-100: rgb(234 236 248);
+  --color-surface-200: rgb(226 228 240);
+  --color-surface-300: rgb(216 218 234);
+  --color-muted: rgb(107 111 138);
+  --color-muted-light: rgb(45 48 88);
+  --color-line: rgb(224 226 240);
+  --color-line-light: rgb(208 210 228);
+  --font-sans: "Inter", "system-ui", "-apple-system", "sans-serif";
+  --font-mono: "JetBrains Mono", "Menlo", "Consolas", "monospace";
 }
 
-/* Dark mode */
+/* ── Dark mode overrides ─────────────────────────────────────────────────── */
 .dark {
-  --brand-rgb: 0 128 255;
-  --text-primary-rgb: 255 255 255;
-  --surface-rgb: 9 9 11;
-  --surface-50-rgb: 14 14 18;
-  --surface-100-rgb: 19 19 24;
-  --surface-200-rgb: 26 26 34;
-  --surface-300-rgb: 34 34 48;
-  --muted-rgb: 67 70 86;
-  --muted-light-rgb: 167 170 188;
-  --line-rgb: 26 26 34;
-  --line-light-rgb: 34 34 48;
+  --color-white: rgb(255 255 255);
+  --color-brand: rgb(0 128 255);
+  --color-surface: rgb(9 9 11);
+  --color-surface-50: rgb(14 14 18);
+  --color-surface-100: rgb(19 19 24);
+  --color-surface-200: rgb(26 26 34);
+  --color-surface-300: rgb(34 34 48);
+  --color-muted: rgb(67 70 86);
+  --color-muted-light: rgb(167 170 188);
+  --color-line: rgb(26 26 34);
+  --color-line-light: rgb(34 34 48);
 }
 
-/* ── Component classes ────────────────────────────────────────────────────── */
-@layer components {
-  .form-label {
-    @apply block text-[11px] text-muted uppercase tracking-widest mb-1.5;
-  }
-  .form-label-sm {
-    @apply block text-[10px] text-muted uppercase tracking-widest mb-1;
-  }
-  .form-input {
-    @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-none focus:border-brand/30 transition-colors;
-  }
-  select.form-select {
-    @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-none focus:border-brand/30 transition-colors;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1rem;
-    padding-right: 2rem;
-  }
-  .form-checkbox {
-    @apply w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0;
-  }
-  .btn-primary {
-    @apply px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors;
-  }
-  .th {
-    @apply px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest;
-  }
-  .filter-tab {
-    @apply px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap;
-  }
-  .filter-active {
-    @apply text-brand border-brand/30 bg-brand/[0.04];
-  }
-  .filter-inactive {
-    @apply text-muted border-line hover:text-muted-light;
-  }
-  .stat-label {
-    @apply text-[10px] text-muted uppercase tracking-widest mb-1;
-  }
+/* ── Component utilities ─────────────────────────────────────────────────── */
+@utility form-label {
+  @apply block text-[11px] text-muted uppercase tracking-widest mb-1.5;
+}
+@utility form-label-sm {
+  @apply block text-[10px] text-muted uppercase tracking-widest mb-1;
+}
+@utility form-input {
+  @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] placeholder-muted focus:outline-hidden focus:border-brand/30 transition-colors;
+}
+@utility form-select {
+  @apply w-full px-3 py-2 bg-surface border border-line rounded text-white text-[13px] focus:outline-hidden focus:border-brand/30 transition-colors;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  padding-right: 2rem;
+}
+@utility form-checkbox {
+  @apply w-3.5 h-3.5 rounded-sm bg-surface border-line text-brand focus:ring-brand/30 focus:ring-offset-0;
+}
+@utility btn-primary {
+  @apply px-4 py-2 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors;
+}
+@utility th {
+  @apply px-4 py-2.5 text-[10px] font-medium text-muted uppercase tracking-widest;
+}
+@utility filter-tab {
+  @apply px-2.5 py-1 text-[10px] uppercase tracking-wider border rounded transition-colors whitespace-nowrap;
+}
+@utility filter-active {
+  @apply text-brand border-brand/30 bg-brand/[0.04];
+}
+@utility filter-inactive {
+  @apply text-muted border-line hover:text-muted-light;
+}
+@utility stat-label {
+  @apply text-[10px] text-muted uppercase tracking-widest mb-1;
 }
 
 /* ── Light mode: status text colours for contrast on pastel bg ───────────── */

@@ -42,7 +42,7 @@
             <div class="flex items-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="enabled" class="sr-only peer" {{if $sp}}{{if $sp.Enabled}}checked{{end}}{{end}}>
-                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
                 </label>
                 <span class="text-[13px] text-white">Enabled</span>
             </div>
@@ -50,7 +50,7 @@
             <div class="flex items-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="api_enabled" class="sr-only peer" {{if $sp}}{{if $sp.APIEnabled}}checked{{end}}{{end}}>
-                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
                 </label>
                 <span class="text-[13px] text-white">Public API</span>
             </div>
@@ -58,7 +58,7 @@
             <div class="flex items-center gap-3">
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" name="show_incidents" class="sr-only peer" {{if $sp}}{{if $sp.ShowIncidents}}checked{{end}}{{else}}checked{{end}}>
-                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                    <div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
                 </label>
                 <span class="text-[13px] text-white">Show Incidents</span>
             </div>
@@ -74,7 +74,7 @@
             <div class="flex items-center justify-between mb-3">
                 <label class="text-[11px] text-muted uppercase tracking-widest">Monitors</label>
                 <input type="text" x-model="search" placeholder="Filter monitors..."
-                       class="px-2.5 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-none focus:border-brand/30 transition-colors w-48">
+                       class="px-2.5 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-hidden focus:border-brand/30 transition-colors w-48">
             </div>
             <div class="space-y-1 max-h-80 overflow-y-auto">
                 {{range $monitors}}
@@ -88,11 +88,11 @@
                     </div>
                     <input type="number" name="monitor_{{.ID}}_sort" placeholder="0"
                            value="{{with index $assignedData .ID}}{{.SortOrder}}{{end}}"
-                           class="w-16 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-none focus:border-brand/30 text-center"
+                           class="w-16 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30 text-center"
                            title="Sort order">
                     <input type="text" name="monitor_{{.ID}}_group" placeholder="Group"
                            value="{{with index $assignedData .ID}}{{.GroupName}}{{end}}"
-                           class="w-28 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-none focus:border-brand/30"
+                           class="w-28 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30"
                            title="Group name">
                 </div>
                 {{end}}

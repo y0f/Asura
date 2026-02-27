@@ -27,7 +27,7 @@
         <div class="relative max-w-xs">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" name="q" value="{{.Data.Search}}" placeholder="Search monitors..."
-                   class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-none focus:border-brand/40 transition-colors">
+                   class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-hidden focus:border-brand/40 transition-colors">
         </div>
     </form>
 
@@ -54,7 +54,7 @@
                     class="px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">Resume</button>
             {{if .Data.Groups}}
             <select x-model="bulkGroupId" @change="if(bulkGroupId !== '') { bulkAction='set_group'; $nextTick(() => $refs.bulkForm.submit()) }"
-                    class="px-2 py-1 text-[11px] bg-transparent border border-line rounded text-muted-light focus:border-brand/40 focus:outline-none">
+                    class="px-2 py-1 text-[11px] bg-transparent border border-line rounded text-muted-light focus:border-brand/40 focus:outline-hidden">
                 <option value="">Set Group...</option>
                 <option value="0">No Group</option>
                 {{range .Data.Groups}}

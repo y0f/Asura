@@ -14,7 +14,7 @@
             <div class="text-[11px] text-muted mt-1 ml-[18px] font-mono">{{typeLabel $mon.Type}} · {{$mon.Target}} · {{$mon.Interval}}s interval · {{$mon.Timeout}}s timeout</div>
         </div>
         {{if index $.Perms "monitors.write"}}
-        <div class="flex items-center gap-1.5 flex-shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
             {{if $mon.Enabled}}
             <form method="POST" action="{{$.BasePath}}/monitors/{{$mon.ID}}/pause">
                 <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-yellow-400 hover:border-yellow-500/20 transition-colors">
@@ -52,7 +52,7 @@
 
     {{if .Data.OpenIncident}}
     <div class="mb-5 px-4 py-2.5 border border-red-500/15 rounded text-[13px] text-red-400 flex items-center gap-2">
-        <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Active incident: {{.Data.OpenIncident.Cause}}
         <a href="{{$.BasePath}}/incidents/{{.Data.OpenIncident.ID}}" class="text-red-400/80 hover:text-red-300 underline underline-offset-2 ml-1">View &rarr;</a>
     </div>
@@ -131,8 +131,8 @@
             const tipSt = tip ? tip.querySelector('.tip-status') : null;
 
             const cs = getComputedStyle(document.documentElement);
-            const axisColor = `rgb(${cs.getPropertyValue('--muted-rgb').trim()})`;
-            const gridColor = `rgb(${cs.getPropertyValue('--line-rgb').trim()})`;
+            const axisColor = cs.getPropertyValue('--color-muted').trim();
+            const gridColor = cs.getPropertyValue('--color-line').trim();
 
             const opts = {
                 width: el.clientWidth,
@@ -358,7 +358,7 @@
         <div class="divide-y divide-line">
             {{range $.Data.Changes.Data}}
             <div class="px-4 py-2.5 flex items-center gap-3 min-w-0">
-                <span class="text-[10px] text-muted/60 whitespace-nowrap flex-shrink-0 w-16">{{timeAgo .CreatedAt}}</span>
+                <span class="text-[10px] text-muted/60 whitespace-nowrap shrink-0 w-16">{{timeAgo .CreatedAt}}</span>
                 {{if .Diff}}<code class="text-[11px] text-muted-light font-mono truncate">{{.Diff}}</code>{{else}}<span class="text-[11px] text-muted/40">—</span>{{end}}
             </div>
             {{end}}

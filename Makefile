@@ -5,12 +5,15 @@ GOFLAGS  := -trimpath
 
 TAILWIND := ./tailwindcss
 
-.PHONY: all build css test lint run clean hash-key release
+.PHONY: all build css watch test lint run clean hash-key release
 
 all: build
 
 css:
-	$(TAILWIND) -c tailwind.config.js -i web/tailwind.input.css -o web/static/tailwind.css --minify
+	$(TAILWIND) -i web/tailwind.input.css -o web/static/tailwind.css --minify
+
+watch:
+	$(TAILWIND) -i web/tailwind.input.css -o web/static/tailwind.css --watch
 
 build:
 	CGO_ENABLED=0 go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINARY) ./cmd/asura

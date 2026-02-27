@@ -12,7 +12,7 @@
             <div class="text-[11px] text-muted mt-1">{{$inc.MonitorName}} · Started {{timeAgo $inc.StartedAt}} · Duration {{incidentDuration $inc.StartedAt $inc.ResolvedAt}}</div>
         </div>
         {{if index $.Perms "incidents.write"}}
-        <div class="flex items-center gap-1.5 flex-shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
             {{if eq $inc.Status "open"}}
             <form method="POST" action="{{$.BasePath}}/incidents/{{$inc.ID}}/ack">
                 <button type="submit" class="px-3 py-1.5 text-[12px] text-yellow-400 border border-yellow-500/20 rounded hover:bg-yellow-500/5 transition-colors">Acknowledge</button>

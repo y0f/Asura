@@ -19,6 +19,13 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Rebuild Tailwind CSS
+        run: |
+          curl -sL -o tailwindcss "https://github.com/tailwindlabs/tailwindcss/releases/download/v4.2.1/tailwindcss-linux-x64"
+          chmod +x tailwindcss
+          ./tailwindcss -i web/tailwind.input.css -o web/static/tailwind.css --minify
+          ./tailwindcss -i docs/tailwind.input.css -o docs/static/docs.css --minify
+
       - name: Build binaries
         run: |
           VERSION=${GITHUB_REF_NAME}

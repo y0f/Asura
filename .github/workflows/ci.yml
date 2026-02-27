@@ -6,7 +6,37 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  TAILWIND_VERSION: "4.2.1"
+
 jobs:
+  tailwind:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Tailwind CLI
+        run: |
+          curl -sL -o tailwindcss "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-x64"
+          chmod +x tailwindcss
+
+      - name: Rebuild CSS
+        run: |
+          ./tailwindcss -i web/tailwind.input.css -o web/static/tailwind.css --minify
+          ./tailwindcss -i docs/tailwind.input.css -o docs/static/docs.css --minify
+
+      - name: Commit if changed
+        run: |
+          git diff --quiet web/static/tailwind.css docs/static/docs.css && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/static/tailwind.css docs/static/docs.css
+          git commit -m "Rebuild Tailwind CSS [skip ci]"
+          git push
+
   test:
     runs-on: ubuntu-latest
     steps:
