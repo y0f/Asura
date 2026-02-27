@@ -29,7 +29,7 @@ Asura monitors your infrastructure from a single Go binary backed by SQLite. No 
 |---|---|---|
 | **Runtime** | Single static binary | Node.js / Java / Python runtime |
 | **Database** | SQLite compiled in | Requires Postgres, MySQL, or Redis |
-| **Binary size** | ~15 MB | 100-500 MB installed |
+| **Binary size** | ~15 MB | 100 MB+ installed |
 | **Deploy** | `scp` binary + run | Package manager, runtime install, migrations |
 | **RAM** | ~20 MB idle | Varies — runtime + database overhead |
 
@@ -86,6 +86,14 @@ docker compose up -d
 | [Architecture](https://y0f.github.io/Asura/#architecture) | Pipeline, storage, checker registry |
 
 ---
+
+## Tech Stack
+
+- **Go 1.24+** with stdlib `net/http` routing — no frameworks
+- **SQLite** via `modernc.org/sqlite` (pure Go, no CGO)
+- **[templ](https://templ.guide/)** for type-safe server-rendered HTML
+- **HTMX** + **Alpine.js** for progressive enhancement
+- **Tailwind CSS v4** (standalone CLI, no Node.js)
 
 ## Contributing
 

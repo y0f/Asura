@@ -1,0 +1,203 @@
+package views
+
+import (
+	"github.com/y0f/asura/internal/storage"
+)
+
+type DailyBar struct {
+	Date      string
+	UptimePct float64
+	HasData   bool
+	Label     string
+}
+
+type MonitorWithUptime struct {
+	Monitor     *storage.Monitor
+	DailyBars   []DailyBar
+	Uptime90d   float64
+	UptimeLabel string
+	GroupName   string
+}
+
+type MonitorGroup struct {
+	Name     string
+	Monitors []MonitorWithUptime
+}
+
+type PublicStatusPageParams struct {
+	Title        string
+	BasePath     string
+	Config       *storage.StatusPage
+	Monitors     []MonitorWithUptime
+	Groups       []MonitorGroup
+	HasGroups    bool
+	Overall      string
+	Incidents    []*storage.Incident
+	HasIncidents bool
+}
+
+templ PublicStatusPage(p PublicStatusPageParams) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<script>
+				(function(){var t=localStorage.getItem('theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}})();
+			</script>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ p.Title }</title>
+			<link rel="icon" href={ p.BasePath + "/static/favicon.ico" }/>
+			<link rel="stylesheet" href={ p.BasePath + "/static/tailwind.css" }/>
+			<script defer src={ p.BasePath + "/static/alpine.min.js" }></script>
+			<style>
+				[x-cloak] { display: none !important; }
+				::selection { background: rgba(0,128,255,.15); }
+				::-webkit-scrollbar { width: 3px; height: 3px; }
+				::-webkit-scrollbar-track { background: transparent; }
+				::-webkit-scrollbar-thumb { background: var(--color-line-light); border-radius: 3px; }
+				.noise-bg {
+					position: fixed;
+					inset: 0;
+					pointer-events: none;
+					z-index: 0;
+					background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700' width='700' height='700'%3E%3Cdefs%3E%3Cfilter id='nnnoise-filter' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='4' seed='15' stitchTiles='stitch' x='0%25' y='0%25' width='100%25' height='100%25' result='turbulence'/%3E%3CfeSpecularLighting surfaceScale='5' specularConstant='0.8' specularExponent='20' lighting-color='white' x='0%25' y='0%25' width='100%25' height='100%25' in='turbulence' result='specularLighting'%3E%3CfeDistantLight azimuth='3' elevation='96'/%3E%3C/feSpecularLighting%3E%3CfeColorMatrix type='saturate' values='0' x='0%25' y='0%25' width='100%25' height='100%25' in='specularLighting' result='colormatrix'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='700' height='700' fill='black'/%3E%3Crect width='700' height='700' fill='white' filter='url(%23nnnoise-filter)'/%3E%3C/svg%3E");
+					background-size: 400px;
+					opacity: 0.045;
+				}
+				.glow-bg {
+					position: fixed;
+					inset: 0;
+					pointer-events: none;
+					z-index: 0;
+					background: radial-gradient(ellipse 90% 45% at 50% -5%, rgba(0,128,255,0.08) 0%, transparent 70%);
+				}
+				@keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+				.animate-ping { animation: ping 1.5s cubic-bezier(0,0,.2,1) infinite; }
+				if p.Config != nil && p.Config.CustomCSS != "" {
+					{ p.Config.CustomCSS }
+				}
+			</style>
+		</head>
+		<body class="bg-surface text-muted-light font-sans min-h-screen antialiased">
+			<div class="noise-bg"></div>
+			<div class="glow-bg"></div>
+			<div class="relative z-10 max-w-2xl mx-auto px-4 py-14 sm:px-6 sm:py-20">
+				@statusOverallBanner(p.Overall)
+				if p.HasGroups {
+					for _, g := range p.Groups {
+						if g.Name != "" {
+							<h2 class="text-[11px] font-medium text-muted uppercase tracking-widest mb-2 mt-6">{ g.Name }</h2>
+						}
+						<div class="border border-line rounded-lg overflow-hidden divide-y divide-line mb-4">
+							for _, mwu := range g.Monitors {
+								@statusMonitorRow(mwu)
+							}
+						</div>
+					}
+				} else if len(p.Monitors) > 0 {
+					<div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+						for _, mwu := range p.Monitors {
+							@statusMonitorRow(mwu)
+						}
+					</div>
+				} else {
+					<div class="border border-line rounded-lg px-4 py-12 text-center">
+						<p class="text-muted text-[13px]">No monitors configured</p>
+					</div>
+				}
+				if p.Config != nil && p.Config.ShowIncidents && p.HasIncidents {
+					<div class="mt-8">
+						<h2 class="text-[10px] font-medium text-muted uppercase tracking-widest mb-3">Recent Incidents</h2>
+						<div class="border border-line rounded-lg overflow-hidden divide-y divide-line">
+							for _, inc := range p.Incidents {
+								<div class="px-4 py-3" style="background: color-mix(in srgb, var(--color-surface-50) 35%, transparent)">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-2">
+											<span class={ "w-1.5 h-1.5 rounded-full", StatusDot(inc.Status) }></span>
+											<span class="text-[13px] text-white">{ inc.MonitorName }</span>
+										</div>
+										<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(inc.Status) }>{ inc.Status }</span>
+									</div>
+									<div class="mt-1.5 flex items-center gap-3 text-[11px] text-muted">
+										<span>{ TimeAgo(inc.StartedAt) }</span>
+										if inc.Cause != "" {
+											<span>{ inc.Cause }</span>
+										}
+										if inc.ResolvedAt != nil {
+											<span class="text-emerald-400">Resolved in { IncidentDuration(inc.StartedAt, inc.ResolvedAt) }</span>
+										}
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				}
+				<div class="mt-12 pt-5 border-t border-line flex items-center justify-center gap-1.5">
+					<span class="text-[11px] text-muted">Powered by</span>
+					<a href="https://github.com/y0f/asura" target="_blank" rel="noopener" class="flex items-center">
+						<img src={ p.BasePath + "/static/logo.gif" } alt="Asura" class="h-2" style="margin-top:2px"/>
+					</a>
+				</div>
+			</div>
+		</body>
+	</html>
+}
+
+templ statusOverallBanner(overall string) {
+	<div class={ "mb-8 rounded-lg border px-4 py-3.5 flex items-center gap-3",
+		templ.KV("border-emerald-500/20 bg-emerald-500/[0.04]", overall == "operational"),
+		templ.KV("border-yellow-500/20 bg-yellow-500/[0.04]", overall == "degraded"),
+		templ.KV("border-red-500/20 bg-red-500/[0.04]", overall != "operational" && overall != "degraded") }>
+		<span class="relative flex h-2 w-2 shrink-0">
+			<span class={ "animate-ping absolute inline-flex h-full w-full rounded-full opacity-50",
+				templ.KV("bg-emerald-400", overall == "operational"),
+				templ.KV("bg-yellow-400", overall == "degraded"),
+				templ.KV("bg-red-400", overall != "operational" && overall != "degraded") }></span>
+			<span class={ "relative inline-flex rounded-full h-2 w-2",
+				templ.KV("bg-emerald-400", overall == "operational"),
+				templ.KV("bg-yellow-400", overall == "degraded"),
+				templ.KV("bg-red-400", overall != "operational" && overall != "degraded") }></span>
+		</span>
+		<span class={ "text-[13px] font-medium",
+			templ.KV("text-emerald-400", overall == "operational"),
+			templ.KV("text-yellow-400", overall == "degraded"),
+			templ.KV("text-red-400", overall != "operational" && overall != "degraded") }>
+			if overall == "operational" {
+				All Systems Operational
+			} else if overall == "degraded" {
+				Partial System Degradation
+			} else {
+				Major System Outage
+			}
+		</span>
+	</div>
+}
+
+templ statusMonitorRow(mwu MonitorWithUptime) {
+	<div class="px-4 py-4" style="background: color-mix(in srgb, var(--color-surface-50) 35%, transparent)">
+		<div class="flex items-center justify-between mb-3">
+			<span class="text-[13px] font-medium text-white">{ mwu.Monitor.Name }</span>
+			<div class="flex items-center gap-1.5">
+				<span class={ "w-1.5 h-1.5 rounded-full", StatusDot(mwu.Monitor.Status) }></span>
+				<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(mwu.Monitor.Status) }>{ mwu.Monitor.Status }</span>
+			</div>
+		</div>
+		<div class="flex items-center gap-[2px]" x-data="{tooltip: '', show: false, mx: 0, my: 0}">
+			for _, bar := range mwu.DailyBars {
+				<div class={ "flex-1 h-7 rounded-[2px] opacity-80 hover:opacity-100 transition-opacity cursor-default", UptimeBarColor(bar.UptimePct, bar.HasData) }
+					@mouseenter={ "tooltip = '" + UptimeBarTooltip(bar.UptimePct, bar.HasData, bar.Label) + "'; show = true; mx = $event.clientX; my = $event.clientY" }
+					@mousemove="mx = $event.clientX; my = $event.clientY"
+					@mouseleave="show = false"></div>
+			}
+			<div x-show="show" x-cloak
+				class="fixed z-50 px-2.5 py-1.5 bg-surface-100 border border-line rounded text-[11px] text-muted-light shadow-lg pointer-events-none whitespace-nowrap"
+				:style="`top: ${my - 40}px; left: ${mx}px`"
+				x-text="tooltip"></div>
+		</div>
+		<div class="flex items-center justify-between mt-2">
+			<span class="text-[10px] text-muted">90 days ago</span>
+			<span class={ "text-[11px] font-medium tabular-nums", UptimeColor(mwu.Uptime90d) }>{ mwu.UptimeLabel }</span>
+			<span class="text-[10px] text-muted">Today</span>
+		</div>
+	</div>
+}

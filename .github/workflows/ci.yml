@@ -46,6 +46,12 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Generate templ
+        run: templ generate
+
       - name: Vet
         run: go vet ./...
 
@@ -61,6 +67,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: "1.24"
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Generate templ
+        run: templ generate
 
       - name: Build linux/amd64
         run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /dev/null ./cmd/asura

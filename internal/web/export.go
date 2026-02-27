@@ -7,11 +7,14 @@ import (
 	"net/http"
 
 	"github.com/y0f/asura/internal/api"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
-	pd := h.newPageData(r, "Settings", "settings")
-	h.render(w, "settings/index.html", pd)
+	lp := h.newLayoutParams(r, "Settings", "settings")
+	h.renderComponent(w, r, views.SettingsPage(views.SettingsParams{
+		LayoutParams: lp,
+	}))
 }
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {

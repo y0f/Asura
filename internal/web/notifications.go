@@ -11,6 +11,7 @@ import (
 	"github.com/y0f/asura/internal/notifier"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
@@ -19,9 +20,11 @@ func (h *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list notifications", "error", err)
 	}
 
-	pd := h.newPageData(r, "Notifications", "notifications")
-	pd.Data = channels
-	h.render(w, "notifications/list.html", pd)
+	lp := h.newLayoutParams(r, "Notifications", "notifications")
+	h.renderComponent(w, r, views.NotificationListPage(views.NotificationListParams{
+		LayoutParams: lp,
+		Channels:     channels,
+	}))
 }
 
 func (h *Handler) NotificationCreate(w http.ResponseWriter, r *http.Request) {

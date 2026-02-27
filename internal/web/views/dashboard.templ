@@ -1,0 +1,168 @@
+package views
+
+import (
+	"fmt"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type DashboardParams struct {
+	LayoutParams
+	Monitors      []*storage.Monitor
+	Incidents     []*storage.Incident
+	ResponseTimes map[int64]int64
+	Total         int
+	Up            int
+	Down          int
+	Degraded      int
+	Paused        int
+	OpenIncidents int
+	Requests24h   int64
+	Visitors24h   int64
+	Page          int
+	TotalPages    int
+	Filter        string
+}
+
+type dashFilterType struct {
+	Value string
+	Label string
+}
+
+var dashFilterTypes = []dashFilterType{
+	{"http", "HTTP"}, {"tcp", "TCP"}, {"dns", "DNS"}, {"icmp", "ICMP"}, {"tls", "TLS"},
+	{"websocket", "WS"}, {"heartbeat", "HB"}, {"command", "CMD"}, {"docker", "DK"},
+	{"domain", "Domain"}, {"grpc", "gRPC"}, {"mqtt", "MQTT"},
+}
+
+func (p DashboardParams) pageHref(page int) string {
+	href := fmt.Sprintf("%s/?page=%d", p.BasePath, page)
+	if p.Filter != "" {
+		href += "&type=" + p.Filter
+	}
+	return href
+}
+
+templ DashboardPage(p DashboardParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Monitors</div>
+					<div class="text-2xl font-semibold text-white tabular-nums">{ fmt.Sprint(p.Total) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Up</div>
+					<div class="text-2xl font-semibold text-emerald-400 tabular-nums">{ fmt.Sprint(p.Up) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Down</div>
+					<div class={ "text-2xl font-semibold tabular-nums", templ.KV("text-red-400", p.Down > 0), templ.KV("text-muted", p.Down == 0) }>{ fmt.Sprint(p.Down) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Incidents</div>
+					<div class={ "text-2xl font-semibold tabular-nums", templ.KV("text-yellow-400", p.OpenIncidents > 0), templ.KV("text-muted", p.OpenIncidents == 0) }>{ fmt.Sprint(p.OpenIncidents) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Requests 24h</div>
+					<div class="text-2xl font-semibold text-muted-light tabular-nums">{ fmt.Sprint(p.Requests24h) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Visitors 24h</div>
+					<div class="text-2xl font-semibold text-muted-light tabular-nums">{ fmt.Sprint(p.Visitors24h) }</div>
+				</div>
+			</div>
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<div class="lg:col-span-2">
+					<div class="flex items-center justify-between mb-3">
+						<h2 class="text-[11px] text-muted uppercase tracking-widest">Monitors</h2>
+						<a href={ templ.SafeURL(p.BasePath + "/monitors/new") } class="text-[11px] text-brand hover:text-brand/80 transition-colors">+ Add</a>
+					</div>
+					<div>
+						<div class="px-4 py-2 border-b border-line flex gap-1.5 overflow-x-auto rounded-t-lg border-x border-t">
+							<a href={ templ.SafeURL(p.BasePath + "/") }
+								class={ "filter-tab px-2 py-0.5", templ.KV("filter-active", p.Filter == ""), templ.KV("filter-inactive", p.Filter != "") }>All</a>
+							for _, ft := range dashFilterTypes {
+								<a href={ templ.SafeURL(p.BasePath + "/?type=" + ft.Value) }
+									class={ "filter-tab px-2 py-0.5", templ.KV("filter-active", p.Filter == ft.Value), templ.KV("filter-inactive", p.Filter != ft.Value) }>{ ft.Label }</a>
+							}
+						</div>
+						<div id="monitor-grid"
+							hx-get={ p.pageHref(p.Page) }
+							hx-trigger="every 30s" hx-select="#monitor-grid" hx-swap="outerHTML" hx-push-url="false"
+							class="border border-line border-t-0 rounded-b-lg overflow-hidden">
+							if len(p.Monitors) > 0 {
+								<div class="divide-y divide-line">
+									for _, m := range p.Monitors {
+										<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)) }
+											class="flex items-center justify-between px-4 py-2.5 hover:bg-surface-200/20 transition-colors group">
+											<div class="flex items-center gap-3 min-w-0">
+												<div class={ "w-1.5 h-1.5 rounded-full shrink-0", StatusDot(m.Status), templ.KV("animate-pulse-dot", m.Status == "down") }></div>
+												<div class="min-w-0">
+													<div class="text-[13px] text-muted-light group-hover:text-white transition-colors truncate">{ m.Name }</div>
+													<div class="text-[11px] text-muted truncate font-mono">{ TypeLabel(m.Type) } · { m.Target }</div>
+												</div>
+											</div>
+											<div class="flex items-center gap-3 shrink-0 ml-3">
+												if rt := p.ResponseTimes[m.ID]; rt > 0 {
+													<span class="text-[11px] text-muted tabular-nums font-mono">{ FormatMs(rt) }</span>
+												}
+												<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(m.Status) }>{ m.Status }</span>
+											</div>
+										</a>
+									}
+								</div>
+							} else {
+								<div class="px-4 py-14 text-center">
+									if p.Filter != "" {
+										<p class="text-muted text-[13px]">{ fmt.Sprintf("No %s monitors found", p.Filter) }</p>
+									} else {
+										<p class="text-muted text-[13px] mb-3">No monitors configured</p>
+										<a href={ templ.SafeURL(p.BasePath + "/monitors/new") } class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create your first monitor</a>
+									}
+								</div>
+							}
+							if p.TotalPages > 1 {
+								<div class="px-4 py-2 border-t border-line flex items-center justify-between">
+									<span class="text-[11px] text-muted tabular-nums">{ fmt.Sprintf("Page %d / %d", p.Page, p.TotalPages) }</span>
+									<div class="flex gap-1">
+										if p.Page > 1 {
+											@PrevPageBtn(p.pageHref(p.Page - 1))
+										}
+										if p.Page < p.TotalPages {
+											@NextPageBtn(p.pageHref(p.Page + 1))
+										}
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				</div>
+				<div>
+					<h2 class="text-[11px] text-muted uppercase tracking-widest mb-3">Active Incidents</h2>
+					<div class="border border-line rounded-lg overflow-hidden">
+						if len(p.Incidents) > 0 {
+							<div class="divide-y divide-line">
+								for _, inc := range p.Incidents {
+									<a href={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d", p.BasePath, inc.ID)) } class="block px-4 py-3 hover:bg-surface-200/20 transition-colors">
+										<div class="flex items-center justify-between mb-1">
+											<span class="text-[13px] text-muted-light">{ inc.MonitorName }</span>
+											<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(inc.Status) }>{ inc.Status }</span>
+										</div>
+										<div class="text-[11px] text-muted truncate">{ inc.Cause }</div>
+										<div class="text-[10px] text-muted/50 mt-0.5">{ TimeAgo(inc.StartedAt) }</div>
+									</a>
+								}
+							</div>
+						} else {
+							<div class="px-4 py-12 text-center">
+								<svg class="w-6 h-6 mx-auto text-muted/30 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+								<p class="text-muted text-[11px]">No active incidents</p>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}

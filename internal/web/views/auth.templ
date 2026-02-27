@@ -1,0 +1,82 @@
+package views
+
+type LoginParams struct {
+	BasePath string
+	Error    string
+}
+
+type TOTPParams struct {
+	BasePath       string
+	Error          string
+	ChallengeToken string
+}
+
+templ authHead(basePath, title string) {
+	<script>
+		(function(){var t=localStorage.getItem('theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}})();
+	</script>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>{ title } — Asura</title>
+	<link rel="icon" href={ basePath + "/static/favicon.ico" }/>
+	<link rel="stylesheet" href={ basePath + "/static/tailwind.css" }/>
+	<style>::selection { background: rgba(0,128,255,.15); }</style>
+}
+
+templ LoginPage(p LoginParams) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		@authHead(p.BasePath, "Login")
+	</head>
+	<body class="bg-surface text-muted-light font-sans min-h-screen flex items-center justify-center px-4 antialiased">
+		<div class="w-full max-w-[280px]">
+			<div class="text-center mb-10">
+				<img src={ p.BasePath + "/static/logo.gif" } alt="Asura" class="h-5 mx-auto mb-3"/>
+				<p class="text-muted text-[11px] tracking-wider uppercase">Infrastructure Monitoring</p>
+			</div>
+			if p.Error != "" {
+				<div class="mb-5 px-3 py-2 border border-red-500/15 rounded text-red-400 text-[12px]">{ p.Error }</div>
+			}
+			<form method="POST" action={ templ.SafeURL(p.BasePath + "/login") } class="space-y-3">
+				<input type="password" name="api_key" placeholder="API key" required autofocus
+					class="w-full px-3 py-2.5 bg-surface-50 border border-line rounded text-white text-[13px] placeholder-muted focus:outline-hidden focus:border-brand/40 transition-colors"/>
+				<button type="submit" class="w-full py-2.5 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+					Sign in
+				</button>
+			</form>
+		</div>
+	</body>
+	</html>
+}
+
+templ TOTPPage(p TOTPParams) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		@authHead(p.BasePath, "Two-Factor")
+	</head>
+	<body class="bg-surface text-muted-light font-sans min-h-screen flex items-center justify-center px-4 antialiased">
+		<div class="w-full max-w-[280px]">
+			<div class="text-center mb-10">
+				<img src={ p.BasePath + "/static/logo.gif" } alt="Asura" class="h-5 mx-auto mb-3"/>
+				<p class="text-muted text-[11px] tracking-wider uppercase">Two-Factor Authentication</p>
+			</div>
+			if p.Error != "" {
+				<div class="mb-5 px-3 py-2 border border-red-500/15 rounded text-red-400 text-[12px]">{ p.Error }</div>
+			}
+			<form method="POST" action={ templ.SafeURL(p.BasePath + "/login/totp") } class="space-y-3">
+				<input type="hidden" name="challenge" value={ p.ChallengeToken }/>
+				<input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="000000" required autofocus
+					class="w-full px-3 py-2.5 bg-surface-50 border border-line rounded text-white text-[13px] text-center tracking-[0.3em] placeholder-muted focus:outline-hidden focus:border-brand/40 transition-colors"/>
+				<button type="submit" class="w-full py-2.5 bg-brand hover:bg-brand/85 text-white text-[13px] font-medium rounded transition-colors">
+					Verify
+				</button>
+			</form>
+			<div class="mt-4 text-center">
+				<a href={ templ.SafeURL(p.BasePath + "/login") } class="text-muted text-[11px] hover:text-white transition-colors">Use a different key</a>
+			</div>
+		</div>
+	</body>
+	</html>
+}

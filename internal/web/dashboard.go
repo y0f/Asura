@@ -9,6 +9,7 @@ import (
 	"github.com/y0f/asura/internal/incident"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
@@ -41,25 +42,24 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 	requests24h, visitors24h := h.loadRequestStats(ctx, now)
 
-	pd := h.newPageData(r, "Dashboard", "dashboard")
-	pd.Data = map[string]any{
-		"Monitors":      displayMonitors,
-		"Incidents":     incidentList,
-		"Total":         len(allMonitors),
-		"Up":            up,
-		"Down":          down,
-		"Degraded":      degraded,
-		"Paused":        paused,
-		"OpenIncidents": len(incidentList),
-		"ResponseTimes": responseTimes,
-		"Requests24h":   requests24h,
-		"Visitors24h":   visitors24h,
-		"Page":          page,
-		"TotalPages":    totalPages,
-		"Filter":        typeFilter,
-		"FilteredTotal": len(filtered),
-	}
-	h.render(w, "dashboard.html", pd)
+	lp := h.newLayoutParams(r, "Dashboard", "dashboard")
+	h.renderComponent(w, r, views.DashboardPage(views.DashboardParams{
+		LayoutParams:  lp,
+		Monitors:      displayMonitors,
+		Incidents:     incidentList,
+		ResponseTimes: responseTimes,
+		Total:         len(allMonitors),
+		Up:            up,
+		Down:          down,
+		Degraded:      degraded,
+		Paused:        paused,
+		OpenIncidents: len(incidentList),
+		Requests24h:   requests24h,
+		Visitors24h:   visitors24h,
+		Page:          page,
+		TotalPages:    totalPages,
+		Filter:        typeFilter,
+	}))
 }
 
 func (h *Handler) loadAllMonitors(ctx context.Context) []*storage.Monitor {

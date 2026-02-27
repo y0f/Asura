@@ -2,28 +2,13 @@ package web
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
+	"github.com/y0f/asura/internal/web/views"
 )
-
-type dailyBar struct {
-	Date      string
-	UptimePct float64
-	HasData   bool
-	Label     string
-}
-
-type monitorWithUptime struct {
-	Monitor     *storage.Monitor
-	DailyBars   []dailyBar
-	Uptime90d   float64
-	UptimeLabel string
-	GroupName   string
-}
 
 func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID int64) {
 	ctx := r.Context()
@@ -49,7 +34,7 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 		groupNameMap[spm.MonitorID] = spm.GroupName
 	}
 
-	var monitorData []monitorWithUptime
+	var monitorData []views.MonitorWithUptime
 	for _, m := range monitors {
 		bars := h.buildDailyBars(ctx, m.ID, from, now)
 		uptime, err := h.store.GetUptimePercent(ctx, m.ID, from, now)
@@ -58,20 +43,16 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 			uptime = 100
 		}
 
-		monitorData = append(monitorData, monitorWithUptime{
+		monitorData = append(monitorData, views.MonitorWithUptime{
 			Monitor:     m,
 			DailyBars:   bars,
 			Uptime90d:   uptime,
-			UptimeLabel: formatPct(uptime),
+			UptimeLabel: views.UptimeFmt(uptime),
 			GroupName:   groupNameMap[m.ID],
 		})
 	}
 
-	type monitorGroup struct {
-		Name     string
-		Monitors []monitorWithUptime
-	}
-	var groups []monitorGroup
+	var groups []views.MonitorGroup
 	groupIdx := make(map[string]int)
 	for _, md := range monitorData {
 		gn := md.GroupName
@@ -79,7 +60,7 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 			groups[idx].Monitors = append(groups[idx].Monitors, md)
 		} else {
 			groupIdx[gn] = len(groups)
-			groups = append(groups, monitorGroup{Name: gn, Monitors: []monitorWithUptime{md}})
+			groups = append(groups, views.MonitorGroup{Name: gn, Monitors: []views.MonitorWithUptime{md}})
 		}
 	}
 
@@ -87,23 +68,20 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 
 	incidents := httputil.PublicIncidentsForPage(ctx, h.store, sp, monitors, now)
 
-	pd := pageData{
-		Title:    sp.Title,
-		BasePath: h.cfg.Server.BasePath,
-		Data: map[string]any{
-			"Config":       sp,
-			"Monitors":     monitorData,
-			"Groups":       groups,
-			"HasGroups":    len(groups) > 1 || (len(groups) == 1 && groups[0].Name != ""),
-			"Overall":      overall,
-			"Incidents":    incidents,
-			"HasIncidents": len(incidents) > 0,
-		},
-	}
-	h.renderStatusPage(w, pd)
+	h.renderComponent(w, r, views.PublicStatusPage(views.PublicStatusPageParams{
+		Title:        sp.Title,
+		BasePath:     h.cfg.Server.BasePath,
+		Config:       sp,
+		Monitors:     monitorData,
+		Groups:       groups,
+		HasGroups:    len(groups) > 1 || (len(groups) == 1 && groups[0].Name != ""),
+		Overall:      overall,
+		Incidents:    incidents,
+		HasIncidents: len(incidents) > 0,
+	}))
 }
 
-func (h *Handler) buildDailyBars(ctx context.Context, monitorID int64, from, now time.Time) []dailyBar {
+func (h *Handler) buildDailyBars(ctx context.Context, monitorID int64, from, now time.Time) []views.DailyBar {
 	daily, err := h.store.GetDailyUptime(ctx, monitorID, from, now)
 	if err != nil {
 		h.logger.Error("web: status daily uptime", "monitor_id", monitorID, "error", err)
@@ -114,20 +92,20 @@ func (h *Handler) buildDailyBars(ctx context.Context, monitorID int64, from, now
 		dayMap[d.Date] = d
 	}
 
-	bars := make([]dailyBar, 0, 90)
+	bars := make([]views.DailyBar, 0, 90)
 	for i := 89; i >= 0; i-- {
 		day := now.AddDate(0, 0, -i)
 		dateStr := day.Format("2006-01-02")
 		label := day.Format("Jan 2, 2006")
 		if d, ok := dayMap[dateStr]; ok {
-			bars = append(bars, dailyBar{
+			bars = append(bars, views.DailyBar{
 				Date:      dateStr,
 				UptimePct: d.UptimePct,
 				HasData:   true,
 				Label:     label,
 			})
 		} else {
-			bars = append(bars, dailyBar{
+			bars = append(bars, views.DailyBar{
 				Date:    dateStr,
 				HasData: false,
 				Label:   label,
@@ -135,25 +113,4 @@ func (h *Handler) buildDailyBars(ctx context.Context, monitorID int64, from, now
 		}
 	}
 	return bars
-}
-
-func (h *Handler) renderStatusPage(w http.ResponseWriter, data pageData) {
-	t, ok := h.templates["status/page.html"]
-	if !ok {
-		http.Error(w, "template not found", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'")
-	if err := t.ExecuteTemplate(w, "status_page", data); err != nil {
-		h.logger.Error("template render", "template", "status/page.html", "error", err)
-	}
-}
-
-func formatPct(pct float64) string {
-	if pct >= 99.995 {
-		return "100%"
-	}
-	return fmt.Sprintf("%.2f%%", pct)
 }

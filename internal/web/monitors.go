@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 type headerPair struct {
@@ -19,35 +19,8 @@ type headerPair struct {
 	Value string `json:"value"`
 }
 
-type monitorFormData struct {
-	Monitor              *storage.Monitor
-	HTTP                 storage.HTTPSettings
-	TCP                  storage.TCPSettings
-	DNS                  storage.DNSSettings
-	TLS                  storage.TLSSettings
-	WS                   storage.WebSocketSettings
-	Cmd                  storage.CommandSettings
-	Docker               storage.DockerSettings
-	Domain               storage.DomainSettings
-	GRPC                 storage.GRPCSettings
-	MQTT                 storage.MQTTSettings
-	FollowRedirects      bool
-	MaxRedirects         int
-	HeadersJSON          template.JS
-	WsHeadersJSON        template.JS
-	AssertionsJSON       template.JS
-	SettingsJSON         string
-	AssertionsRaw        string
-	Groups               []*storage.MonitorGroup
-	NotificationChannels []*storage.NotificationChannel
-	SelectedChannelIDs   []int64
-	Proxies              []*storage.Proxy
-	AllTags              []*storage.Tag
-	SelectedTags         []storage.MonitorTag
-}
-
-func monitorToFormData(mon *storage.Monitor) *monitorFormData {
-	fd := &monitorFormData{Monitor: mon}
+func monitorToFormData(mon *storage.Monitor) *views.MonitorFormParams {
+	fd := &views.MonitorFormParams{Monitor: mon}
 	if mon == nil {
 		fd.Monitor = &storage.Monitor{}
 		fd.FollowRedirects = true
@@ -80,26 +53,26 @@ func monitorToFormData(mon *storage.Monitor) *monitorFormData {
 	return fd
 }
 
-var _settingsTargets = map[string]func(*monitorFormData) any{
-	"http":      func(fd *monitorFormData) any { return &fd.HTTP },
-	"tcp":       func(fd *monitorFormData) any { return &fd.TCP },
-	"dns":       func(fd *monitorFormData) any { return &fd.DNS },
-	"tls":       func(fd *monitorFormData) any { return &fd.TLS },
-	"websocket": func(fd *monitorFormData) any { return &fd.WS },
-	"command":   func(fd *monitorFormData) any { return &fd.Cmd },
-	"docker":    func(fd *monitorFormData) any { return &fd.Docker },
-	"domain":    func(fd *monitorFormData) any { return &fd.Domain },
-	"grpc":      func(fd *monitorFormData) any { return &fd.GRPC },
-	"mqtt":      func(fd *monitorFormData) any { return &fd.MQTT },
+var _settingsTargets = map[string]func(*views.MonitorFormParams) any{
+	"http":      func(fd *views.MonitorFormParams) any { return &fd.HTTP },
+	"tcp":       func(fd *views.MonitorFormParams) any { return &fd.TCP },
+	"dns":       func(fd *views.MonitorFormParams) any { return &fd.DNS },
+	"tls":       func(fd *views.MonitorFormParams) any { return &fd.TLS },
+	"websocket": func(fd *views.MonitorFormParams) any { return &fd.WS },
+	"command":   func(fd *views.MonitorFormParams) any { return &fd.Cmd },
+	"docker":    func(fd *views.MonitorFormParams) any { return &fd.Docker },
+	"domain":    func(fd *views.MonitorFormParams) any { return &fd.Domain },
+	"grpc":      func(fd *views.MonitorFormParams) any { return &fd.GRPC },
+	"mqtt":      func(fd *views.MonitorFormParams) any { return &fd.MQTT },
 }
 
-func unmarshalMonitorSettings(fd *monitorFormData, mon *storage.Monitor) {
+func unmarshalMonitorSettings(fd *views.MonitorFormParams, mon *storage.Monitor) {
 	if fn, ok := _settingsTargets[mon.Type]; ok {
 		json.Unmarshal(mon.Settings, fn(fd))
 	}
 }
 
-func applyHTTPDefaults(fd *monitorFormData) {
+func applyHTTPDefaults(fd *views.MonitorFormParams) {
 	fd.FollowRedirects = fd.HTTP.FollowRedirects == nil || *fd.HTTP.FollowRedirects
 	fd.MaxRedirects = fd.HTTP.MaxRedirects
 	if fd.MaxRedirects == 0 && fd.FollowRedirects {
@@ -124,7 +97,7 @@ func inferHTTPAuthMethod(h storage.HTTPSettings) string {
 	return "none"
 }
 
-func headersToJSON(headers map[string]string) template.JS {
+func headersToJSON(headers map[string]string) string {
 	if len(headers) == 0 {
 		return "[]"
 	}
@@ -132,11 +105,10 @@ func headersToJSON(headers map[string]string) template.JS {
 	for k, v := range headers {
 		pairs = append(pairs, headerPair{Key: k, Value: v})
 	}
-	b, _ := json.Marshal(pairs)
-	return safeJS(b)
+	return views.ToJSON(pairs)
 }
 
-func assertionsToJSON(raw json.RawMessage) template.JS {
+func assertionsToJSON(raw json.RawMessage) string {
 	if len(raw) == 0 {
 		return "[]"
 	}
@@ -144,8 +116,7 @@ func assertionsToJSON(raw json.RawMessage) template.JS {
 	if err := json.Unmarshal(raw, &assertions); err != nil {
 		return "[]"
 	}
-	b, _ := json.Marshal(assertions)
-	return safeJS(b)
+	return views.ToJSON(assertions)
 }
 
 var _settingsAssemblers = map[string]func(*http.Request) json.RawMessage{
@@ -367,17 +338,17 @@ func (h *Handler) Monitors(w http.ResponseWriter, r *http.Request) {
 	groups, _ := h.store.ListMonitorGroups(r.Context())
 	allTags, _ := h.store.ListTags(r.Context())
 
-	pd := h.newPageData(r, "Monitors", "monitors")
-	pd.Data = map[string]any{
-		"Result":    result,
-		"Search":    q,
-		"Type":      typeFilter,
-		"Groups":    groups,
-		"TagMap":    tagMap,
-		"AllTags":   allTags,
-		"TagFilter": tagFilter,
-	}
-	h.render(w, "monitors/list.html", pd)
+	lp := h.newLayoutParams(r, "Monitors", "monitors")
+	h.renderComponent(w, r, views.MonitorListPage(views.MonitorListParams{
+		LayoutParams: lp,
+		Result:       result,
+		Search:       q,
+		Type:         typeFilter,
+		Groups:       groups,
+		TagMap:       tagMap,
+		AllTags:      allTags,
+		TagFilter:    tagFilter,
+	}))
 }
 
 func (h *Handler) MonitorDetail(w http.ResponseWriter, r *http.Request) {
@@ -422,31 +393,36 @@ func (h *Handler) MonitorDetail(w http.ResponseWriter, r *http.Request) {
 	openIncident, _ := h.store.GetOpenIncident(ctx, id)
 	monTags, _ := h.store.GetMonitorTags(ctx, id)
 
-	pd := h.newPageData(r, mon.Name, "monitors")
-	pd.Data = map[string]any{
-		"Monitor":      mon,
-		"Checks":       checks,
-		"Changes":      changes,
-		"ChecksPage":   checksPage,
-		"ChangesPage":  changesPage,
-		"Uptime24h":    uptime24h,
-		"Uptime7d":     uptime7d,
-		"Uptime30d":    uptime30d,
-		"P50":          p50,
-		"P95":          p95,
-		"P99":          p99,
-		"TotalChecks":  totalChecks,
-		"UpChecks":     upChecks,
-		"DownChecks":   downChecks,
-		"LatestCheck":  latestCheck,
-		"OpenIncident": openIncident,
-		"Tags":         monTags,
-	}
-	h.render(w, "monitors/detail.html", pd)
+	lp := h.newLayoutParams(r, mon.Name, "monitors")
+	h.renderComponent(w, r, views.MonitorDetailPage(views.MonitorDetailParams{
+		LayoutParams: lp,
+		Monitor:      mon,
+		Checks:       checks,
+		Changes:      changes,
+		ChecksPage:   checksPage,
+		ChangesPage:  changesPage,
+		Uptime24h:    uptime24h,
+		Uptime7d:     uptime7d,
+		Uptime30d:    uptime30d,
+		P50:          p50,
+		P95:          p95,
+		P99:          p99,
+		TotalChecks:  totalChecks,
+		UpChecks:     upChecks,
+		DownChecks:   downChecks,
+		LatestCheck:  latestCheck,
+		OpenIncident: openIncident,
+		Tags:         monTags,
+	}))
+}
+
+func (h *Handler) renderMonitorForm(w http.ResponseWriter, r *http.Request, lp views.LayoutParams, fd *views.MonitorFormParams) {
+	fd.LayoutParams = lp
+	h.renderComponent(w, r, views.MonitorFormPage(*fd))
 }
 
 func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
-	pd := h.newPageData(r, "New Monitor", "monitors")
+	lp := h.newLayoutParams(r, "New Monitor", "monitors")
 
 	groups, _ := h.store.ListMonitorGroups(r.Context())
 	channels, _ := h.store.ListNotificationChannels(r.Context())
@@ -465,7 +441,7 @@ func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
 			h.redirect(w, r, "/monitors")
 			return
 		}
-		pd.Title = "Edit " + mon.Name
+		lp.Title = "Edit " + mon.Name
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
@@ -473,17 +449,15 @@ func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
 		fd.AllTags = allTags
 		fd.SelectedChannelIDs, _ = h.store.GetMonitorNotificationChannelIDs(r.Context(), id)
 		fd.SelectedTags, _ = h.store.GetMonitorTags(r.Context(), id)
-		pd.Data = fd
+		h.renderMonitorForm(w, r, lp, fd)
 	} else {
 		fd := monitorToFormData(nil)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
 		fd.AllTags = allTags
-		pd.Data = fd
+		h.renderMonitorForm(w, r, lp, fd)
 	}
-
-	h.render(w, "monitors/form.html", pd)
 }
 
 func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
@@ -496,8 +470,8 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
 		allTags, _ := h.store.ListTags(r.Context())
-		pd := h.newPageData(r, "New Monitor", "monitors")
-		pd.Error = err.Error()
+		lp := h.newLayoutParams(r, "New Monitor", "monitors")
+		lp.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
@@ -505,8 +479,7 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
 		fd.SelectedTags = monTags
-		pd.Data = fd
-		h.render(w, "monitors/form.html", pd)
+		h.renderMonitorForm(w, r, lp, fd)
 		return
 	}
 
@@ -516,8 +489,8 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		proxies, _ := h.store.ListProxies(r.Context())
 		allTags, _ := h.store.ListTags(r.Context())
 		h.logger.Error("web: create monitor", "error", err)
-		pd := h.newPageData(r, "New Monitor", "monitors")
-		pd.Error = "Failed to create monitor"
+		lp := h.newLayoutParams(r, "New Monitor", "monitors")
+		lp.Error = "Failed to create monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
@@ -525,8 +498,7 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
 		fd.SelectedTags = monTags
-		pd.Data = fd
-		h.render(w, "monitors/form.html", pd)
+		h.renderMonitorForm(w, r, lp, fd)
 		return
 	}
 
@@ -565,8 +537,8 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
 		allTags, _ := h.store.ListTags(r.Context())
-		pd := h.newPageData(r, "Edit Monitor", "monitors")
-		pd.Error = err.Error()
+		lp := h.newLayoutParams(r, "Edit Monitor", "monitors")
+		lp.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
@@ -574,8 +546,7 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
 		fd.SelectedTags = monTags
-		pd.Data = fd
-		h.render(w, "monitors/form.html", pd)
+		h.renderMonitorForm(w, r, lp, fd)
 		return
 	}
 
@@ -585,8 +556,8 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		proxies, _ := h.store.ListProxies(r.Context())
 		allTags, _ := h.store.ListTags(r.Context())
 		h.logger.Error("web: update monitor", "error", err)
-		pd := h.newPageData(r, "Edit Monitor", "monitors")
-		pd.Error = "Failed to update monitor"
+		lp := h.newLayoutParams(r, "Edit Monitor", "monitors")
+		lp.Error = "Failed to update monitor"
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
@@ -594,8 +565,7 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
 		fd.SelectedTags = monTags
-		pd.Data = fd
-		h.render(w, "monitors/form.html", pd)
+		h.renderMonitorForm(w, r, lp, fd)
 		return
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) StatusPages(w http.ResponseWriter, r *http.Request) {
@@ -18,9 +19,11 @@ func (h *Handler) StatusPages(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list status pages", "error", err)
 	}
 
-	pd := h.newPageData(r, "Status Pages", "status-pages")
-	pd.Data = pages
-	h.render(w, "status/list.html", pd)
+	lp := h.newLayoutParams(r, "Status Pages", "status-pages")
+	h.renderComponent(w, r, views.StatusPageListPage(views.StatusPageListParams{
+		LayoutParams: lp,
+		Pages:        pages,
+	}))
 }
 
 func (h *Handler) StatusPageForm(w http.ResponseWriter, r *http.Request) {
@@ -75,14 +78,14 @@ func (h *Handler) StatusPageForm(w http.ResponseWriter, r *http.Request) {
 		assignedData[pm.MonitorID] = pm
 	}
 
-	pd := h.newPageData(r, "Status Page", "status-pages")
-	pd.Data = map[string]any{
-		"StatusPage":   sp,
-		"Monitors":     monitors,
-		"Assigned":     assignedSet,
-		"AssignedData": assignedData,
-	}
-	h.render(w, "status/form.html", pd)
+	lp := h.newLayoutParams(r, "Status Page", "status-pages")
+	h.renderComponent(w, r, views.StatusPageFormPage(views.StatusPageFormParams{
+		LayoutParams: lp,
+		StatusPage:   sp,
+		Monitors:     monitors,
+		Assigned:     assignedSet,
+		AssignedData: assignedData,
+	}))
 }
 
 func (h *Handler) StatusPageCreate(w http.ResponseWriter, r *http.Request) {

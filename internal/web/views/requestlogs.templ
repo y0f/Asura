@@ -1,0 +1,187 @@
+package views
+
+import (
+	"fmt"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type RequestLogParams struct {
+	LayoutParams
+	Result    *storage.PaginatedResult
+	Stats     *storage.RequestLogStats
+	Filter    string
+	ClientIP  string
+	TimeRange string
+	TopIPs    []string
+}
+
+func (p RequestLogParams) logs() []*storage.RequestLog {
+	if p.Result == nil || p.Result.Data == nil {
+		return nil
+	}
+	logs, _ := p.Result.Data.([]*storage.RequestLog)
+	return logs
+}
+
+func (p RequestLogParams) timeFilterHref(tr string) string {
+	href := fmt.Sprintf("%s/logs?range=%s", p.BasePath, tr)
+	if p.Filter != "" {
+		href += "&group=" + p.Filter
+	}
+	if p.ClientIP != "" {
+		href += "&ip=" + p.ClientIP
+	}
+	return href
+}
+
+func (p RequestLogParams) groupFilterHref(group string) string {
+	href := fmt.Sprintf("%s/logs?range=%s", p.BasePath, p.TimeRange)
+	if group != "" {
+		href += "&group=" + group
+	}
+	if p.ClientIP != "" {
+		href += "&ip=" + p.ClientIP
+	}
+	return href
+}
+
+func (p RequestLogParams) pageHref(page int) string {
+	href := fmt.Sprintf("%s/logs?range=%s", p.BasePath, p.TimeRange)
+	if p.Filter != "" {
+		href += "&group=" + p.Filter
+	}
+	if p.ClientIP != "" {
+		href += "&ip=" + p.ClientIP
+	}
+	href += fmt.Sprintf("&page=%d", page)
+	return href
+}
+
+func (p RequestLogParams) ipFilterFormBase() string {
+	return p.BasePath + "/logs"
+}
+
+templ RequestLogListPage(p RequestLogParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<h1 class="text-[15px] font-medium text-white mb-5">Request Logs</h1>
+			if p.Stats != nil {
+				<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">Requests</div>
+						<div class="text-2xl font-semibold text-white tabular-nums">{ fmt.Sprint(p.Stats.TotalRequests) }</div>
+					</div>
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">Visitors</div>
+						<div class="text-2xl font-semibold text-muted-light tabular-nums">{ fmt.Sprint(p.Stats.UniqueVisitors) }</div>
+					</div>
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">Avg Latency</div>
+						<div class="text-2xl font-semibold text-muted-light tabular-nums">{ FormatMs(p.Stats.AvgLatencyMs) }</div>
+					</div>
+				</div>
+			}
+			<div class="flex flex-wrap items-center gap-3 mb-3">
+				<div class="flex gap-1.5">
+					for _, tr := range []string{"1h", "12h", "24h", "7d"} {
+						<a href={ templ.SafeURL(p.timeFilterHref(tr)) }
+							class={ "filter-tab", templ.KV("filter-active", p.TimeRange == tr), templ.KV("filter-inactive", p.TimeRange != tr) }>
+							{ tr }
+						</a>
+					}
+				</div>
+				<div class="h-4 w-px bg-line"></div>
+				<div class="flex gap-1.5">
+					<a href={ templ.SafeURL(p.groupFilterHref("")) }
+						class={ "filter-tab", templ.KV("filter-active", p.Filter == ""), templ.KV("filter-inactive", p.Filter != "") }>All</a>
+					for _, g := range []string{"web", "api", "badge", "auth", "status"} {
+						<a href={ templ.SafeURL(p.groupFilterHref(g)) }
+							class={ "filter-tab", templ.KV("filter-active", p.Filter == g), templ.KV("filter-inactive", p.Filter != g) }>
+							{ capitalize(g) }
+						</a>
+					}
+				</div>
+				if len(p.TopIPs) > 0 {
+					<div class="h-4 w-px bg-line"></div>
+					<form method="GET" action={ templ.SafeURL(p.ipFilterFormBase()) } class="contents">
+						<input type="hidden" name="range" value={ p.TimeRange }/>
+						if p.Filter != "" {
+							<input type="hidden" name="group" value={ p.Filter }/>
+						}
+						<select name="ip" onchange="this.form.submit()"
+							class={ "form-select px-2.5 py-1 text-[11px] border rounded transition-colors focus:outline-hidden",
+								templ.KV("text-brand border-brand/30 bg-brand/[0.04]", p.ClientIP != ""),
+								templ.KV("text-muted border-line bg-surface hover:text-muted-light", p.ClientIP == "") }>
+							<option value="">All IPs</option>
+							for _, ip := range p.TopIPs {
+								<option value={ ip } selected?={ ip == p.ClientIP }>{ ip }</option>
+							}
+						</select>
+					</form>
+				}
+			</div>
+			<div class="border border-line rounded-lg overflow-hidden">
+				if logs := p.logs(); len(logs) > 0 {
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[800px]">
+							<thead>
+								<tr class="border-b border-line text-left">
+									<th class="th">Time</th>
+									<th class="th">Method</th>
+									<th class="th">Path</th>
+									<th class="th">Status</th>
+									<th class="th">Latency</th>
+									<th class="th">IP</th>
+									<th class="th">Group</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-line">
+								for _, log := range logs {
+									<tr class="hover:bg-surface-200/20 transition-colors">
+										<td class="px-4 py-2.5 text-[12px] text-muted tabular-nums font-mono whitespace-nowrap">{ TimeAgo(log.CreatedAt) }</td>
+										<td class="px-4 py-2.5"><span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border border-line text-muted-light">{ log.Method }</span></td>
+										<td class="px-4 py-2.5 text-[12px] text-muted-light font-mono truncate max-w-[250px]" title={ log.Path }>{ log.Path }</td>
+										<td class={ "px-4 py-2.5 text-[12px] font-mono tabular-nums", HttpStatusColor(log.StatusCode) }>{ fmt.Sprint(log.StatusCode) }</td>
+										<td class="px-4 py-2.5 text-[12px] text-muted tabular-nums font-mono">{ FormatMs(log.LatencyMs) }</td>
+										<td class="px-4 py-2.5 text-[11px] font-mono">
+											<a href={ templ.SafeURL(p.groupFilterHref(p.Filter) + "&ip=" + log.ClientIP) } class="text-muted hover:text-brand transition-colors">{ log.ClientIP }</a>
+										</td>
+										<td class="px-4 py-2.5"><span class="text-[10px] font-medium tracking-wide px-1.5 py-px rounded border border-line text-muted">{ log.RouteGroup }</span></td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if p.Result != nil && p.Result.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">
+								{ fmt.Sprintf("Page %d / %d · %d entries", p.Result.Page, p.Result.TotalPages, p.Result.Total) }
+							</span>
+							<div class="flex gap-1">
+								if p.Result.Page > 1 {
+									@PrevPageBtn(p.pageHref(p.Result.Page - 1))
+								}
+								if p.Result.Page < p.Result.TotalPages {
+									@NextPageBtn(p.pageHref(p.Result.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				} else {
+					<div class="px-4 py-16 text-center">
+						<svg class="w-6 h-6 mx-auto text-muted/20 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+						<p class="text-muted text-[12px]">No request logs found</p>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return string(s[0]-32) + s[1:]
+}

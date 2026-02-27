@@ -5,9 +5,12 @@ GOFLAGS  := -trimpath
 
 TAILWIND := ./tailwindcss
 
-.PHONY: all build css watch test lint run clean hash-key release
+.PHONY: all build css watch dev test lint run clean hash-key release generate
 
 all: build
+
+generate:
+	templ generate
 
 css:
 	$(TAILWIND) -i web/tailwind.input.css -o web/static/tailwind.css --minify
@@ -15,10 +18,14 @@ css:
 watch:
 	$(TAILWIND) -i web/tailwind.input.css -o web/static/tailwind.css --watch
 
-build:
+dev:
+	templ generate --watch &
+	$(TAILWIND) -i web/tailwind.input.css -o web/static/tailwind.css --watch
+
+build: generate
 	CGO_ENABLED=0 go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINARY) ./cmd/asura
 
-test:
+test: generate
 	go test -race -count=1 ./...
 
 lint:

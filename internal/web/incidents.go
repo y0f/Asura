@@ -12,6 +12,7 @@ import (
 	"github.com/y0f/asura/internal/notifier"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func newIncidentEvent(incidentID int64, eventType, message string) *storage.IncidentEvent {
@@ -35,13 +36,13 @@ func (h *Handler) Incidents(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list incidents", "error", err)
 	}
 
-	pd := h.newPageData(r, "Incidents", "incidents")
-	pd.Data = map[string]any{
-		"Result": result,
-		"Filter": status,
-		"Search": q,
-	}
-	h.render(w, "incidents/list.html", pd)
+	lp := h.newLayoutParams(r, "Incidents", "incidents")
+	h.renderComponent(w, r, views.IncidentListPage(views.IncidentListParams{
+		LayoutParams: lp,
+		Result:       result,
+		Filter:       status,
+		Search:       q,
+	}))
 }
 
 func (h *Handler) IncidentDetail(w http.ResponseWriter, r *http.Request) {
@@ -59,12 +60,12 @@ func (h *Handler) IncidentDetail(w http.ResponseWriter, r *http.Request) {
 
 	events, _ := h.store.ListIncidentEvents(r.Context(), id)
 
-	pd := h.newPageData(r, "Incident #"+r.PathValue("id"), "incidents")
-	pd.Data = map[string]any{
-		"Incident": inc,
-		"Events":   events,
-	}
-	h.render(w, "incidents/detail.html", pd)
+	lp := h.newLayoutParams(r, "Incident #"+r.PathValue("id"), "incidents")
+	h.renderComponent(w, r, views.IncidentDetailPage(views.IncidentDetailParams{
+		LayoutParams: lp,
+		Incident:     inc,
+		Events:       events,
+	}))
 }
 
 func (h *Handler) IncidentAck(w http.ResponseWriter, r *http.Request) {

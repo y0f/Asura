@@ -7,6 +7,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Proxies(w http.ResponseWriter, r *http.Request) {
@@ -15,9 +16,11 @@ func (h *Handler) Proxies(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list proxies", "error", err)
 	}
 
-	pd := h.newPageData(r, "Proxies", "proxies")
-	pd.Data = proxies
-	h.render(w, "proxies/list.html", pd)
+	lp := h.newLayoutParams(r, "Proxies", "proxies")
+	h.renderComponent(w, r, views.ProxyListPage(views.ProxyListParams{
+		LayoutParams: lp,
+		Proxies:      proxies,
+	}))
 }
 
 func (h *Handler) ProxyForm(w http.ResponseWriter, r *http.Request) {
@@ -47,9 +50,11 @@ func (h *Handler) ProxyForm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	pd := h.newPageData(r, title, "proxies")
-	pd.Data = proxy
-	h.render(w, "proxies/form.html", pd)
+	lp := h.newLayoutParams(r, title, "proxies")
+	h.renderComponent(w, r, views.ProxyFormPage(views.ProxyFormParams{
+		LayoutParams: lp,
+		Proxy:        proxy,
+	}))
 }
 
 func (h *Handler) ProxyCreate(w http.ResponseWriter, r *http.Request) {
@@ -58,10 +63,12 @@ func (h *Handler) ProxyCreate(w http.ResponseWriter, r *http.Request) {
 	p := parseProxyForm(r)
 
 	if err := validate.ValidateProxy(p); err != nil {
-		pd := h.newPageData(r, "New Proxy", "proxies")
-		pd.Error = err.Error()
-		pd.Data = p
-		h.render(w, "proxies/form.html", pd)
+		lp := h.newLayoutParams(r, "New Proxy", "proxies")
+		lp.Error = err.Error()
+		h.renderComponent(w, r, views.ProxyFormPage(views.ProxyFormParams{
+			LayoutParams: lp,
+			Proxy:        p,
+		}))
 		return
 	}
 
@@ -89,10 +96,12 @@ func (h *Handler) ProxyUpdate(w http.ResponseWriter, r *http.Request) {
 	p.ID = id
 
 	if err := validate.ValidateProxy(p); err != nil {
-		pd := h.newPageData(r, "Edit Proxy", "proxies")
-		pd.Error = err.Error()
-		pd.Data = p
-		h.render(w, "proxies/form.html", pd)
+		lp := h.newLayoutParams(r, "Edit Proxy", "proxies")
+		lp.Error = err.Error()
+		h.renderComponent(w, r, views.ProxyFormPage(views.ProxyFormParams{
+			LayoutParams: lp,
+			Proxy:        p,
+		}))
 		return
 	}
 

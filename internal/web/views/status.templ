@@ -1,0 +1,256 @@
+package views
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type StatusPageListParams struct {
+	LayoutParams
+	Pages []*storage.StatusPage
+}
+
+type StatusPageFormParams struct {
+	LayoutParams
+	StatusPage   *storage.StatusPage
+	Monitors     []*storage.Monitor
+	Assigned     map[int64]bool
+	AssignedData map[int64]storage.StatusPageMonitor
+}
+
+templ StatusPageListPage(p StatusPageListParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<div class="flex items-center justify-between mb-5">
+				<h1 class="text-[15px] font-medium text-white">Status Pages</h1>
+				<a href={ templ.SafeURL(p.BasePath + "/status-pages/new") }
+					class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">
+					<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+					New Status Page
+				</a>
+			</div>
+			if len(p.Pages) > 0 {
+				<div class="border border-line rounded-lg overflow-hidden">
+					<table class="w-full">
+						<thead>
+							<tr class="border-b border-line text-[10px] text-muted uppercase tracking-widest">
+								<th class="text-left px-4 py-2.5 font-medium">Title</th>
+								<th class="text-left px-4 py-2.5 font-medium">Slug</th>
+								<th class="text-center px-4 py-2.5 font-medium">Monitors</th>
+								<th class="text-center px-4 py-2.5 font-medium">Status</th>
+								<th class="text-right px-4 py-2.5 font-medium">Actions</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-line">
+							for _, sp := range p.Pages {
+								<tr class="hover:bg-surface-50/50 transition-colors">
+									<td class="px-4 py-3">
+										<span class="text-[13px] text-white font-medium">{ sp.Title }</span>
+									</td>
+									<td class="px-4 py-3">
+										<code class="text-[12px] text-muted-light bg-surface-200 px-1.5 py-0.5 rounded">/{ sp.Slug }</code>
+									</td>
+									<td class="px-4 py-3 text-center">
+										<span class="text-[12px] text-muted-light tabular-nums">{ fmt.Sprint(sp.MonitorCount) }</span>
+									</td>
+									<td class="px-4 py-3 text-center">
+										if sp.Enabled {
+											<span class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">enabled</span>
+										} else {
+											<span class="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-px rounded border bg-gray-500/10 text-gray-400 border-gray-500/20">disabled</span>
+										}
+									</td>
+									<td class="px-4 py-3">
+										<div class="flex items-center justify-end gap-2">
+											if sp.Enabled {
+												<a href={ templ.SafeURL(fmt.Sprintf("%s/%s", p.BasePath, sp.Slug)) } target="_blank"
+													class="text-muted hover:text-white transition-colors" title="View">
+													<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+												</a>
+											}
+											<a href={ templ.SafeURL(fmt.Sprintf("%s/status-pages/%d/edit", p.BasePath, sp.ID)) }
+												class="text-muted hover:text-white transition-colors" title="Edit">
+												<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+											</a>
+											<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/status-pages/%d/delete", p.BasePath, sp.ID)) }
+												x-data @submit.prevent="if(confirm('Delete this status page?')) $el.submit()">
+												<button type="submit" class="text-muted hover:text-red-400 transition-colors" title="Delete">
+													<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+												</button>
+											</form>
+										</div>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			} else {
+				<div class="border border-line rounded-lg px-4 py-12 text-center">
+					<p class="text-muted text-[13px] mb-3">No status pages configured</p>
+					<a href={ templ.SafeURL(p.BasePath + "/status-pages/new") } class="text-brand text-[13px] hover:underline">Create your first status page</a>
+				</div>
+			}
+		</div>
+	}
+}
+
+templ StatusPageFormPage(p StatusPageFormParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<div class="flex items-center justify-between mb-5">
+				<h1 class="text-[15px] font-medium text-white">
+					if p.StatusPage != nil {
+						Edit Status Page
+					} else {
+						New Status Page
+					}
+				</h1>
+				<a href={ templ.SafeURL(p.BasePath + "/status-pages") } class="text-muted text-[12px] hover:text-muted-light transition-colors">&larr; Back to Status Pages</a>
+			</div>
+			<form method="POST"
+				if p.StatusPage != nil {
+					action={ templ.SafeURL(fmt.Sprintf("%s/status-pages/%d", p.BasePath, p.StatusPage.ID)) }
+				} else {
+					action={ templ.SafeURL(p.BasePath + "/status-pages") }
+				}
+				class="space-y-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+					<div>
+						<label class="form-label">Title</label>
+						<input type="text" name="title"
+							if p.StatusPage != nil {
+								value={ p.StatusPage.Title }
+							}
+							required class="form-input" placeholder="Service Status"/>
+					</div>
+					<div>
+						<label class="form-label">URL Slug</label>
+						<div class="flex items-center gap-0">
+							<span class="px-3 py-2 bg-surface-200 border border-r-0 border-line rounded-l text-muted text-[13px]">{ p.BasePath }/</span>
+							<input type="text" name="slug"
+								if p.StatusPage != nil {
+									value={ p.StatusPage.Slug }
+								} else {
+									value="status"
+								}
+								required class="form-input flex-1 rounded-r" placeholder="status" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9]"/>
+						</div>
+						<p class="mt-1 text-[10px] text-muted">Lowercase letters, numbers, and hyphens only.</p>
+					</div>
+				</div>
+				<div>
+					<label class="form-label">Description</label>
+					<textarea name="description" rows="2" class="form-input resize-none" placeholder="Current status of our services">
+						if p.StatusPage != nil {
+							{ p.StatusPage.Description }
+						}
+					</textarea>
+				</div>
+				<div class="flex flex-wrap gap-x-6 gap-y-3">
+					<div class="flex items-center gap-3">
+						<label class="relative inline-flex items-center cursor-pointer">
+							<input type="checkbox" name="enabled" class="sr-only peer"
+								if p.StatusPage != nil && p.StatusPage.Enabled {
+									checked
+								}/>
+							<div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+						</label>
+						<span class="text-[13px] text-white">Enabled</span>
+					</div>
+					<div class="flex items-center gap-3">
+						<label class="relative inline-flex items-center cursor-pointer">
+							<input type="checkbox" name="api_enabled" class="sr-only peer"
+								if p.StatusPage != nil && p.StatusPage.APIEnabled {
+									checked
+								}/>
+							<div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+						</label>
+						<span class="text-[13px] text-white">Public API</span>
+					</div>
+					<div class="flex items-center gap-3">
+						<label class="relative inline-flex items-center cursor-pointer">
+							<input type="checkbox" name="show_incidents" class="sr-only peer"
+								if p.StatusPage == nil || p.StatusPage.ShowIncidents {
+									checked
+								}/>
+							<div class="w-9 h-5 bg-surface-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#ffffff] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+						</label>
+						<span class="text-[13px] text-white">Show Incidents</span>
+					</div>
+				</div>
+				<div>
+					<label class="form-label">Sort Order</label>
+					<input type="number" name="sort_order"
+						if p.StatusPage != nil {
+							value={ strconv.Itoa(p.StatusPage.SortOrder) }
+						} else {
+							value="0"
+						}
+						class="form-input w-24"/>
+				</div>
+				<div x-data="{search: ''}" class="border border-line rounded-lg p-4">
+					<div class="flex items-center justify-between mb-3">
+						<label class="text-[11px] text-muted uppercase tracking-widest">Monitors</label>
+						<input type="text" x-model="search" placeholder="Filter monitors..."
+							class="px-2.5 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-hidden focus:border-brand/30 transition-colors w-48"/>
+					</div>
+					<div class="space-y-1 max-h-80 overflow-y-auto">
+						for _, m := range p.Monitors {
+							<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-50/50 transition-colors"
+								data-name={ m.Name }
+								x-show="!search || $el.dataset.name.toLowerCase().includes(search.toLowerCase())">
+								<input type="checkbox" name={ fmt.Sprintf("monitor_%d_enabled", m.ID) }
+									class="rounded border-line bg-surface text-brand focus:ring-brand/30"
+									if p.Assigned[m.ID] {
+										checked
+									}/>
+								<div class="flex-1 min-w-0">
+									<span class="text-[13px] text-white truncate block">{ m.Name }</span>
+									<span class="text-[10px] text-muted">{ TypeLabel(m.Type) }</span>
+								</div>
+								<input type="number" name={ fmt.Sprintf("monitor_%d_sort", m.ID) } placeholder="0"
+									value={ statusPageMonitorSort(p.AssignedData, m.ID) }
+									class="w-16 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30 text-center"
+									title="Sort order"/>
+								<input type="text" name={ fmt.Sprintf("monitor_%d_group", m.ID) } placeholder="Group"
+									value={ statusPageMonitorGroup(p.AssignedData, m.ID) }
+									class="w-28 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30"
+									title="Group name"/>
+							</div>
+						}
+					</div>
+					if len(p.Monitors) == 0 {
+						<p class="text-muted text-[12px] text-center py-4">No monitors available</p>
+					}
+				</div>
+				<div x-data="{showAdvanced: false}">
+					<button type="button" @click="showAdvanced = !showAdvanced" class="text-[12px] text-muted hover:text-muted-light transition-colors flex items-center gap-1">
+						<svg class="w-3 h-3 transition-transform" :class="showAdvanced && 'rotate-90'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+						Advanced
+					</button>
+					<div x-show="showAdvanced" x-cloak class="mt-3">
+						<label class="form-label">Custom CSS</label>
+						<textarea name="custom_css" rows="4" class="form-input text-[12px] font-mono resize-y" placeholder="/* Custom styles for this status page */">
+							if p.StatusPage != nil {
+								{ p.StatusPage.CustomCSS }
+							}
+						</textarea>
+					</div>
+				</div>
+				<div class="flex items-center gap-3 pt-2">
+					<button type="submit" class="btn-primary">
+						if p.StatusPage != nil {
+							Update Status Page
+						} else {
+							Create Status Page
+						}
+					</button>
+					<a href={ templ.SafeURL(p.BasePath + "/status-pages") } class="px-4 py-2 border border-line hover:border-line-light text-muted-light text-[13px] rounded transition-colors">Cancel</a>
+				</div>
+			</form>
+		</div>
+	}
+}

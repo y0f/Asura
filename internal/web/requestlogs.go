@@ -7,6 +7,7 @@ import (
 
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) RequestLogs(w http.ResponseWriter, r *http.Request) {
@@ -70,16 +71,14 @@ func (h *Handler) RequestLogs(w http.ResponseWriter, r *http.Request) {
 		timeRange = "24h"
 	}
 
-	pd := h.newPageData(r, "Request Logs", "logs")
-	pd.Data = map[string]any{
-		"Result":     result,
-		"Stats":      stats,
-		"Filter":     f.RouteGroup,
-		"Method":     f.Method,
-		"StatusCode": f.StatusCode,
-		"ClientIP":   f.ClientIP,
-		"TimeRange":  timeRange,
-		"TopIPs":     topIPs,
-	}
-	h.render(w, "requestlogs/list.html", pd)
+	lp := h.newLayoutParams(r, "Request Logs", "logs")
+	h.renderComponent(w, r, views.RequestLogListPage(views.RequestLogParams{
+		LayoutParams: lp,
+		Result:       result,
+		Stats:        stats,
+		Filter:       f.RouteGroup,
+		ClientIP:     f.ClientIP,
+		TimeRange:    timeRange,
+		TopIPs:       topIPs,
+	}))
 }

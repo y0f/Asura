@@ -4,12 +4,18 @@ Thanks for your interest in contributing. This guide covers the basics.
 
 ## Development Workflow
 
-Requires Go 1.22+.
+Requires Go 1.24+ and [templ](https://templ.guide/) CLI.
+
+```bash
+go install github.com/a-h/templ/cmd/templ@latest
+```
 
 1. Fork the repo and create a branch from `main`
-2. Make your changes
-3. Commit with a clear message (see below)
-4. Open a pull request
+2. Run `make dev` to watch for template and CSS changes (or run `templ generate` and `make css` manually)
+3. Make your changes
+4. Run `make test` to verify
+5. Commit with a clear message (see below)
+6. Open a pull request
 
 ## Commit Messages
 
@@ -27,6 +33,7 @@ Update SQLite dependency to v1.35
 - No dependencies unless truly necessary -- keep the binary small
 - Error messages are lowercase, no trailing punctuation
 - Table-driven tests where applicable
+- Web UI templates use [templ](https://templ.guide/) -- run `templ generate` after editing `.templ` files
 
 ## What to Work On
 

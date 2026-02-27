@@ -26,6 +26,12 @@ jobs:
           ./tailwindcss -i web/tailwind.input.css -o web/static/tailwind.css --minify
           ./tailwindcss -i docs/tailwind.input.css -o docs/static/docs.css --minify
 
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Generate templ
+        run: templ generate
+
       - name: Build binaries
         run: |
           VERSION=${GITHUB_REF_NAME}

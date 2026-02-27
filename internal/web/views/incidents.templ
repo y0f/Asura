@@ -1,0 +1,233 @@
+package views
+
+import (
+	"fmt"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type IncidentListParams struct {
+	LayoutParams
+	Result *storage.PaginatedResult
+	Filter string
+	Search string
+}
+
+type IncidentDetailParams struct {
+	LayoutParams
+	Incident *storage.Incident
+	Events   []*storage.IncidentEvent
+}
+
+func (p IncidentListParams) incidents() []*storage.Incident {
+	if p.Result == nil || p.Result.Data == nil {
+		return nil
+	}
+	incs, _ := p.Result.Data.([]*storage.Incident)
+	return incs
+}
+
+func (p IncidentListParams) filterHref(status string) string {
+	href := p.BasePath + "/incidents"
+	if status != "" {
+		href += "?status=" + status
+	}
+	if p.Search != "" {
+		if status != "" {
+			href += "&q=" + p.Search
+		} else {
+			href += "?q=" + p.Search
+		}
+	}
+	return href
+}
+
+func (p IncidentListParams) pageHref(page int) string {
+	href := fmt.Sprintf("%s/incidents?page=%d", p.BasePath, page)
+	if p.Filter != "" {
+		href += "&status=" + p.Filter
+	}
+	if p.Search != "" {
+		href += "&q=" + p.Search
+	}
+	return href
+}
+
+func incFilterClass(filter, current string) string {
+	if filter == current {
+		switch current {
+		case "open":
+			return "text-red-400 border-red-500/30 bg-red-500/[0.04]"
+		case "acknowledged":
+			return "text-yellow-400 border-yellow-500/30 bg-yellow-500/[0.04]"
+		case "resolved":
+			return "text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.04]"
+		}
+	}
+	return ""
+}
+
+templ IncidentListPage(p IncidentListParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<h1 class="text-[15px] font-medium text-white mb-5">Incidents</h1>
+			<div class="flex gap-1.5 mb-3">
+				<a href={ templ.SafeURL(p.filterHref("")) }
+					class={ "filter-tab", templ.KV("filter-active", p.Filter == ""), templ.KV("filter-inactive", p.Filter != "") }>All</a>
+				for _, s := range []string{"open", "acknowledged", "resolved"} {
+					<a href={ templ.SafeURL(p.filterHref(s)) }
+						class={ "filter-tab", templ.KV(incFilterClass(p.Filter, s), p.Filter == s), templ.KV("filter-inactive", p.Filter != s) }>
+						{ capitalize(s) }
+					</a>
+				}
+			</div>
+			<form method="GET" action={ templ.SafeURL(p.BasePath + "/incidents") } class="mb-4">
+				if p.Filter != "" {
+					<input type="hidden" name="status" value={ p.Filter }/>
+				}
+				<div class="relative max-w-xs">
+					<svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+					<input type="text" name="q" value={ p.Search } placeholder="Search incidents..."
+						class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-hidden focus:border-brand/40 transition-colors"/>
+				</div>
+			</form>
+			<div class="border border-line rounded-lg overflow-hidden">
+				if incs := p.incidents(); len(incs) > 0 {
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[700px]">
+							<thead>
+								<tr class="border-b border-line text-left">
+									<th class="th">Monitor</th>
+									<th class="th">Status</th>
+									<th class="th">Cause</th>
+									<th class="th">Duration</th>
+									<th class="th">Started</th>
+									<th class="th text-right"></th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-line">
+								for _, inc := range incs {
+									<tr class="hover:bg-surface-200/20 transition-colors">
+										<td class="px-4 py-3 text-[13px] text-white font-medium">{ inc.MonitorName }</td>
+										<td class="px-4 py-3"><span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(inc.Status) }>{ inc.Status }</span></td>
+										<td class="px-4 py-3 text-[12px] text-muted truncate max-w-[200px]" title={ inc.Cause }>{ inc.Cause }</td>
+										<td class="px-4 py-3 text-[12px] text-muted tabular-nums font-mono">{ IncidentDuration(inc.StartedAt, inc.ResolvedAt) }</td>
+										<td class="px-4 py-3 text-[12px] text-muted/60">{ TimeAgo(inc.StartedAt) }</td>
+										<td class="px-4 py-3 text-right">
+											<div class="flex items-center justify-end gap-2">
+												<a href={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d", p.BasePath, inc.ID)) } class="text-muted hover:text-white transition-colors" title="View">
+													<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+												</a>
+												if p.Perms["incidents.write"] {
+													<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d/delete", p.BasePath, inc.ID)) } style="display:inline"
+														x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
+														<button type="submit" class="text-muted hover:text-red-400 transition-colors" title="Delete">
+															<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+														</button>
+													</form>
+												}
+											</div>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if p.Result != nil && p.Result.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">
+								{ fmt.Sprintf("Page %d / %d · %d incidents", p.Result.Page, p.Result.TotalPages, p.Result.Total) }
+							</span>
+							<div class="flex gap-1">
+								if p.Result.Page > 1 {
+									@PrevPageBtn(p.pageHref(p.Result.Page - 1))
+								}
+								if p.Result.Page < p.Result.TotalPages {
+									@NextPageBtn(p.pageHref(p.Result.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				} else {
+					<div class="px-4 py-16 text-center">
+						<svg class="w-6 h-6 mx-auto text-muted/20 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+						if p.Search != "" || p.Filter != "" {
+							<p class="text-muted text-[12px]">No incidents match your search</p>
+						} else {
+							<p class="text-muted text-[12px]">No incidents found</p>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ IncidentDetailPage(p IncidentDetailParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+				<div>
+					<a href={ templ.SafeURL(p.BasePath + "/incidents") } class="inline-flex items-center gap-1 text-[11px] text-muted hover:text-muted-light transition-colors">
+						<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+						Incidents
+					</a>
+					<div class="flex items-center gap-2.5 mt-1.5">
+						<h1 class="text-[17px] font-medium text-white">{ fmt.Sprintf("Incident #%d", p.Incident.ID) }</h1>
+						<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(p.Incident.Status) }>{ p.Incident.Status }</span>
+					</div>
+					<div class="text-[11px] text-muted mt-1">
+						{ p.Incident.MonitorName } · Started { TimeAgo(p.Incident.StartedAt) } · Duration { IncidentDuration(p.Incident.StartedAt, p.Incident.ResolvedAt) }
+					</div>
+				</div>
+				if p.Perms["incidents.write"] {
+					<div class="flex items-center gap-1.5 shrink-0">
+						if p.Incident.Status == "open" {
+							<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d/ack", p.BasePath, p.Incident.ID)) }>
+								<button type="submit" class="px-3 py-1.5 text-[12px] text-yellow-400 border border-yellow-500/20 rounded hover:bg-yellow-500/5 transition-colors">Acknowledge</button>
+							</form>
+						}
+						if p.Incident.Status != "resolved" {
+							<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d/resolve", p.BasePath, p.Incident.ID)) }>
+								<button type="submit" class="px-3 py-1.5 text-[12px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">Resolve</button>
+							</form>
+						}
+						<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d/delete", p.BasePath, p.Incident.ID)) }
+							x-data x-on:submit.prevent="if(confirm('Delete this incident?')) $el.submit()">
+							<button type="submit" class="px-3 py-1.5 text-[12px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+						</form>
+					</div>
+				}
+			</div>
+			<div class="border-l-2 border-l-red-500/40 border border-line rounded-r-lg px-4 py-3 mb-5">
+				<div class="stat-label">Cause</div>
+				<div class="text-[13px] text-white">{ p.Incident.Cause }</div>
+			</div>
+			<div class="border border-line rounded-lg overflow-hidden">
+				<div class="px-4 py-2.5 border-b border-line">
+					<h2 class="text-[11px] text-muted uppercase tracking-widest">Timeline</h2>
+				</div>
+				if len(p.Events) > 0 {
+					<div class="p-4">
+						<div class="space-y-0">
+							for _, ev := range p.Events {
+								<div class="flex gap-3">
+									<div class="flex flex-col items-center">
+										<div class={ "w-2 h-2 rounded-full mt-1.5 ring-[3px] ring-surface-50", StatusDot(ev.Type) }></div>
+										<div class="w-px flex-1 bg-line mt-1"></div>
+									</div>
+									<div class="pb-4">
+										<div class="text-[13px] text-muted-light">{ ev.Message }</div>
+										<div class="text-[10px] text-muted/50 mt-0.5">{ TimeAgo(ev.CreatedAt) }</div>
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				} else {
+					<div class="px-4 py-10 text-center text-muted text-[12px]">No events</div>
+				}
+			</div>
+		</div>
+	}
+}

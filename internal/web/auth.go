@@ -17,6 +17,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/totp"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 const sessionCookie = "asura_session"
@@ -35,7 +36,7 @@ func generateSessionToken() (string, error) {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath})
+	h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath}))
 }
 
 func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
@@ -43,45 +44,45 @@ func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
 
 	if !h.loginRL.Allow(ip) {
 		h.auditLogin("login_rate_limited", "", ip)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."}))
 		return
 	}
 
 	key := r.FormValue("api_key")
 	if key == "" {
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "API key is required"})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "API key is required"}))
 		return
 	}
 
 	apiKey, ok := h.cfg.LookupAPIKey(key)
 	if !ok {
 		h.auditLogin("login_failed", "", ip)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Invalid API key"})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Invalid API key"}))
 		return
 	}
 
 	if apiKey.TOTP {
 		_, err := h.store.GetTOTPKey(r.Context(), apiKey.Name)
 		if err != nil {
-			h.render(w, "auth/login.html", pageData{
+			h.renderComponent(w, r, views.LoginPage(views.LoginParams{
 				BasePath: h.cfg.Server.BasePath,
 				Error:    "TOTP enabled but not configured. Run: asura --setup-totp " + apiKey.Name,
-			})
+			}))
 			return
 		}
 		token := h.createTOTPChallenge(apiKey.Name, apiKey.Hash, ip)
-		h.render(w, "auth/totp.html", pageData{
-			BasePath: h.cfg.Server.BasePath,
-			Data:     map[string]string{"ChallengeToken": token},
-		})
+		h.renderComponent(w, r, views.TOTPPage(views.TOTPParams{
+			BasePath:       h.cfg.Server.BasePath,
+			ChallengeToken: token,
+		}))
 		return
 	}
 
 	if h.cfg.Auth.TOTP.Required {
-		h.render(w, "auth/login.html", pageData{
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{
 			BasePath: h.cfg.Server.BasePath,
 			Error:    "Two-factor authentication is required. Contact your administrator.",
-		})
+		}))
 		return
 	}
 
@@ -153,7 +154,7 @@ func (h *Handler) TOTPLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	if !h.loginRL.Allow(ip) {
 		h.auditLogin("login_rate_limited", "", ip)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Too many login attempts. Try again later."}))
 		return
 	}
 
@@ -162,37 +163,37 @@ func (h *Handler) TOTPLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	ch := h.consumeTOTPChallenge(challengeToken)
 	if ch == nil {
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Session expired. Please sign in again."})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Session expired. Please sign in again."}))
 		return
 	}
 
 	apiKey := h.cfg.LookupAPIKeyByName(ch.apiKeyName)
 	if apiKey == nil || apiKey.Hash != ch.keyHash {
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "API key no longer valid. Please sign in again."})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "API key no longer valid. Please sign in again."}))
 		return
 	}
 
 	totpKey, err := h.store.GetTOTPKey(r.Context(), apiKey.Name)
 	if err != nil {
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "TOTP configuration error."})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "TOTP configuration error."}))
 		return
 	}
 
 	secret, err := totp.DecodeSecret(totpKey.Secret)
 	if err != nil {
 		h.logger.Error("decode totp secret", "error", err)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Internal error"})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Internal error"}))
 		return
 	}
 
 	if !totp.Validate(secret, code, time.Now()) {
 		h.auditLogin("login_totp_failed", apiKey.Name, ip)
 		newToken := h.createTOTPChallenge(apiKey.Name, apiKey.Hash, ip)
-		h.render(w, "auth/totp.html", pageData{
-			BasePath: h.cfg.Server.BasePath,
-			Error:    "Invalid code. Please try again.",
-			Data:     map[string]string{"ChallengeToken": newToken},
-		})
+		h.renderComponent(w, r, views.TOTPPage(views.TOTPParams{
+			BasePath:       h.cfg.Server.BasePath,
+			Error:          "Invalid code. Please try again.",
+			ChallengeToken: newToken,
+		}))
 		return
 	}
 
@@ -204,7 +205,7 @@ func (h *Handler) createSessionAndLogin(w http.ResponseWriter, r *http.Request, 
 	token, err := generateSessionToken()
 	if err != nil {
 		h.logger.Error("generate session token", "error", err)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Internal error"})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Internal error"}))
 		return
 	}
 
@@ -217,7 +218,7 @@ func (h *Handler) createSessionAndLogin(w http.ResponseWriter, r *http.Request, 
 	}
 	if err := h.store.CreateSession(r.Context(), sess); err != nil {
 		h.logger.Error("create session", "error", err)
-		h.render(w, "auth/login.html", pageData{BasePath: h.cfg.Server.BasePath, Error: "Internal error"})
+		h.renderComponent(w, r, views.LoginPage(views.LoginParams{BasePath: h.cfg.Server.BasePath, Error: "Internal error"}))
 		return
 	}
 

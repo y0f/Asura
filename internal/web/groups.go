@@ -7,6 +7,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Groups(w http.ResponseWriter, r *http.Request) {
@@ -15,9 +16,11 @@ func (h *Handler) Groups(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list groups", "error", err)
 	}
 
-	pd := h.newPageData(r, "Groups", "groups")
-	pd.Data = groups
-	h.render(w, "groups/list.html", pd)
+	lp := h.newLayoutParams(r, "Groups", "groups")
+	h.renderComponent(w, r, views.GroupListPage(views.GroupListParams{
+		LayoutParams: lp,
+		Groups:       groups,
+	}))
 }
 
 func (h *Handler) GroupDetail(w http.ResponseWriter, r *http.Request) {
@@ -39,12 +42,12 @@ func (h *Handler) GroupDetail(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list group monitors", "error", err)
 	}
 
-	pd := h.newPageData(r, group.Name, "groups")
-	pd.Data = map[string]any{
-		"Group":    group,
-		"Monitors": result,
-	}
-	h.render(w, "groups/detail.html", pd)
+	lp := h.newLayoutParams(r, group.Name, "groups")
+	h.renderComponent(w, r, views.GroupDetailPage(views.GroupDetailParams{
+		LayoutParams: lp,
+		Group:        group,
+		Monitors:     result,
+	}))
 }
 
 func (h *Handler) GroupCreate(w http.ResponseWriter, r *http.Request) {

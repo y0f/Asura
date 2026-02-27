@@ -9,6 +9,7 @@ import (
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/storage"
 	"github.com/y0f/asura/internal/validate"
+	"github.com/y0f/asura/internal/web/views"
 )
 
 func (h *Handler) Maintenance(w http.ResponseWriter, r *http.Request) {
@@ -17,9 +18,11 @@ func (h *Handler) Maintenance(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list maintenance", "error", err)
 	}
 
-	pd := h.newPageData(r, "Maintenance", "maintenance")
-	pd.Data = windows
-	h.render(w, "maintenance/list.html", pd)
+	lp := h.newLayoutParams(r, "Maintenance", "maintenance")
+	h.renderComponent(w, r, views.MaintenanceListPage(views.MaintenanceListParams{
+		LayoutParams: lp,
+		Windows:      windows,
+	}))
 }
 
 func (h *Handler) MaintenanceCreate(w http.ResponseWriter, r *http.Request) {

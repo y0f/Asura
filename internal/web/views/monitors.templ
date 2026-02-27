@@ -1,0 +1,756 @@
+package views
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type MonitorListParams struct {
+	LayoutParams
+	Result    *storage.PaginatedResult
+	Search    string
+	Type      string
+	Groups    []*storage.MonitorGroup
+	TagMap    map[int64][]storage.MonitorTag
+	AllTags   []*storage.Tag
+	TagFilter *int64
+}
+
+type MonitorDetailParams struct {
+	LayoutParams
+	Monitor      *storage.Monitor
+	Checks       *storage.PaginatedResult
+	Changes      *storage.PaginatedResult
+	ChecksPage   int
+	ChangesPage  int
+	Uptime24h    float64
+	Uptime7d     float64
+	Uptime30d    float64
+	P50          float64
+	P95          float64
+	P99          float64
+	TotalChecks  int64
+	UpChecks     int64
+	DownChecks   int64
+	LatestCheck  *storage.CheckResult
+	OpenIncident *storage.Incident
+	Tags         []storage.MonitorTag
+}
+
+func (p MonitorListParams) monitors() []*storage.Monitor {
+	if p.Result == nil || p.Result.Data == nil {
+		return nil
+	}
+	m, _ := p.Result.Data.([]*storage.Monitor)
+	return m
+}
+
+func (p MonitorListParams) monitorIDs() string {
+	ms := p.monitors()
+	if len(ms) == 0 {
+		return "[]"
+	}
+	var b strings.Builder
+	b.WriteByte('[')
+	for i, m := range ms {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		fmt.Fprintf(&b, "%d", m.ID)
+	}
+	b.WriteByte(']')
+	return b.String()
+}
+
+func (p MonitorListParams) pageHref(page int) string {
+	href := fmt.Sprintf("%s/monitors?page=%d", p.BasePath, page)
+	if p.Type != "" {
+		href += "&type=" + p.Type
+	}
+	if p.Search != "" {
+		href += "&q=" + p.Search
+	}
+	if p.TagFilter != nil {
+		href += "&tag=" + strconv.FormatInt(*p.TagFilter, 10)
+	}
+	return href
+}
+
+func (p MonitorListParams) filterHref(typeVal string) string {
+	href := p.BasePath + "/monitors"
+	if typeVal != "" {
+		href += "?type=" + typeVal
+	}
+	if p.Search != "" {
+		if typeVal != "" {
+			href += "&q=" + p.Search
+		} else {
+			href += "?q=" + p.Search
+		}
+	}
+	return href
+}
+
+func (p MonitorListParams) tagFilterHref(tagID int64) string {
+	href := fmt.Sprintf("%s/monitors?tag=%d", p.BasePath, tagID)
+	if p.Search != "" {
+		href += "&q=" + p.Search
+	}
+	if p.Type != "" {
+		href += "&type=" + p.Type
+	}
+	return href
+}
+
+var monitorTypes = []string{"http", "tcp", "dns", "icmp", "tls", "websocket", "command", "heartbeat", "docker", "domain", "grpc", "mqtt"}
+
+func monitorListXData(ids string) string {
+	return `{
+    selected: [],
+    allIds: ` + ids + `,
+    get allSelected() { return this.allIds.length > 0 && this.selected.length === this.allIds.length },
+    toggleAll() { this.selected = this.allSelected ? [] : [...this.allIds] },
+    toggle(id) {
+        const i = this.selected.indexOf(id);
+        if (i === -1) this.selected.push(id); else this.selected.splice(i, 1);
+    },
+    bulkAction: '',
+    bulkGroupId: ''}`
+}
+
+func tagTooltip(t storage.MonitorTag) string {
+	if t.Value != "" {
+		return t.Name + ": " + t.Value
+	}
+	return t.Name
+}
+
+func (p MonitorDetailParams) checks() []*storage.CheckResult {
+	if p.Checks == nil || p.Checks.Data == nil {
+		return nil
+	}
+	c, _ := p.Checks.Data.([]*storage.CheckResult)
+	return c
+}
+
+func (p MonitorDetailParams) changes() []*storage.ContentChange {
+	if p.Changes == nil || p.Changes.Data == nil {
+		return nil
+	}
+	c, _ := p.Changes.Data.([]*storage.ContentChange)
+	return c
+}
+
+func (p MonitorDetailParams) checksPageHref(page int) string {
+	href := fmt.Sprintf("%s/monitors/%d?checks_page=%d", p.BasePath, p.Monitor.ID, page)
+	if p.ChangesPage > 1 {
+		href += fmt.Sprintf("&changes_page=%d", p.ChangesPage)
+	}
+	return href
+}
+
+func (p MonitorDetailParams) changesPageHref(page int) string {
+	href := fmt.Sprintf("%s/monitors/%d?changes_page=%d", p.BasePath, p.Monitor.ID, page)
+	if p.ChecksPage > 1 {
+		href += fmt.Sprintf("&checks_page=%d", p.ChecksPage)
+	}
+	return href
+}
+
+func (p MonitorDetailParams) showPercentiles() bool {
+	switch p.Monitor.Type {
+	case "http", "tcp", "dns", "icmp", "websocket":
+		return true
+	}
+	return false
+}
+
+func monitorChartXData() string {
+	return `{
+    range: '24h',
+    loading: true,
+    chart: null,
+    points: [],
+    async fetchData() {
+        this.loading = true;
+        try {
+            const resp = await fetch(this.$el.dataset.chartUrl + '?range=' + this.range, {credentials: 'same-origin'});
+            const data = await resp.json();
+            this.points = data.points || [];
+        } catch(e) {
+            this.points = [];
+        }
+        this.loading = false;
+        this.$nextTick(() => this.render());
+    },
+    render() {
+        const el = this.$refs.chart;
+        const tip = this.$refs.tooltip;
+        if (!el || !this.points.length) return;
+        if (this.chart) { this.chart.destroy(); this.chart = null; }
+        const ts = this.points.map(p => p.ts);
+        const rt = this.points.map(p => p.rt);
+        const statuses = this.points.map(p => p.s);
+        const tipDate = tip ? tip.querySelector('.tip-date') : null;
+        const tipVal = tip ? tip.querySelector('.tip-value') : null;
+        const tipSt = tip ? tip.querySelector('.tip-status') : null;
+        const cs = getComputedStyle(document.documentElement);
+        const axisColor = cs.getPropertyValue('--color-muted').trim();
+        const gridColor = cs.getPropertyValue('--color-line').trim();
+        const opts = {
+            width: el.clientWidth, height: 200,
+            cursor: { show: true, drag: { x: false, y: false } },
+            select: { show: false }, legend: { show: false },
+            padding: [12, 8, 0, 0],
+            axes: [
+                { stroke: axisColor, grid: { stroke: gridColor, width: 1 }, ticks: { stroke: gridColor, width: 1 }, font: '10px Inter, system-ui, sans-serif', gap: 6 },
+                { stroke: axisColor, grid: { stroke: gridColor, width: 1 }, ticks: { stroke: gridColor, width: 1 }, font: '10px Inter, system-ui, sans-serif', gap: 6, values: (u, vals) => vals.map(v => v + 'ms') }
+            ],
+            series: [
+                {},
+                { label: 'Response Time', stroke: '#0080ff', width: 1.5, fill: 'rgba(0,128,255,0.06)', points: { show: false } }
+            ],
+            hooks: {
+                draw: [(u) => {
+                    const ctx = u.ctx;
+                    const { left, top, width, height } = u.bbox;
+                    for (let i = 0; i < statuses.length; i++) {
+                        if (statuses[i] !== 'down') continue;
+                        const x = Math.round(u.valToPos(ts[i], 'x', true));
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(248,113,113,0.15)';
+                        const bw = Math.max(2, width / statuses.length);
+                        ctx.fillRect(x - bw/2, top, bw, height);
+                        ctx.restore();
+                    }
+                }],
+                setCursor: [(u) => {
+                    if (!tip) return;
+                    const idx = u.cursor.idx;
+                    if (idx == null) { tip.style.display = 'none'; return; }
+                    const t = new Date(ts[idx] * 1000);
+                    const time = t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+                    const date = t.toLocaleDateString([], {month:'short',day:'numeric'});
+                    if (tipDate) tipDate.textContent = date + ' ' + time;
+                    if (tipVal) tipVal.textContent = rt[idx] + 'ms';
+                    if (tipSt) { tipSt.textContent = statuses[idx] === 'down' ? 'down' : ''; tipSt.style.display = statuses[idx] === 'down' ? '' : 'none'; }
+                    tip.style.display = 'block';
+                    const cx = u.valToPos(ts[idx], 'x', true);
+                    const tipW = tip.offsetWidth;
+                    let lx = cx + 12;
+                    if (lx + tipW > el.clientWidth) lx = cx - tipW - 12;
+                    tip.style.left = lx + 'px';
+                    tip.style.top = '8px';
+                }]
+            }
+        };
+        this.chart = new uPlot(opts, [ts, rt], el);
+    },
+    resizeObs: null,
+    themeHandler: null,
+    init() {
+        this.fetchData();
+        this.resizeObs = new ResizeObserver(() => {
+            if (this.chart && this.$refs.chart) this.chart.setSize({width: this.$refs.chart.clientWidth, height: 200});
+        });
+        this.$nextTick(() => { if (this.$refs.chart) this.resizeObs.observe(this.$refs.chart); });
+        this.themeHandler = () => this.fetchData();
+        window.addEventListener('theme-changed', this.themeHandler);
+    },
+    destroy() { if (this.resizeObs) this.resizeObs.disconnect(); if (this.chart) this.chart.destroy(); if (this.themeHandler) window.removeEventListener('theme-changed', this.themeHandler); }}`
+}
+
+templ MonitorListPage(p MonitorListParams) {
+	@Layout(p.LayoutParams) {
+		<div x-data={ monitorListXData(p.monitorIDs()) }>
+			<div class="flex items-center justify-between mb-5">
+				<h1 class="text-[15px] font-medium text-white">Monitors</h1>
+				if p.Perms["monitors.write"] {
+					<a href={ templ.SafeURL(p.BasePath + "/monitors/new") } class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">
+						<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m7-7H5"></path></svg>
+						New Monitor
+					</a>
+				}
+			</div>
+			<form method="GET" action={ templ.SafeURL(p.BasePath + "/monitors") } class="mb-4">
+				if p.Type != "" {
+					<input type="hidden" name="type" value={ p.Type }/>
+				}
+				<div class="relative max-w-xs">
+					<svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+					<input type="text" name="q" value={ p.Search } placeholder="Search monitors..."
+						class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-hidden focus:border-brand/40 transition-colors"/>
+				</div>
+			</form>
+			<div class="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+				<a href={ templ.SafeURL(p.filterHref("")) }
+					class={ "filter-tab", templ.KV("filter-active", p.Type == "" && p.TagFilter == nil), templ.KV("filter-inactive", p.Type != "" || p.TagFilter != nil) }>All</a>
+				for _, t := range monitorTypes {
+					<a href={ templ.SafeURL(p.filterHref(t)) }
+						class={ "filter-tab", templ.KV("filter-active", p.Type == t), templ.KV("filter-inactive", p.Type != t) }>{ TypeLabel(t) }</a>
+				}
+				for _, tag := range p.AllTags {
+					<a href={ templ.SafeURL(p.tagFilterHref(tag.ID)) }
+						class={ "filter-tab inline-flex items-center gap-1", templ.KV("filter-active", p.TagFilter != nil && *p.TagFilter == tag.ID), templ.KV("filter-inactive", p.TagFilter == nil || *p.TagFilter != tag.ID) }>
+						<span class="inline-block w-1.5 h-1.5 rounded-full" style={ "background-color: " + tag.Color }></span>{ tag.Name }
+					</a>
+				}
+			</div>
+			if p.Perms["monitors.write"] {
+				<div x-show="selected.length > 0" x-cloak class="mb-3 px-4 py-2.5 border border-brand/30 bg-brand/5 rounded-lg flex items-center gap-3 flex-wrap">
+					<span class="text-[12px] text-white font-medium" x-text="selected.length + ' selected'"></span>
+					<form method="POST" action={ templ.SafeURL(p.BasePath + "/monitors/bulk") } x-ref="bulkForm" class="contents">
+						<template x-for="id in selected" :key="id">
+							<input type="hidden" name="ids[]" :value="id"/>
+						</template>
+						<input type="hidden" name="action" :value="bulkAction"/>
+						<input type="hidden" name="group_id" :value="bulkGroupId"/>
+						<button type="button" @click="bulkAction='pause'; $nextTick(() => $refs.bulkForm.submit())"
+							class="px-2.5 py-1 text-[11px] text-yellow-400 border border-yellow-500/20 rounded hover:bg-yellow-500/5 transition-colors">Pause</button>
+						<button type="button" @click="bulkAction='resume'; $nextTick(() => $refs.bulkForm.submit())"
+							class="px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">Resume</button>
+						if len(p.Groups) > 0 {
+							<select x-model="bulkGroupId" @change="if(bulkGroupId !== '') { bulkAction='set_group'; $nextTick(() => $refs.bulkForm.submit()) }"
+								class="px-2 py-1 text-[11px] bg-transparent border border-line rounded text-muted-light focus:border-brand/40 focus:outline-hidden">
+								<option value="">Set Group...</option>
+								<option value="0">No Group</option>
+								for _, g := range p.Groups {
+									<option value={ fmt.Sprint(g.ID) }>{ g.Name }</option>
+								}
+							</select>
+						}
+						<button type="button" @click="if(confirm('Delete ' + selected.length + ' monitors?')) { bulkAction='delete'; $nextTick(() => $refs.bulkForm.submit()) }"
+							class="px-2.5 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+						<button type="button" @click="selected = []" class="px-2 py-1 text-[11px] text-muted hover:text-muted-light transition-colors">Clear</button>
+					</form>
+				</div>
+			}
+			<div id="monitor-list" hx-get="" hx-trigger="every 30s" hx-select="#monitor-list" hx-swap="outerHTML" hx-push-url="false"
+				class="border border-line rounded-lg overflow-hidden">
+				if ms := p.monitors(); len(ms) > 0 {
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[640px]">
+							<thead>
+								<tr class="border-b border-line text-left">
+									if p.Perms["monitors.write"] {
+										<th class="th w-8">
+											<input type="checkbox" :checked="allSelected" @change="toggleAll()" class="form-checkbox"/>
+										</th>
+									}
+									<th class="th">Monitor</th>
+									<th class="th">Type</th>
+									<th class="th">Status</th>
+									<th class="th">Last Check</th>
+									<th class="th text-right">Actions</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-line">
+								for _, m := range ms {
+									<tr class="hover:bg-surface-200/20 transition-colors" :class={ fmt.Sprintf("selected.includes(%d) && 'bg-brand/5'", m.ID) }>
+										if p.Perms["monitors.write"] {
+											<td class="px-4 py-3">
+												<input type="checkbox" :checked={ fmt.Sprintf("selected.includes(%d)", m.ID) } @change={ fmt.Sprintf("toggle(%d)", m.ID) } class="form-checkbox"/>
+											</td>
+										}
+										<td class="px-4 py-3">
+											<div class="flex items-center gap-1.5">
+												<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)) } class="text-[13px] text-muted-light hover:text-white transition-colors font-medium">{ m.Name }</a>
+												for _, tag := range p.TagMap[m.ID] {
+													<span class="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={ "background-color: " + tag.Color } title={ tagTooltip(tag) }></span>
+												}
+											</div>
+											<div class="text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono">{ m.Target }</div>
+										</td>
+										<td class="px-4 py-3">
+											<span class="text-[10px] text-brand uppercase tracking-wider">{ TypeLabel(m.Type) }</span>
+										</td>
+										<td class="px-4 py-3">
+											<div class="flex items-center gap-2">
+												<div class={ "w-1.5 h-1.5 rounded-full", StatusDot(m.Status), templ.KV("animate-pulse-dot", m.Status == "down") }></div>
+												<span class={ "text-[12px]", StatusColor(m.Status) }>{ m.Status }</span>
+											</div>
+										</td>
+										<td class="px-4 py-3 text-[12px] text-muted">
+											if m.LastCheckAt != nil {
+												{ TimeAgo(m.LastCheckAt) }
+											} else {
+												<span class="text-muted/40">—</span>
+											}
+										</td>
+										<td class="px-4 py-3 text-right">
+											<div class="flex items-center justify-end gap-2">
+												if p.Perms["monitors.write"] {
+													if m.Enabled {
+														<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, m.ID)) } class="contents">
+															<button type="submit" class="inline-flex items-center text-muted hover:text-yellow-400 transition-colors" title="Pause">
+																<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+															</button>
+														</form>
+													} else {
+														<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, m.ID)) } class="contents">
+															<button type="submit" class="inline-flex items-center text-muted hover:text-emerald-400 transition-colors" title="Resume">
+																<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+															</button>
+														</form>
+													}
+												}
+												<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)) } class="inline-flex items-center text-muted hover:text-white transition-colors" title="View">
+													<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+												</a>
+												if p.Perms["monitors.write"] {
+													<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, m.ID)) } class="inline-flex items-center text-muted hover:text-brand transition-colors" title="Edit">
+														<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+													</a>
+												}
+											</div>
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if p.Result != nil && p.Result.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">{ fmt.Sprintf("Page %d / %d · %d monitors", p.Result.Page, p.Result.TotalPages, p.Result.Total) }</span>
+							<div class="flex gap-1">
+								if p.Result.Page > 1 {
+									@PrevPageBtn(p.pageHref(p.Result.Page - 1))
+								}
+								if p.Result.Page < p.Result.TotalPages {
+									@NextPageBtn(p.pageHref(p.Result.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				} else {
+					<div class="px-4 py-16 text-center">
+						if p.Search != "" || p.Type != "" {
+							<p class="text-muted text-[13px] mb-2">No monitors match your search</p>
+							<a href={ templ.SafeURL(p.BasePath + "/monitors") } class="text-[12px] text-brand hover:text-brand/80 transition-colors">Clear filters</a>
+						} else {
+							<p class="text-muted text-[13px] mb-2">No monitors configured</p>
+							<a href={ templ.SafeURL(p.BasePath + "/monitors/new") } class="text-[12px] text-brand hover:text-brand/80 transition-colors">Create your first monitor</a>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ MonitorDetailPage(p MonitorDetailParams) {
+	@Layout(p.LayoutParams) {
+		<div id="monitor-detail" hx-get="" hx-trigger="every 15s" hx-select="#monitor-detail" hx-swap="outerHTML" hx-push-url="false">
+			<div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+				<div>
+					<a href={ templ.SafeURL(p.BasePath + "/monitors") } class="inline-flex items-center gap-1 text-[11px] text-muted hover:text-muted-light transition-colors">
+						<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+						Monitors
+					</a>
+					<div class="flex items-center gap-2.5 mt-1.5">
+						<div class={ "w-2 h-2 rounded-full", StatusDot(p.Monitor.Status), templ.KV("animate-pulse-dot", p.Monitor.Status == "down") }></div>
+						<h1 class="text-[17px] font-medium text-white">{ p.Monitor.Name }</h1>
+						<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(p.Monitor.Status) }>{ p.Monitor.Status }</span>
+						if !p.Monitor.Enabled {
+							<span class="text-[10px] tracking-wide px-1.5 py-px rounded border border-line text-muted">paused</span>
+						}
+					</div>
+					<div class="text-[11px] text-muted mt-1 ml-[18px] font-mono">{ TypeLabel(p.Monitor.Type) } · { p.Monitor.Target } · { fmt.Sprint(p.Monitor.Interval) }s interval · { fmt.Sprint(p.Monitor.Timeout) }s timeout</div>
+				</div>
+				if p.Perms["monitors.write"] {
+					<div class="flex items-center gap-1.5 shrink-0">
+						if p.Monitor.Enabled {
+							<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, p.Monitor.ID)) }>
+								<button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-yellow-400 hover:border-yellow-500/20 transition-colors">
+									<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+									Pause
+								</button>
+							</form>
+						} else {
+							<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, p.Monitor.ID)) }>
+								<button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">
+									<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+									Resume
+								</button>
+							</form>
+						}
+						<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/clone", p.BasePath, p.Monitor.ID)) }>
+							<button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-brand hover:border-brand/20 transition-colors">
+								<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+								Clone
+							</button>
+						</form>
+						<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, p.Monitor.ID)) } class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors">
+							<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+							Edit
+						</a>
+						<form method="POST" action={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d/delete", p.BasePath, p.Monitor.ID)) } x-data x-on:submit.prevent="if(confirm('Delete this monitor?')) $el.submit()">
+							<button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">
+								<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+								Delete
+							</button>
+						</form>
+					</div>
+				}
+			</div>
+			if p.OpenIncident != nil {
+				<div class="mb-5 px-4 py-2.5 border border-red-500/15 rounded text-[13px] text-red-400 flex items-center gap-2">
+					<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+					Active incident: { p.OpenIncident.Cause }
+					<a href={ templ.SafeURL(fmt.Sprintf("%s/incidents/%d", p.BasePath, p.OpenIncident.ID)) } class="text-red-400/80 hover:text-red-300 underline underline-offset-2 ml-1">View &rarr;</a>
+				</div>
+			}
+			<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Uptime 24h</div>
+					<div class={ "text-lg font-semibold tabular-nums", UptimeColor(p.Uptime24h) }>{ UptimeFmt(p.Uptime24h) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Uptime 7d</div>
+					<div class={ "text-lg font-semibold tabular-nums", UptimeColor(p.Uptime7d) }>{ UptimeFmt(p.Uptime7d) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Uptime 30d</div>
+					<div class={ "text-lg font-semibold tabular-nums", UptimeColor(p.Uptime30d) }>{ UptimeFmt(p.Uptime30d) }</div>
+				</div>
+				<div class="border border-line rounded-lg px-4 py-3">
+					<div class="stat-label">Checks 24h</div>
+					<div class="text-lg font-semibold text-white tabular-nums">{ fmt.Sprint(p.TotalChecks) }</div>
+					if p.TotalChecks > 0 {
+						<div class="flex items-center gap-2 mt-0.5">
+							<span class="text-[10px] text-emerald-400">{ fmt.Sprint(p.UpChecks) } up</span>
+							if p.DownChecks > 0 {
+								<span class="text-[10px] text-red-400">{ fmt.Sprint(p.DownChecks) } down</span>
+							}
+						</div>
+					}
+				</div>
+			</div>
+			if p.showPercentiles() {
+				<div class="grid grid-cols-3 gap-3 mb-5">
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">p50</div>
+						<div class="text-lg font-semibold text-white tabular-nums font-mono">{ FormatFloat(p.P50) }</div>
+					</div>
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">p95</div>
+						<div class="text-lg font-semibold text-white tabular-nums font-mono">{ FormatFloat(p.P95) }</div>
+					</div>
+					<div class="border border-line rounded-lg px-4 py-3">
+						<div class="stat-label">p99</div>
+						<div class="text-lg font-semibold text-white tabular-nums font-mono">{ FormatFloat(p.P99) }</div>
+					</div>
+				</div>
+			}
+			<div id="response-chart" hx-preserve="true"
+				data-chart-url={ fmt.Sprintf("%s/monitors/%d/chart", p.BasePath, p.Monitor.ID) }
+				class="border border-line rounded-lg px-4 py-3 mb-5"
+				x-data={ monitorChartXData() } x-init="init()" x-cloak>
+				<div class="flex items-center justify-between mb-3">
+					<h2 class="text-[11px] text-muted uppercase tracking-widest">Response Time</h2>
+					<div class="flex gap-1">
+						<template x-for="r in ['1h','6h','24h','7d','30d']" :key="r">
+							<button @click="range = r; fetchData()"
+								:class="range === r ? 'text-brand bg-brand/[0.08] border-brand/20' : 'text-muted hover:text-muted-light border-line hover:border-line-light'"
+								class="px-2 py-0.5 text-[10px] border rounded transition-colors" x-text="r"></button>
+						</template>
+					</div>
+				</div>
+				<div x-show="loading" class="h-[200px] flex items-center justify-center">
+					<div class="text-[11px] text-muted">Loading chart...</div>
+				</div>
+				<div x-show="!loading && !points.length" class="h-[200px] flex items-center justify-center">
+					<div class="text-[11px] text-muted">No data for this time range</div>
+				</div>
+				<div x-show="!loading && points.length" class="relative">
+					<div x-ref="chart"></div>
+					<div x-ref="tooltip" class="chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10" style="display:none">
+						<div class="tip-date text-[10px] text-muted"></div>
+						<div class="tip-value text-[12px] text-white font-mono"></div>
+						<div class="tip-status text-[10px] text-red-400" style="display:none"></div>
+					</div>
+				</div>
+			</div>
+			if p.LatestCheck != nil && p.Monitor.Type == "tls" && p.LatestCheck.CertExpiry != nil {
+				<div class="border border-line rounded-lg px-4 py-3 mb-5 flex items-center justify-between">
+					<div>
+						<div class="stat-label">TLS Certificate</div>
+						<div class={ "text-[13px] font-medium", CertColor(p.LatestCheck.CertExpiry) }>{ fmt.Sprint(CertDays(p.LatestCheck.CertExpiry)) } days remaining</div>
+					</div>
+					<div class="text-[11px] text-muted font-mono">{ p.LatestCheck.CertExpiry.Format("2006-01-02") }</div>
+				</div>
+			}
+			if p.LatestCheck != nil && p.Monitor.Type == "dns" {
+				if records := ParseDNS(p.LatestCheck.DNSRecords); len(records) > 0 {
+					<div class="border border-line rounded-lg px-4 py-3 mb-5">
+						<div class="stat-label mb-2">DNS Records</div>
+						<div class="space-y-0.5">
+							for _, rec := range records {
+								<div class="text-[12px] text-muted-light font-mono">{ rec }</div>
+							}
+						</div>
+					</div>
+				}
+			}
+			<div class="border border-line rounded-lg px-4 py-3 mb-5">
+				<div class="stat-label mb-2">Configuration</div>
+				<div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]">
+					<div><span class="text-muted">Interval</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.Interval) }s</span></div>
+					<div><span class="text-muted">Timeout</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.Timeout) }s</span></div>
+					<div><span class="text-muted">Fail threshold</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.FailureThreshold) }</span></div>
+					<div><span class="text-muted">Success threshold</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.SuccessThreshold) }</span></div>
+					<div>
+						<span class="text-muted">Enabled</span>
+						if p.Monitor.Enabled {
+							<span class="text-emerald-400 ml-1">yes</span>
+						} else {
+							<span class="text-muted ml-1">no</span>
+						}
+					</div>
+					if p.Monitor.TrackChanges {
+						<div><span class="text-muted">Track changes</span> <span class="text-brand ml-1">yes</span></div>
+					}
+					if p.Monitor.UpsideDown {
+						<div><span class="text-muted">Upside-down</span> <span class="text-yellow-400 ml-1">yes</span></div>
+					}
+					if p.Monitor.ResendInterval > 0 {
+						<div><span class="text-muted">Resend every</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.ResendInterval) }s</span></div>
+					}
+					if p.Monitor.Description != "" {
+						<div class="col-span-full"><span class="text-muted">Description</span> <span class="text-muted-light ml-1">{ p.Monitor.Description }</span></div>
+					}
+					if len(p.Tags) > 0 {
+						<div class="col-span-full flex items-center gap-1.5">
+							<span class="text-muted">Tags</span>
+							for _, tag := range p.Tags {
+								<span class="inline-flex items-center gap-1 ml-1 px-1.5 py-px rounded text-[11px] border border-line">
+									<span class="inline-block w-1.5 h-1.5 rounded-full" style={ "background-color: " + tag.Color }></span>
+									<span class="text-muted-light">{ tag.Name }</span>
+									if tag.Value != "" {
+										<span class="text-muted">{ tag.Value }</span>
+									}
+								</span>
+							}
+						</div>
+					}
+				</div>
+			</div>
+			<div class="border border-line rounded-lg mb-5 overflow-hidden">
+				<div class="px-4 py-2.5 border-b border-line flex items-center justify-between">
+					<h2 class="text-[11px] text-muted uppercase tracking-widest">Recent Checks</h2>
+					if p.Checks != nil && p.Checks.Total > 0 {
+						<span class="text-[10px] text-muted/50 tabular-nums">{ fmt.Sprint(p.Checks.Total) } total</span>
+					}
+				</div>
+				if cks := p.checks(); len(cks) > 0 {
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[600px]">
+							<thead>
+								<tr class="border-b border-line text-left">
+									<th class="th py-2">Status</th>
+									<th class="th py-2">Response</th>
+									if p.Monitor.Type == "http" || p.Monitor.Type == "websocket" {
+										<th class="th py-2">Code</th>
+									}
+									if p.Monitor.Type == "tls" {
+										<th class="th py-2">Cert</th>
+									}
+									<th class="th py-2">Message</th>
+									<th class="th py-2">Time</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-line">
+								for _, ck := range cks {
+									<tr class="hover:bg-surface-200/20 transition-colors">
+										<td class="px-4 py-2">
+											<div class="flex items-center gap-2">
+												<div class={ "w-1.5 h-1.5 rounded-full", StatusDot(ck.Status) }></div>
+												<span class={ "text-[11px]", StatusColor(ck.Status) }>{ ck.Status }</span>
+											</div>
+										</td>
+										<td class="px-4 py-2 text-[11px] text-muted-light tabular-nums font-mono">{ FormatMs(ck.ResponseTime) }</td>
+										if p.Monitor.Type == "http" || p.Monitor.Type == "websocket" {
+											if ck.StatusCode != 0 {
+												<td class={ "px-4 py-2 text-[11px] tabular-nums font-mono", HttpStatusColor(ck.StatusCode) }>{ fmt.Sprint(ck.StatusCode) }</td>
+											} else {
+												<td class="px-4 py-2 text-[11px] tabular-nums font-mono text-muted/30">—</td>
+											}
+										}
+										if p.Monitor.Type == "tls" {
+											if ck.CertExpiry != nil {
+												<td class={ "px-4 py-2 text-[11px]", CertColor(ck.CertExpiry) }>{ fmt.Sprint(CertDays(ck.CertExpiry)) }d</td>
+											} else {
+												<td class="px-4 py-2 text-[11px] text-muted/30">—</td>
+											}
+										}
+										<td class="px-4 py-2 text-[11px] text-muted truncate max-w-[200px]">
+											if ck.Message != "" {
+												{ ck.Message }
+											} else {
+												—
+											}
+										</td>
+										<td class="px-4 py-2 text-[11px] text-muted/60">{ TimeAgo(ck.CreatedAt) }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if p.Checks != nil && p.Checks.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">{ fmt.Sprintf("Page %d / %d", p.Checks.Page, p.Checks.TotalPages) }</span>
+							<div class="flex gap-1">
+								if p.Checks.Page > 1 {
+									@PrevPageBtn(p.checksPageHref(p.Checks.Page - 1))
+								}
+								if p.Checks.Page < p.Checks.TotalPages {
+									@NextPageBtn(p.checksPageHref(p.Checks.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				} else {
+					<div class="px-4 py-10 text-center text-muted text-[12px]">No check results yet</div>
+				}
+			</div>
+			if chs := p.changes(); len(chs) > 0 {
+				<div class="border border-line rounded-lg overflow-hidden">
+					<div class="px-4 py-2.5 border-b border-line flex items-center justify-between">
+						<h2 class="text-[11px] text-muted uppercase tracking-widest">Content Changes</h2>
+						if p.Changes != nil && p.Changes.Total > 0 {
+							<span class="text-[10px] text-muted/50 tabular-nums">{ fmt.Sprint(p.Changes.Total) } total</span>
+						}
+					</div>
+					<div class="divide-y divide-line">
+						for _, ch := range chs {
+							<div class="px-4 py-2.5 flex items-center gap-3 min-w-0">
+								<span class="text-[10px] text-muted/60 whitespace-nowrap shrink-0 w-16">{ TimeAgo(ch.CreatedAt) }</span>
+								if ch.Diff != "" {
+									<code class="text-[11px] text-muted-light font-mono truncate">{ ch.Diff }</code>
+								} else {
+									<span class="text-[11px] text-muted/40">—</span>
+								}
+							</div>
+						}
+					</div>
+					if p.Changes != nil && p.Changes.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">{ fmt.Sprintf("Page %d / %d", p.Changes.Page, p.Changes.TotalPages) }</span>
+							<div class="flex gap-1">
+								if p.Changes.Page > 1 {
+									@PrevPageBtn(p.changesPageHref(p.Changes.Page - 1))
+								}
+								if p.Changes.Page < p.Changes.TotalPages {
+									@NextPageBtn(p.changesPageHref(p.Changes.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				</div>
+			}
+		</div>
+	}
+}
