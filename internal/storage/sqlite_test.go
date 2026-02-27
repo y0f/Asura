@@ -956,8 +956,18 @@ func TestTags(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()
 
-	store.CreateMonitor(ctx, &Monitor{Name: "A", Type: "http", Target: "https://a.com", Interval: 60, Timeout: 10, Enabled: true, Tags: []string{"web", "prod"}, FailureThreshold: 3, SuccessThreshold: 1})
-	store.CreateMonitor(ctx, &Monitor{Name: "B", Type: "http", Target: "https://b.com", Interval: 60, Timeout: 10, Enabled: true, Tags: []string{"api", "prod"}, FailureThreshold: 3, SuccessThreshold: 1})
+	t1 := &Tag{Name: "web", Color: "#ff0000"}
+	t2 := &Tag{Name: "prod", Color: "#00ff00"}
+	t3 := &Tag{Name: "api", Color: "#0000ff"}
+	if err := store.CreateTag(ctx, t1); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateTag(ctx, t2); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateTag(ctx, t3); err != nil {
+		t.Fatal(err)
+	}
 
 	tags, err := store.ListTags(ctx)
 	if err != nil {
@@ -965,6 +975,56 @@ func TestTags(t *testing.T) {
 	}
 	if len(tags) != 3 {
 		t.Fatalf("expected 3 tags, got %d: %v", len(tags), tags)
+	}
+
+	got, err := store.GetTag(ctx, t1.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "web" || got.Color != "#ff0000" {
+		t.Errorf("GetTag: got %+v", got)
+	}
+
+	t1.Name = "frontend"
+	if err := store.UpdateTag(ctx, t1); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = store.GetTag(ctx, t1.ID)
+	if got.Name != "frontend" {
+		t.Errorf("after update: name = %q", got.Name)
+	}
+
+	m := createTestMonitor(t, store, ctx, "TagMon")
+	monTags := []MonitorTag{
+		{TagID: t1.ID, Value: "val1"},
+		{TagID: t2.ID, Value: ""},
+	}
+	if err := store.SetMonitorTags(ctx, m.ID, monTags); err != nil {
+		t.Fatal(err)
+	}
+
+	gotMT, err := store.GetMonitorTags(ctx, m.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(gotMT) != 2 {
+		t.Fatalf("expected 2 monitor tags, got %d", len(gotMT))
+	}
+
+	batchMap, err := store.GetMonitorTagsBatch(ctx, []int64{m.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(batchMap[m.ID]) != 2 {
+		t.Errorf("batch: expected 2 tags for monitor %d, got %d", m.ID, len(batchMap[m.ID]))
+	}
+
+	if err := store.DeleteTag(ctx, t3.ID); err != nil {
+		t.Fatal(err)
+	}
+	tags, _ = store.ListTags(ctx)
+	if len(tags) != 2 {
+		t.Errorf("after delete: expected 2 tags, got %d", len(tags))
 	}
 }
 

@@ -91,6 +91,10 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 		where += " AND m.group_id=?"
 		args = append(args, *f.GroupID)
 	}
+	if f.TagID != nil {
+		where += " AND EXISTS (SELECT 1 FROM monitor_tags WHERE monitor_id=m.id AND tag_id=?)"
+		args = append(args, *f.TagID)
+	}
 
 	var total int64
 	countArgs := make([]any, len(args))

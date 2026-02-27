@@ -61,6 +61,12 @@ func (h *Handler) Metrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) writeMonitorMetrics(sb *strings.Builder, ctx context.Context, monList []*storage.Monitor) {
+	monIDs := make([]int64, len(monList))
+	for i, m := range monList {
+		monIDs[i] = m.ID
+	}
+	tagMap, _ := h.store.GetMonitorTagsBatch(ctx, monIDs)
+
 	sb.WriteString("\n# HELP asura_monitor_up Whether the monitor is up (1) or down (0).\n")
 	sb.WriteString("# TYPE asura_monitor_up gauge\n")
 	for _, m := range monList {
@@ -68,8 +74,9 @@ func (h *Handler) writeMonitorMetrics(sb *strings.Builder, ctx context.Context, 
 		if m.Status == "up" {
 			val = 1
 		}
-		fmt.Fprintf(sb, "asura_monitor_up{id=\"%d\",name=\"%s\",type=\"%s\"} %d\n",
-			m.ID, escapeProm(m.Name), m.Type, val)
+		tagsLabel := formatTagsLabel(tagMap[m.ID])
+		fmt.Fprintf(sb, "asura_monitor_up{id=\"%d\",name=\"%s\",type=\"%s\"%s} %d\n",
+			m.ID, escapeProm(m.Name), m.Type, tagsLabel, val)
 	}
 
 	rtMap, err := h.store.GetLatestResponseTimes(ctx)
@@ -140,6 +147,22 @@ func (h *Handler) writeRequestMetrics(sb *strings.Builder, ctx context.Context) 
 	sb.WriteString("\n# HELP asura_http_avg_latency_ms Average request latency in last 24 hours.\n")
 	sb.WriteString("# TYPE asura_http_avg_latency_ms gauge\n")
 	fmt.Fprintf(sb, "asura_http_avg_latency_ms %d\n", stats.AvgLatencyMs)
+}
+
+func formatTagsLabel(tags []storage.MonitorTag) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for _, t := range tags {
+		label := strings.ReplaceAll(strings.ToLower(t.Name), " ", "_")
+		val := t.Value
+		if val == "" {
+			val = "true"
+		}
+		fmt.Fprintf(&sb, ",tag_%s=\"%s\"", escapeProm(label), escapeProm(val))
+	}
+	return sb.String()
 }
 
 func escapeProm(s string) string {

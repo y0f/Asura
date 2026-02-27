@@ -239,7 +239,7 @@
   </tbody>
 </table>
 
-<p>Export downloads all monitors, groups, proxies, notification channels, maintenance windows, and status pages as a portable JSON file. Relationships are stored by name (not ID) so imports work across instances.</p>
+<p>Export downloads all monitors, groups, tags, proxies, notification channels, maintenance windows, and status pages as a portable JSON file. Relationships are stored by name (not ID) so imports work across instances. Each monitor includes its assigned tags with per-monitor values; tags are created automatically on import if they don't exist.</p>
 
 <p>Query parameters:</p>
 <ul>
@@ -250,6 +250,32 @@
 
 <p>The import response returns counts of created, skipped, and errored entities.</p>
 
+<h2>Tags</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/tags</code></td><td>List all tags</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/tags</code></td><td>Create a tag</td></tr>
+    <tr><td><code>PUT</code></td><td><code>/api/v1/tags/{id}</code></td><td>Update a tag</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/api/v1/tags/{id}</code></td><td>Delete a tag</td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Tag name (max 50 chars)</td></tr>
+    <tr><td><code>color</code></td><td>string</td><td></td><td>Hex color (default: <code>#808080</code>)</td></tr>
+  </tbody>
+</table>
+
+<p>Tags are global. Assign tags to a monitor by including <code>tag_ids</code> (array of tag IDs) and optional <code>tag_values</code> (array of per-monitor values) when creating or updating a monitor. Filter the monitor list with <code>?tag={id}</code>. Deleting a tag removes it from all monitors. Tags and per-monitor values are included in Prometheus metrics and exports.</p>
+
 <h2>Other</h2>
 
 <table>
@@ -258,6 +284,5 @@
   </thead>
   <tbody>
     <tr><td><code>GET</code></td><td><code>/api/v1/overview</code></td><td>Status summary</td></tr>
-    <tr><td><code>GET</code></td><td><code>/api/v1/tags</code></td><td>All tags</td></tr>
   </tbody>
 </table>

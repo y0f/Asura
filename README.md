@@ -42,6 +42,7 @@ Asura monitors your infrastructure from a single Go binary backed by SQLite. No 
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
 | **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy, Teams, PagerDuty, Opsgenie, Pushover |
 | **Status pages** | Multiple public status pages with custom slugs and grouping |
+| **Tags** | Color-coded tags with per-monitor values, filtering, and Prometheus labels |
 | **Prometheus** | `/metrics` endpoint with per-monitor, incident, and request metrics |
 
 ---

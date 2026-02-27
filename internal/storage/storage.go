@@ -88,7 +88,14 @@ type Store interface {
 	DeleteMonitorGroup(ctx context.Context, id int64) error
 
 	// Tags
-	ListTags(ctx context.Context) ([]string, error)
+	CreateTag(ctx context.Context, t *Tag) error
+	GetTag(ctx context.Context, id int64) (*Tag, error)
+	ListTags(ctx context.Context) ([]*Tag, error)
+	UpdateTag(ctx context.Context, t *Tag) error
+	DeleteTag(ctx context.Context, id int64) error
+	SetMonitorTags(ctx context.Context, monitorID int64, tags []MonitorTag) error
+	GetMonitorTags(ctx context.Context, monitorID int64) ([]MonitorTag, error)
+	GetMonitorTagsBatch(ctx context.Context, monitorIDs []int64) (map[int64][]MonitorTag, error)
 
 	// Audit
 	InsertAudit(ctx context.Context, entry *AuditEntry) error

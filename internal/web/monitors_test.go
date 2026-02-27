@@ -408,7 +408,8 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 		"timeout":              {"5"},
 		"failure_threshold":    {"3"},
 		"success_threshold":    {"1"},
-		"tags":                 {"prod, api"},
+		"tag_ids[]":            {"1", "2"},
+		"tag_values[]":         {"prod-val", "api-val"},
 		"track_changes":        {"on"},
 		"upside_down":          {"on"},
 		"resend_interval":      {"60"},
@@ -424,7 +425,7 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 
 	h := testWebHandler(t)
 	r := buildFormRequest(form)
-	mon, _ := h.parseMonitorForm(r)
+	mon, _, monTags := h.parseMonitorForm(r)
 
 	if mon.Name != "My Monitor" {
 		t.Errorf("Name = %q", mon.Name)
@@ -438,8 +439,11 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 	if mon.ResendInterval != 60 {
 		t.Errorf("ResendInterval = %d", mon.ResendInterval)
 	}
-	if len(mon.Tags) != 2 || mon.Tags[0] != "prod" || mon.Tags[1] != "api" {
-		t.Errorf("Tags = %v", mon.Tags)
+	if len(monTags) != 2 || monTags[0].TagID != 1 || monTags[1].TagID != 2 {
+		t.Errorf("MonitorTags = %v", monTags)
+	}
+	if monTags[0].Value != "prod-val" || monTags[1].Value != "api-val" {
+		t.Errorf("MonitorTag values = %q, %q", monTags[0].Value, monTags[1].Value)
 	}
 	if mon.Settings == nil {
 		t.Error("Settings should not be nil")
@@ -466,7 +470,7 @@ func TestParseMonitorFormJSONMode(t *testing.T) {
 
 	h := testWebHandler(t)
 	r := buildFormRequest(form)
-	mon, _ := h.parseMonitorForm(r)
+	mon, _, _ := h.parseMonitorForm(r)
 
 	var s storage.HTTPSettings
 	json.Unmarshal(mon.Settings, &s)
@@ -498,7 +502,7 @@ func TestParseMonitorFormJSONModeInvalidJSON(t *testing.T) {
 
 	h := testWebHandler(t)
 	r := buildFormRequest(form)
-	mon, _ := h.parseMonitorForm(r)
+	mon, _, _ := h.parseMonitorForm(r)
 
 	if mon.Settings != nil {
 		t.Errorf("invalid JSON settings should be nil, got %s", mon.Settings)

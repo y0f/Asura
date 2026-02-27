@@ -42,6 +42,8 @@ type monitorFormData struct {
 	NotificationChannels []*storage.NotificationChannel
 	SelectedChannelIDs   []int64
 	Proxies              []*storage.Proxy
+	AllTags              []*storage.Tag
+	SelectedTags         []storage.MonitorTag
 }
 
 func monitorToFormData(mon *storage.Monitor) *monitorFormData {
@@ -335,20 +337,45 @@ func (h *Handler) Monitors(w http.ResponseWriter, r *http.Request) {
 		typeFilter = ""
 	}
 
-	f := storage.MonitorListFilter{Type: typeFilter, Search: q}
+	var tagFilter *int64
+	if v := r.URL.Query().Get("tag"); v != "" {
+		if tid, err := strconv.ParseInt(v, 10, 64); err == nil {
+			tagFilter = &tid
+		}
+	}
+
+	f := storage.MonitorListFilter{Type: typeFilter, Search: q, TagID: tagFilter}
 	result, err := h.store.ListMonitors(r.Context(), f, p)
 	if err != nil {
 		h.logger.Error("web: list monitors", "error", err)
 	}
 
+	var tagMap map[int64][]storage.MonitorTag
+	if result != nil {
+		if monList, ok := result.Data.([]*storage.Monitor); ok && len(monList) > 0 {
+			ids := make([]int64, len(monList))
+			for i, m := range monList {
+				ids[i] = m.ID
+			}
+			tagMap, _ = h.store.GetMonitorTagsBatch(r.Context(), ids)
+		}
+	}
+	if tagMap == nil {
+		tagMap = map[int64][]storage.MonitorTag{}
+	}
+
 	groups, _ := h.store.ListMonitorGroups(r.Context())
+	allTags, _ := h.store.ListTags(r.Context())
 
 	pd := h.newPageData(r, "Monitors", "monitors")
 	pd.Data = map[string]any{
-		"Result": result,
-		"Search": q,
-		"Type":   typeFilter,
-		"Groups": groups,
+		"Result":    result,
+		"Search":    q,
+		"Type":      typeFilter,
+		"Groups":    groups,
+		"TagMap":    tagMap,
+		"AllTags":   allTags,
+		"TagFilter": tagFilter,
 	}
 	h.render(w, "monitors/list.html", pd)
 }
@@ -393,6 +420,7 @@ func (h *Handler) MonitorDetail(w http.ResponseWriter, r *http.Request) {
 	totalChecks, upChecks, downChecks, _, _ := h.store.GetCheckCounts(ctx, id, now.Add(-24*time.Hour), now)
 	latestCheck, _ := h.store.GetLatestCheckResult(ctx, id)
 	openIncident, _ := h.store.GetOpenIncident(ctx, id)
+	monTags, _ := h.store.GetMonitorTags(ctx, id)
 
 	pd := h.newPageData(r, mon.Name, "monitors")
 	pd.Data = map[string]any{
@@ -412,6 +440,7 @@ func (h *Handler) MonitorDetail(w http.ResponseWriter, r *http.Request) {
 		"DownChecks":   downChecks,
 		"LatestCheck":  latestCheck,
 		"OpenIncident": openIncident,
+		"Tags":         monTags,
 	}
 	h.render(w, "monitors/detail.html", pd)
 }
@@ -422,6 +451,7 @@ func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
 	groups, _ := h.store.ListMonitorGroups(r.Context())
 	channels, _ := h.store.ListNotificationChannels(r.Context())
 	proxies, _ := h.store.ListProxies(r.Context())
+	allTags, _ := h.store.ListTags(r.Context())
 
 	idStr := r.PathValue("id")
 	if idStr != "" {
@@ -440,13 +470,16 @@ func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		fd.SelectedChannelIDs, _ = h.store.GetMonitorNotificationChannelIDs(r.Context(), id)
+		fd.SelectedTags, _ = h.store.GetMonitorTags(r.Context(), id)
 		pd.Data = fd
 	} else {
 		fd := monitorToFormData(nil)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		pd.Data = fd
 	}
 
@@ -454,7 +487,7 @@ func (h *Handler) MonitorForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
-	mon, channelIDs := h.parseMonitorForm(r)
+	mon, channelIDs, monTags := h.parseMonitorForm(r)
 
 	h.applyMonitorDefaults(mon)
 
@@ -462,13 +495,16 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		groups, _ := h.store.ListMonitorGroups(r.Context())
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
+		allTags, _ := h.store.ListTags(r.Context())
 		pd := h.newPageData(r, "New Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
+		fd.SelectedTags = monTags
 		pd.Data = fd
 		h.render(w, "monitors/form.html", pd)
 		return
@@ -478,6 +514,7 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		groups, _ := h.store.ListMonitorGroups(r.Context())
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
+		allTags, _ := h.store.ListTags(r.Context())
 		h.logger.Error("web: create monitor", "error", err)
 		pd := h.newPageData(r, "New Monitor", "monitors")
 		pd.Error = "Failed to create monitor"
@@ -485,7 +522,9 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
+		fd.SelectedTags = monTags
 		pd.Data = fd
 		h.render(w, "monitors/form.html", pd)
 		return
@@ -494,6 +533,12 @@ func (h *Handler) MonitorCreate(w http.ResponseWriter, r *http.Request) {
 	if len(channelIDs) > 0 {
 		if err := h.store.SetMonitorNotificationChannels(r.Context(), mon.ID, channelIDs); err != nil {
 			h.logger.Error("web: set monitor notification channels", "error", err)
+		}
+	}
+
+	if len(monTags) > 0 {
+		if err := h.store.SetMonitorTags(r.Context(), mon.ID, monTags); err != nil {
+			h.logger.Error("web: set monitor tags", "error", err)
 		}
 	}
 
@@ -512,20 +557,23 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mon, channelIDs := h.parseMonitorForm(r)
+	mon, channelIDs, monTags := h.parseMonitorForm(r)
 	mon.ID = id
 
 	if err := validate.ValidateMonitor(mon); err != nil {
 		groups, _ := h.store.ListMonitorGroups(r.Context())
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
+		allTags, _ := h.store.ListTags(r.Context())
 		pd := h.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = err.Error()
 		fd := monitorToFormData(mon)
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
+		fd.SelectedTags = monTags
 		pd.Data = fd
 		h.render(w, "monitors/form.html", pd)
 		return
@@ -535,6 +583,7 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		groups, _ := h.store.ListMonitorGroups(r.Context())
 		channels, _ := h.store.ListNotificationChannels(r.Context())
 		proxies, _ := h.store.ListProxies(r.Context())
+		allTags, _ := h.store.ListTags(r.Context())
 		h.logger.Error("web: update monitor", "error", err)
 		pd := h.newPageData(r, "Edit Monitor", "monitors")
 		pd.Error = "Failed to update monitor"
@@ -542,7 +591,9 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 		fd.Groups = groups
 		fd.NotificationChannels = channels
 		fd.Proxies = proxies
+		fd.AllTags = allTags
 		fd.SelectedChannelIDs = channelIDs
+		fd.SelectedTags = monTags
 		pd.Data = fd
 		h.render(w, "monitors/form.html", pd)
 		return
@@ -550,6 +601,10 @@ func (h *Handler) MonitorUpdate(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.SetMonitorNotificationChannels(r.Context(), id, channelIDs); err != nil {
 		h.logger.Error("web: set monitor notification channels", "error", err)
+	}
+
+	if err := h.store.SetMonitorTags(r.Context(), id, monTags); err != nil {
+		h.logger.Error("web: set monitor tags", "error", err)
 	}
 
 	if h.pipeline != nil {
@@ -622,7 +677,6 @@ func (h *Handler) MonitorClone(w http.ResponseWriter, r *http.Request) {
 		Interval:         src.Interval,
 		Timeout:          src.Timeout,
 		Enabled:          false,
-		Tags:             src.Tags,
 		Settings:         src.Settings,
 		Assertions:       src.Assertions,
 		TrackChanges:     src.TrackChanges,
@@ -632,9 +686,6 @@ func (h *Handler) MonitorClone(w http.ResponseWriter, r *http.Request) {
 		ResendInterval:   src.ResendInterval,
 		GroupID:          src.GroupID,
 		ProxyID:          src.ProxyID,
-	}
-	if clone.Tags == nil {
-		clone.Tags = []string{}
 	}
 
 	if err := h.store.CreateMonitor(ctx, clone); err != nil {
@@ -647,6 +698,11 @@ func (h *Handler) MonitorClone(w http.ResponseWriter, r *http.Request) {
 	channelIDs, _ := h.store.GetMonitorNotificationChannelIDs(ctx, id)
 	if len(channelIDs) > 0 {
 		h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs)
+	}
+
+	srcTags, _ := h.store.GetMonitorTags(ctx, id)
+	if len(srcTags) > 0 {
+		h.store.SetMonitorTags(ctx, clone.ID, srcTags)
 	}
 
 	if h.pipeline != nil {
@@ -715,15 +771,12 @@ func (h *Handler) applyMonitorDefaults(m *storage.Monitor) {
 	if m.SuccessThreshold == 0 {
 		m.SuccessThreshold = h.cfg.Monitor.SuccessThreshold
 	}
-	if m.Tags == nil {
-		m.Tags = []string{}
-	}
 	if m.Type == "heartbeat" && m.Target == "" {
 		m.Target = "heartbeat"
 	}
 }
 
-func (h *Handler) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) {
+func (h *Handler) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64, []storage.MonitorTag) {
 	r.ParseForm()
 
 	interval, _ := strconv.Atoi(r.FormValue("interval"))
@@ -763,7 +816,6 @@ func (h *Handler) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) 
 		}
 	}
 
-	mon.Tags = parseCSV(r.FormValue("tags"))
 	mon.Settings = parseJSONOrForm(r, "settings", func(r *http.Request) json.RawMessage {
 		return assembleSettings(r, mon.Type)
 	})
@@ -771,21 +823,18 @@ func (h *Handler) parseMonitorForm(r *http.Request) (*storage.Monitor, []int64) 
 		return assembleAssertions(r)
 	})
 
-	return mon, parseIDList(r.Form["notification_channel_ids[]"])
-}
-
-func parseCSV(s string) []string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil
-	}
-	var result []string
-	for _, t := range strings.Split(s, ",") {
-		if trimmed := strings.TrimSpace(t); trimmed != "" {
-			result = append(result, trimmed)
+	tagIDs := parseIDList(r.Form["tag_ids[]"])
+	tagValues := r.Form["tag_values[]"]
+	var monTags []storage.MonitorTag
+	for i, tid := range tagIDs {
+		val := ""
+		if i < len(tagValues) {
+			val = strings.TrimSpace(tagValues[i])
 		}
+		monTags = append(monTags, storage.MonitorTag{TagID: tid, Value: val})
 	}
-	return result
+
+	return mon, parseIDList(r.Form["notification_channel_ids[]"]), monTags
 }
 
 func parseJSONOrForm(r *http.Request, prefix string, formFn func(*http.Request) json.RawMessage) json.RawMessage {

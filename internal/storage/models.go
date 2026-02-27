@@ -29,8 +29,9 @@ type Monitor struct {
 	UpdatedAt        time.Time       `json:"updated_at"`
 
 	// Transient fields (not stored in monitors table)
-	NotificationChannelIDs []int64 `json:"notification_channel_ids,omitempty"`
-	ProxyURL               string  `json:"-"` // resolved at check time
+	NotificationChannelIDs []int64      `json:"notification_channel_ids,omitempty"`
+	MonitorTags            []MonitorTag `json:"monitor_tags,omitempty"`
+	ProxyURL               string       `json:"-"` // resolved at check time
 
 	// Computed fields (not stored directly)
 	Status          string     `json:"status,omitempty"`
@@ -266,6 +267,22 @@ type PathCount struct {
 	Count int64  `json:"count"`
 }
 
+// Tag represents a reusable tag with a name and color.
+type Tag struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// MonitorTag links a tag to a monitor with an optional per-monitor value.
+type MonitorTag struct {
+	TagID int64  `json:"tag_id"`
+	Name  string `json:"name"`
+	Color string `json:"color"`
+	Value string `json:"value"`
+}
+
 // MonitorGroup organizes monitors into logical groups.
 type MonitorGroup struct {
 	ID        int64     `json:"id"`
@@ -280,6 +297,7 @@ type MonitorListFilter struct {
 	Type    string
 	Search  string
 	GroupID *int64
+	TagID   *int64
 }
 
 // RequestLogFilter holds filter parameters for listing request logs.

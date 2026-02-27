@@ -82,14 +82,6 @@ func validateMonitorLimits(m *storage.Monitor) error {
 	if m.ResendInterval > 86400 {
 		return fmt.Errorf("resend_interval must be at most 86400 seconds")
 	}
-	for _, tag := range m.Tags {
-		if len(tag) > 50 {
-			return fmt.Errorf("tag must be at most 50 characters")
-		}
-	}
-	if len(m.Tags) > 20 {
-		return fmt.Errorf("at most 20 tags allowed")
-	}
 	return validateMonitorJSON(m)
 }
 
@@ -153,6 +145,36 @@ func ValidateNotificationChannel(ch *storage.NotificationChannel) error {
 	for _, ev := range ch.Events {
 		if !_validNotificationEvents[ev] {
 			return fmt.Errorf("invalid event: %s", ev)
+		}
+	}
+	return nil
+}
+
+var _hexColorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+func ValidateTag(t *storage.Tag) error {
+	if strings.TrimSpace(t.Name) == "" {
+		return fmt.Errorf("name is required")
+	}
+	if len(t.Name) > 50 {
+		return fmt.Errorf("name must be at most 50 characters")
+	}
+	if t.Color == "" {
+		t.Color = "#808080"
+	}
+	if !_hexColorPattern.MatchString(t.Color) {
+		return fmt.Errorf("color must be a valid hex color (e.g. #ff0000)")
+	}
+	return nil
+}
+
+func ValidateMonitorTags(tags []storage.MonitorTag) error {
+	if len(tags) > 20 {
+		return fmt.Errorf("at most 20 tags allowed")
+	}
+	for _, t := range tags {
+		if len(t.Value) > 50 {
+			return fmt.Errorf("tag value must be at most 50 characters")
 		}
 	}
 	return nil

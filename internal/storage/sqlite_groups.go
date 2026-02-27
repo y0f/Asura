@@ -2,8 +2,6 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
-	"sort"
 	"time"
 )
 
@@ -88,35 +86,3 @@ func (s *SQLiteStore) DeleteMonitorGroup(ctx context.Context, id int64) error {
 	return tx.Commit()
 }
 
-// --- Tags ---
-
-func (s *SQLiteStore) ListTags(ctx context.Context) ([]string, error) {
-	rows, err := s.readDB.QueryContext(ctx, "SELECT tags FROM monitors")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	tagSet := map[string]struct{}{}
-	for rows.Next() {
-		var tagsStr string
-		if err := rows.Scan(&tagsStr); err != nil {
-			return nil, err
-		}
-		var tags []string
-		json.Unmarshal([]byte(tagsStr), &tags)
-		for _, t := range tags {
-			tagSet[t] = struct{}{}
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	result := make([]string, 0, len(tagSet))
-	for t := range tagSet {
-		result = append(result, t)
-	}
-	sort.Strings(result)
-	return result, nil
-}

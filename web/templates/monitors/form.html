@@ -103,11 +103,32 @@
                 </div>
             </div>
 
+            {{if $fd.AllTags}}
             <div>
                 <label class="form-label">Tags</label>
-                <input type="text" name="tags" value="{{range $i, $t := $mon.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}" placeholder="production, api"
-                       class="form-input">
+                <p class="text-[10px] text-muted mb-2">Select tags and optionally set per-monitor values.</p>
+                <div class="space-y-1.5">
+                    {{range $fd.AllTags}}
+                    {{$tagID := .ID}}{{$tagColor := .Color}}{{$tagName := .Name}}
+                    {{$selected := false}}{{$tagVal := ""}}
+                    {{range $fd.SelectedTags}}{{if eq .TagID $tagID}}{{$selected = true}}{{$tagVal = .Value}}{{end}}{{end}}
+                    <div class="flex items-center gap-2" x-data="{checked: {{$selected}}}">
+                        <input type="checkbox" x-model="checked" class="form-checkbox"
+                               @change="if(!checked) { $el.closest('div').querySelector('input[name]')?.remove() }">
+                        <span class="inline-block w-2 h-2 rounded-full shrink-0" style="background-color: {{$tagColor}}"></span>
+                        <span class="text-[12px] text-muted-light w-24 shrink-0">{{$tagName}}</span>
+                        <template x-if="checked">
+                            <div class="flex-1 flex gap-1">
+                                <input type="hidden" name="tag_ids[]" value="{{$tagID}}">
+                                <input type="text" name="tag_values[]" value="{{$tagVal}}" placeholder="value (optional)"
+                                       class="form-input py-1 text-[11px] flex-1">
+                            </div>
+                        </template>
+                    </div>
+                    {{end}}
+                </div>
             </div>
+            {{end}}
 
             {{if $fd.Groups}}
             <div>

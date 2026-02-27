@@ -49,6 +49,8 @@ func (h *Handler) GetMonitor(w http.ResponseWriter, r *http.Request) {
 		m.NotificationChannelIDs = channelIDs
 	}
 
+	m.MonitorTags, _ = h.store.GetMonitorTags(r.Context(), m.ID)
+
 	if m.Type == "heartbeat" {
 		hb, err := h.store.GetHeartbeatByMonitorID(r.Context(), m.ID)
 		if err == nil && hb != nil {
@@ -86,6 +88,16 @@ func (h *Handler) CreateMonitor(w http.ResponseWriter, r *http.Request) {
 	if len(m.NotificationChannelIDs) > 0 {
 		if err := h.store.SetMonitorNotificationChannels(r.Context(), m.ID, m.NotificationChannelIDs); err != nil {
 			h.logger.Error("set monitor notification channels", "error", err)
+		}
+	}
+
+	if len(m.MonitorTags) > 0 {
+		if err := validate.ValidateMonitorTags(m.MonitorTags); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err := h.store.SetMonitorTags(r.Context(), m.ID, m.MonitorTags); err != nil {
+			h.logger.Error("set monitor tags", "error", err)
 		}
 	}
 
@@ -141,10 +153,6 @@ func (h *Handler) UpdateMonitor(w http.ResponseWriter, r *http.Request) {
 	m.ID = existing.ID
 	m.CreatedAt = existing.CreatedAt
 
-	if m.Tags == nil {
-		m.Tags = []string{}
-	}
-
 	if err := validate.ValidateMonitor(&m); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -158,6 +166,14 @@ func (h *Handler) UpdateMonitor(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.SetMonitorNotificationChannels(r.Context(), m.ID, m.NotificationChannelIDs); err != nil {
 		h.logger.Error("set monitor notification channels", "error", err)
+	}
+
+	if err := validate.ValidateMonitorTags(m.MonitorTags); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.store.SetMonitorTags(r.Context(), m.ID, m.MonitorTags); err != nil {
+		h.logger.Error("set monitor tags", "error", err)
 	}
 
 	h.audit(r, "update", "monitor", m.ID, "")
@@ -302,7 +318,6 @@ func (h *Handler) CloneMonitor(w http.ResponseWriter, r *http.Request) {
 		Interval:         src.Interval,
 		Timeout:          src.Timeout,
 		Enabled:          false,
-		Tags:             src.Tags,
 		Settings:         src.Settings,
 		Assertions:       src.Assertions,
 		TrackChanges:     src.TrackChanges,
@@ -312,9 +327,6 @@ func (h *Handler) CloneMonitor(w http.ResponseWriter, r *http.Request) {
 		ResendInterval:   src.ResendInterval,
 		GroupID:          src.GroupID,
 		ProxyID:          src.ProxyID,
-	}
-	if clone.Tags == nil {
-		clone.Tags = []string{}
 	}
 
 	if err := h.store.CreateMonitor(ctx, clone); err != nil {
@@ -326,6 +338,11 @@ func (h *Handler) CloneMonitor(w http.ResponseWriter, r *http.Request) {
 	channelIDs, _ := h.store.GetMonitorNotificationChannelIDs(ctx, id)
 	if len(channelIDs) > 0 {
 		h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs)
+	}
+
+	srcTags, _ := h.store.GetMonitorTags(ctx, id)
+	if len(srcTags) > 0 {
+		h.store.SetMonitorTags(ctx, clone.ID, srcTags)
 	}
 
 	if clone.Type == "heartbeat" {
@@ -410,9 +427,6 @@ func applyMonitorDefaults(m *storage.Monitor, cfg config.MonitorConfig) {
 	}
 	if m.SuccessThreshold == 0 {
 		m.SuccessThreshold = cfg.SuccessThreshold
-	}
-	if m.Tags == nil {
-		m.Tags = []string{}
 	}
 	if m.Type == "heartbeat" && m.Target == "" {
 		m.Target = "heartbeat"

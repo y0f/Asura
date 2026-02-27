@@ -286,7 +286,7 @@
             {{if $mon.UpsideDown}}<div><span class="text-muted">Upside-down</span> <span class="text-yellow-400 ml-1">yes</span></div>{{end}}
             {{if $mon.ResendInterval}}<div><span class="text-muted">Resend every</span> <span class="text-muted-light ml-1">{{$mon.ResendInterval}}s</span></div>{{end}}
             {{if $mon.Description}}<div class="col-span-full"><span class="text-muted">Description</span> <span class="text-muted-light ml-1">{{$mon.Description}}</span></div>{{end}}
-            {{if $mon.Tags}}<div class="col-span-full"><span class="text-muted">Tags</span> <span class="text-muted-light ml-1">{{range $i, $t := $mon.Tags}}{{if $i}}, {{end}}{{$t}}{{end}}</span></div>{{end}}
+            {{if $.Data.Tags}}<div class="col-span-full flex items-center gap-1.5"><span class="text-muted">Tags</span>{{range $.Data.Tags}}<span class="inline-flex items-center gap-1 ml-1 px-1.5 py-px rounded text-[11px] border border-line"><span class="inline-block w-1.5 h-1.5 rounded-full" style="background-color: {{.Color}}"></span><span class="text-muted-light">{{.Name}}</span>{{if .Value}}<span class="text-muted">{{.Value}}</span>{{end}}</span>{{end}}</div>{{end}}
         </div>
     </div>
 

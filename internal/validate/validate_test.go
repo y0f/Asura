@@ -42,13 +42,6 @@ func TestValidateMonitor(t *testing.T) {
 		{"timeout too high", func(m *storage.Monitor) { m.Timeout = 301 }, "at most 300"},
 		{"failure threshold zero", func(m *storage.Monitor) { m.FailureThreshold = 0 }, "at least 1"},
 		{"success threshold zero", func(m *storage.Monitor) { m.SuccessThreshold = 0 }, "at least 1"},
-		{"tag too long", func(m *storage.Monitor) { m.Tags = []string{strings.Repeat("t", 51)} }, "at most 50"},
-		{"too many tags", func(m *storage.Monitor) {
-			m.Tags = make([]string, 21)
-			for i := range m.Tags {
-				m.Tags[i] = "t"
-			}
-		}, "at most 20 tags"},
 		{"resend interval zero", func(m *storage.Monitor) { m.ResendInterval = 0 }, ""},
 		{"resend interval valid", func(m *storage.Monitor) { m.ResendInterval = 300 }, ""},
 		{"resend interval negative", func(m *storage.Monitor) { m.ResendInterval = -1 }, "resend_interval must be non-negative"},
@@ -453,6 +446,76 @@ func TestValidateDockerSettings(t *testing.T) {
 				m.Settings = json.RawMessage(tt.settings)
 			}
 			err := ValidateMonitor(m)
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Errorf("error = %q, want substring %q", err.Error(), tt.wantErr)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateTag(t *testing.T) {
+	tests := []struct {
+		name    string
+		tag     *storage.Tag
+		wantErr string
+	}{
+		{"valid", &storage.Tag{Name: "prod", Color: "#ff0000"}, ""},
+		{"valid default color", &storage.Tag{Name: "prod"}, ""},
+		{"empty name", &storage.Tag{Name: "", Color: "#ff0000"}, "name is required"},
+		{"name too long", &storage.Tag{Name: strings.Repeat("t", 51), Color: "#ff0000"}, "at most 50"},
+		{"invalid color", &storage.Tag{Name: "tag", Color: "red"}, "valid hex color"},
+		{"short hex", &storage.Tag{Name: "tag", Color: "#fff"}, "valid hex color"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateTag(tt.tag)
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Errorf("error = %q, want substring %q", err.Error(), tt.wantErr)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateMonitorTags(t *testing.T) {
+	tests := []struct {
+		name    string
+		tags    []storage.MonitorTag
+		wantErr string
+	}{
+		{"valid empty", nil, ""},
+		{"valid tags", []storage.MonitorTag{{TagID: 1, Value: "v1"}, {TagID: 2}}, ""},
+		{"too many", func() []storage.MonitorTag {
+			tags := make([]storage.MonitorTag, 21)
+			for i := range tags {
+				tags[i] = storage.MonitorTag{TagID: int64(i + 1)}
+			}
+			return tags
+		}(), "at most 20 tags"},
+		{"value too long", []storage.MonitorTag{{TagID: 1, Value: strings.Repeat("v", 51)}}, "at most 50"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateMonitorTags(tt.tags)
 			if tt.wantErr == "" {
 				if err != nil {
 					t.Errorf("expected no error, got: %v", err)

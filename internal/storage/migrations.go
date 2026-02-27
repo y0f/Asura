@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 17
+const schemaVersion = 18
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -240,6 +240,22 @@ CREATE TABLE IF NOT EXISTS proxies (
 	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
 	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+
+CREATE TABLE IF NOT EXISTS tags (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL UNIQUE,
+	color      TEXT    NOT NULL DEFAULT '#808080',
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS monitor_tags (
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	tag_id     INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+	value      TEXT    NOT NULL DEFAULT '',
+	PRIMARY KEY (monitor_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_monitor_tags_tag ON monitor_tags(tag_id);
 `
 
 // migrations holds incremental schema changes after the baseline.
@@ -274,5 +290,24 @@ var migrations = []struct {
 	updated_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
 ALTER TABLE monitors ADD COLUMN proxy_id INTEGER DEFAULT NULL REFERENCES proxies(id) ON DELETE SET NULL;`,
+	},
+	{
+		version: 18,
+		sql: `CREATE TABLE IF NOT EXISTS tags (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	name       TEXT    NOT NULL UNIQUE,
+	color      TEXT    NOT NULL DEFAULT '#808080',
+	created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE TABLE IF NOT EXISTS monitor_tags (
+	monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	tag_id     INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+	value      TEXT    NOT NULL DEFAULT '',
+	PRIMARY KEY (monitor_id, tag_id)
+);
+CREATE INDEX IF NOT EXISTS idx_monitor_tags_tag ON monitor_tags(tag_id);
+INSERT OR IGNORE INTO tags (name) SELECT DISTINCT j.value FROM monitors, json_each(monitors.tags) AS j WHERE monitors.tags != '[]' AND monitors.tags != '';
+INSERT OR IGNORE INTO monitor_tags (monitor_id, tag_id) SELECT m.id, t.id FROM monitors m, json_each(m.tags) AS j JOIN tags t ON t.name = j.value WHERE m.tags != '[]' AND m.tags != '';
+UPDATE monitors SET tags = '[]';`,
 	},
 }

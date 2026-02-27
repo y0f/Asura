@@ -124,6 +124,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("DELETE "+s.p("/api/v1/groups/{id}"), monWrite(http.HandlerFunc(s.api.DeleteGroup)))
 	mux.Handle("GET "+s.p("/api/v1/overview"), monRead(http.HandlerFunc(s.api.Overview)))
 	mux.Handle("GET "+s.p("/api/v1/tags"), monRead(http.HandlerFunc(s.api.ListTags)))
+	mux.Handle("POST "+s.p("/api/v1/tags"), monWrite(http.HandlerFunc(s.api.CreateTag)))
+	mux.Handle("PUT "+s.p("/api/v1/tags/{id}"), monWrite(http.HandlerFunc(s.api.UpdateTag)))
+	mux.Handle("DELETE "+s.p("/api/v1/tags/{id}"), monWrite(http.HandlerFunc(s.api.DeleteTag)))
 
 	mux.Handle("POST "+s.p("/api/v1/monitors"), monWrite(http.HandlerFunc(s.api.CreateMonitor)))
 	mux.Handle("PUT "+s.p("/api/v1/monitors/{id}"), monWrite(http.HandlerFunc(s.api.UpdateMonitor)))

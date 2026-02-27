@@ -31,7 +31,7 @@ type ExportMonitor struct {
 	Interval                 int             `json:"interval"`
 	Timeout                  int             `json:"timeout"`
 	Enabled                  bool            `json:"enabled"`
-	Tags                     []string        `json:"tags,omitempty"`
+	Tags                     []ExportMonitorTag `json:"tags,omitempty"`
 	Settings                 json.RawMessage `json:"settings,omitempty"`
 	Assertions               json.RawMessage `json:"assertions,omitempty"`
 	TrackChanges             bool            `json:"track_changes,omitempty"`
@@ -42,6 +42,12 @@ type ExportMonitor struct {
 	GroupName                string          `json:"group_name,omitempty"`
 	ProxyName                string          `json:"proxy_name,omitempty"`
 	NotificationChannelNames []string        `json:"notification_channel_names,omitempty"`
+}
+
+type ExportMonitorTag struct {
+	TagName string `json:"tag_name"`
+	Color   string `json:"color,omitempty"`
+	Value   string `json:"value,omitempty"`
 }
 
 type ExportProxy struct {
@@ -141,6 +147,12 @@ func BuildExportData(ctx context.Context, store storage.Store, redact bool) (*Ex
 
 func buildExportMonitors(ctx context.Context, store storage.Store, monitors []*storage.Monitor,
 	groupMap, proxyMap, channelMap map[int64]string) []ExportMonitor {
+	monIDs := make([]int64, len(monitors))
+	for i, m := range monitors {
+		monIDs[i] = m.ID
+	}
+	tagMap, _ := store.GetMonitorTagsBatch(ctx, monIDs)
+
 	var out []ExportMonitor
 	for _, m := range monitors {
 		em := ExportMonitor{
@@ -151,7 +163,6 @@ func buildExportMonitors(ctx context.Context, store storage.Store, monitors []*s
 			Interval:         m.Interval,
 			Timeout:          m.Timeout,
 			Enabled:          m.Enabled,
-			Tags:             m.Tags,
 			Settings:         m.Settings,
 			Assertions:       m.Assertions,
 			TrackChanges:     m.TrackChanges,
@@ -171,6 +182,13 @@ func buildExportMonitors(ctx context.Context, store storage.Store, monitors []*s
 			if name, ok := channelMap[chID]; ok {
 				em.NotificationChannelNames = append(em.NotificationChannelNames, name)
 			}
+		}
+		for _, mt := range tagMap[m.ID] {
+			em.Tags = append(em.Tags, ExportMonitorTag{
+				TagName: mt.Name,
+				Color:   mt.Color,
+				Value:   mt.Value,
+			})
 		}
 		out = append(out, em)
 	}
@@ -397,7 +415,7 @@ func importSingleMonitor(ctx context.Context, ic *importCtx, em *ExportMonitor) 
 	m := &storage.Monitor{
 		Name: em.Name, Description: em.Description, Type: em.Type, Target: em.Target,
 		Interval: em.Interval, Timeout: em.Timeout, Enabled: em.Enabled,
-		Tags: em.Tags, Settings: em.Settings, Assertions: em.Assertions,
+		Settings: em.Settings, Assertions: em.Assertions,
 		TrackChanges: em.TrackChanges, FailureThreshold: em.FailureThreshold,
 		SuccessThreshold: em.SuccessThreshold, UpsideDown: em.UpsideDown,
 		ResendInterval: em.ResendInterval,
@@ -429,7 +447,39 @@ func importSingleMonitor(ctx context.Context, ic *importCtx, em *ExportMonitor) 
 	if len(chIDs) > 0 {
 		ic.store.SetMonitorNotificationChannels(ctx, m.ID, chIDs)
 	}
+
+	if len(em.Tags) > 0 {
+		importMonitorTags(ctx, ic, m.ID, em.Tags)
+	}
 	return true
+}
+
+func importMonitorTags(ctx context.Context, ic *importCtx, monitorID int64, tags []ExportMonitorTag) {
+	allTags, _ := ic.store.ListTags(ctx)
+	tagNameToID := make(map[string]int64, len(allTags))
+	for _, t := range allTags {
+		tagNameToID[t.Name] = t.ID
+	}
+
+	var monTags []storage.MonitorTag
+	for _, et := range tags {
+		tid, ok := tagNameToID[et.TagName]
+		if !ok {
+			newTag := &storage.Tag{Name: et.TagName, Color: et.Color}
+			if newTag.Color == "" {
+				newTag.Color = "#808080"
+			}
+			if err := ic.store.CreateTag(ctx, newTag); err != nil {
+				continue
+			}
+			tid = newTag.ID
+			tagNameToID[et.TagName] = tid
+		}
+		monTags = append(monTags, storage.MonitorTag{TagID: tid, Value: et.Value})
+	}
+	if len(monTags) > 0 {
+		ic.store.SetMonitorTags(ctx, monitorID, monTags)
+	}
 }
 
 func importMaintenance(ctx context.Context, ic *importCtx, windows []*storage.MaintenanceWindow, stats *ImportStats) {
