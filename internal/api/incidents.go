@@ -96,7 +96,9 @@ func (h *Handler) AckIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy))
+	if err := h.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy)); err != nil {
+		h.logger.Error("insert ack event", "error", err)
+	}
 
 	h.audit(r, "acknowledge", "incident", id, "")
 
@@ -144,7 +146,9 @@ func (h *Handler) ResolveIncident(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy))
+	if err := h.store.InsertIncidentEvent(r.Context(), newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy)); err != nil {
+		h.logger.Error("insert resolve event", "error", err)
+	}
 
 	h.audit(r, "resolve", "incident", id, "")
 

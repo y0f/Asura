@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 ARG VERSION=dev
 
@@ -20,7 +20,7 @@ COPY --from=builder /build/asura .
 
 USER asura
 
-EXPOSE 8080
+EXPOSE 8090
 
 ENTRYPOINT ["./asura"]
 CMD ["-config", "/app/config.yaml"]

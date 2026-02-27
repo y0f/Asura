@@ -48,7 +48,11 @@ func (h *Handler) NotificationCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NotificationUpdate(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/notifications")
+		return
+	}
 	ch := h.parseNotificationForm(r)
 	ch.ID = id
 
@@ -70,7 +74,11 @@ func (h *Handler) NotificationUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NotificationDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/notifications")
+		return
+	}
 	if err := h.store.DeleteNotificationChannel(r.Context(), id); err != nil {
 		h.logger.Error("web: delete notification", "error", err)
 	}
@@ -79,7 +87,11 @@ func (h *Handler) NotificationDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) NotificationTest(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/notifications")
+		return
+	}
 	ch, err := h.store.GetNotificationChannel(r.Context(), id)
 	if err != nil {
 		h.setFlash(w, "Channel not found")

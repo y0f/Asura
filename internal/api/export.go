@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -292,6 +293,7 @@ func buildExportMaintenance(mw []*storage.MaintenanceWindow) []*storage.Maintena
 // importCtx holds name-to-ID maps used during import to resolve references.
 type importCtx struct {
 	store           storage.Store
+	logger          *slog.Logger
 	mode            string
 	groupNameToID   map[string]int64
 	proxyNameToID   map[string]int64
@@ -300,10 +302,11 @@ type importCtx struct {
 }
 
 // RunImport imports configuration data into the store.
-func RunImport(ctx context.Context, store storage.Store, data *ExportData, mode string) *ImportStats {
+func RunImport(ctx context.Context, store storage.Store, logger *slog.Logger, data *ExportData, mode string) *ImportStats {
 	stats := &ImportStats{}
 	ic := &importCtx{
 		store:           store,
+		logger:          logger,
 		mode:            mode,
 		groupNameToID:   make(map[string]int64),
 		proxyNameToID:   make(map[string]int64),
@@ -322,7 +325,12 @@ func RunImport(ctx context.Context, store storage.Store, data *ExportData, mode 
 }
 
 func importGroups(ctx context.Context, ic *importCtx, groups []*storage.MonitorGroup, stats *ImportStats) {
-	existing, _ := ic.store.ListMonitorGroups(ctx)
+	existing, err := ic.store.ListMonitorGroups(ctx)
+	if err != nil {
+		ic.logger.Error("import: list groups", "error", err)
+		stats.Errors += len(groups)
+		return
+	}
 	for _, g := range existing {
 		ic.groupNameToID[g.Name] = g.ID
 	}
@@ -342,7 +350,12 @@ func importGroups(ctx context.Context, ic *importCtx, groups []*storage.MonitorG
 }
 
 func importProxies(ctx context.Context, ic *importCtx, proxies []ExportProxy, stats *ImportStats) {
-	existing, _ := ic.store.ListProxies(ctx)
+	existing, err := ic.store.ListProxies(ctx)
+	if err != nil {
+		ic.logger.Error("import: list proxies", "error", err)
+		stats.Errors += len(proxies)
+		return
+	}
 	for _, p := range existing {
 		ic.proxyNameToID[p.Name] = p.ID
 	}
@@ -369,7 +382,12 @@ func importProxies(ctx context.Context, ic *importCtx, proxies []ExportProxy, st
 }
 
 func importChannels(ctx context.Context, ic *importCtx, channels []*storage.NotificationChannel, stats *ImportStats) {
-	existing, _ := ic.store.ListNotificationChannels(ctx)
+	existing, err := ic.store.ListNotificationChannels(ctx)
+	if err != nil {
+		ic.logger.Error("import: list channels", "error", err)
+		stats.Errors += len(channels)
+		return
+	}
 	for _, ch := range existing {
 		ic.channelNameToID[ch.Name] = ch.ID
 	}
@@ -392,7 +410,12 @@ func importChannels(ctx context.Context, ic *importCtx, channels []*storage.Noti
 }
 
 func importMonitors(ctx context.Context, ic *importCtx, monitors []ExportMonitor, stats *ImportStats) {
-	existing, _ := ic.store.ListMonitors(ctx, storage.MonitorListFilter{}, storage.Pagination{Page: 1, PerPage: 10000})
+	existing, err := ic.store.ListMonitors(ctx, storage.MonitorListFilter{}, storage.Pagination{Page: 1, PerPage: 10000})
+	if err != nil {
+		ic.logger.Error("import: list monitors", "error", err)
+		stats.Errors += len(monitors)
+		return
+	}
 	if existing != nil {
 		for _, m := range existing.Data.([]*storage.Monitor) {
 			ic.monitorNameToID[m.Name] = m.ID
@@ -445,7 +468,9 @@ func importSingleMonitor(ctx context.Context, ic *importCtx, em *ExportMonitor) 
 		}
 	}
 	if len(chIDs) > 0 {
-		ic.store.SetMonitorNotificationChannels(ctx, m.ID, chIDs)
+		if err := ic.store.SetMonitorNotificationChannels(ctx, m.ID, chIDs); err != nil {
+			ic.logger.Error("import: set monitor channels", "monitor", m.Name, "error", err)
+		}
 	}
 
 	if len(em.Tags) > 0 {
@@ -455,7 +480,11 @@ func importSingleMonitor(ctx context.Context, ic *importCtx, em *ExportMonitor) 
 }
 
 func importMonitorTags(ctx context.Context, ic *importCtx, monitorID int64, tags []ExportMonitorTag) {
-	allTags, _ := ic.store.ListTags(ctx)
+	allTags, err := ic.store.ListTags(ctx)
+	if err != nil {
+		ic.logger.Error("import: list tags", "error", err)
+		return
+	}
 	tagNameToID := make(map[string]int64, len(allTags))
 	for _, t := range allTags {
 		tagNameToID[t.Name] = t.ID
@@ -478,7 +507,9 @@ func importMonitorTags(ctx context.Context, ic *importCtx, monitorID int64, tags
 		monTags = append(monTags, storage.MonitorTag{TagID: tid, Value: et.Value})
 	}
 	if len(monTags) > 0 {
-		ic.store.SetMonitorTags(ctx, monitorID, monTags)
+		if err := ic.store.SetMonitorTags(ctx, monitorID, monTags); err != nil {
+			ic.logger.Error("import: set monitor tags", "monitor_id", monitorID, "error", err)
+		}
 	}
 }
 
@@ -521,7 +552,9 @@ func importStatusPages(ctx context.Context, ic *importCtx, pages []ExportStatusP
 			}
 		}
 		if len(spMons) > 0 {
-			ic.store.SetStatusPageMonitors(ctx, nsp.ID, spMons)
+			if err := ic.store.SetStatusPageMonitors(ctx, nsp.ID, spMons); err != nil {
+				ic.logger.Error("import: set status page monitors", "page", nsp.Slug, "error", err)
+			}
 		}
 		stats.StatusPages++
 	}
@@ -565,7 +598,7 @@ func (h *Handler) Import(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats := RunImport(r.Context(), h.store, &data, mode)
+	stats := RunImport(r.Context(), h.store, h.logger, &data, mode)
 
 	if h.pipeline != nil {
 		h.pipeline.ReloadMonitors()

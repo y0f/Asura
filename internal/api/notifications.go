@@ -144,7 +144,8 @@ func (h *Handler) TestNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.notifier.SendTest(ch, testIncident); err != nil {
-		writeError(w, http.StatusBadGateway, "test failed: "+err.Error())
+		h.logger.Error("notification test failed", "channel_id", ch.ID, "error", err)
+		writeError(w, http.StatusBadGateway, "test notification failed")
 		return
 	}
 

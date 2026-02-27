@@ -133,6 +133,16 @@ const (
 )
 
 func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChannel, payload *Payload) {
+	defer func() {
+		if r := recover(); r != nil {
+			d.logger.Error("notification sender panicked",
+				"channel_id", ch.ID,
+				"channel_type", ch.Type,
+				"panic", r,
+			)
+		}
+	}()
+
 	d.sem <- struct{}{}
 	defer func() { <-d.sem }()
 

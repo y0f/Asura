@@ -43,7 +43,11 @@ func (h *Handler) MaintenanceCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) MaintenanceUpdate(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/maintenance")
+		return
+	}
 	mw := h.parseMaintenanceForm(r)
 	mw.ID = id
 	if err := validate.ValidateMaintenanceWindow(mw); err != nil {
@@ -53,13 +57,20 @@ func (h *Handler) MaintenanceUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.store.UpdateMaintenanceWindow(r.Context(), mw); err != nil {
 		h.logger.Error("web: update maintenance", "error", err)
+		h.setFlash(w, "Failed to update maintenance window")
+		h.redirect(w, r, "/maintenance")
+		return
 	}
 	h.setFlash(w, "Maintenance window updated")
 	h.redirect(w, r, "/maintenance")
 }
 
 func (h *Handler) MaintenanceDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/maintenance")
+		return
+	}
 	if err := h.store.DeleteMaintenanceWindow(r.Context(), id); err != nil {
 		h.logger.Error("web: delete maintenance", "error", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/y0f/asura/internal/api"
+	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/web/views"
 )
 
@@ -35,6 +36,13 @@ func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
+	k := httputil.GetAPIKey(r.Context())
+	if k == nil || !k.SuperAdmin {
+		h.setFlash(w, "Import requires admin access")
+		h.redirect(w, r, "/settings")
+		return
+	}
+
 	mode := r.FormValue("mode")
 	if mode == "" {
 		mode = "merge"
@@ -72,7 +80,7 @@ func (h *Handler) ImportConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats := api.RunImport(r.Context(), h.store, &data, mode)
+	stats := api.RunImport(r.Context(), h.store, h.logger, &data, mode)
 
 	if h.pipeline != nil {
 		h.pipeline.ReloadMonitors()

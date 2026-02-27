@@ -43,6 +43,37 @@ cp config.example.yaml config.yaml     # paste the hash
 <pre><code>make release
 scp dist/asura-linux-amd64 you@server:/usr/local/bin/asura</code></pre>
 
+<h2>Local Development</h2>
+
+<p>Requires Go 1.24+ and the <a href="https://templ.guide/" target="_blank">templ</a> CLI:</p>
+
+<pre><code>go install github.com/a-h/templ/cmd/templ@v0.3.977</code></pre>
+
+<p>You also need the <a href="https://github.com/tailwindlabs/tailwindcss/releases" target="_blank">Tailwind CSS standalone CLI</a> binary in the project root (named <code>tailwindcss</code>).</p>
+
+<h3>Watch Mode</h3>
+
+<p>Start two watchers in separate terminals so templates and CSS rebuild on every save:</p>
+
+<pre><code># Terminal 1 — recompile .templ files on change
+templ generate --watch
+
+# Terminal 2 — rebuild Tailwind CSS on change
+./tailwindcss -i web/tailwind.input.css -o web/static/tailwind.css --watch
+
+# Terminal 3 — run the server
+go run ./cmd/asura -config config.yaml</code></pre>
+
+<p>On Linux/macOS with <code>make</code> installed, <code>make dev</code> runs both watchers in one command.</p>
+
+<p>On Windows, use <code>tailwindcss.exe</code> instead of <code>./tailwindcss</code>.</p>
+
+<h3>One-Shot Build</h3>
+
+<pre><code>templ generate                        # compile .templ → Go
+go build -o asura ./cmd/asura         # build binary
+go test -race -count=1 ./...          # run tests</code></pre>
+
 <h2>Manual Setup</h2>
 
 <p>If you want to set everything up yourself:</p>

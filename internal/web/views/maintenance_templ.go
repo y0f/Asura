@@ -79,7 +79,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 					var templ_7745c5c3_Var3 string
 					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(w.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 43, Col: 75}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 43, Col: 75}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 					if templ_7745c5c3_Err != nil {
@@ -92,7 +92,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(w.StartTime.Format("Jan 2, 15:04"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 44, Col: 114}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 44, Col: 114}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -105,7 +105,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(w.EndTime.Format("Jan 2, 15:04"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 45, Col: 112}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 45, Col: 112}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -123,7 +123,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 						var templ_7745c5c3_Var6 string
 						templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(w.Recurring)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 48, Col: 87}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 48, Col: 87}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 						if templ_7745c5c3_Err != nil {
@@ -151,7 +151,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 						var templ_7745c5c3_Var7 templ.SafeURL
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/maintenance/%d/delete", p.BasePath, w.ID)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 55, Col: 113}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 55, Col: 113}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -184,7 +184,7 @@ func MaintenanceListPage(p MaintenanceListParams) templ.Component {
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/maintenance"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/maintenance.templ`, Line: 74, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/maintenance.templ`, Line: 74, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {

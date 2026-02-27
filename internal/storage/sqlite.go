@@ -108,9 +108,17 @@ func runMigrations(db *sql.DB) error {
 }
 
 func (s *SQLiteStore) Close() error {
-	s.readDB.Close()
-	s.writeDB.Exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	return s.writeDB.Close()
+	var firstErr error
+	if err := s.readDB.Close(); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("close read db: %w", err)
+	}
+	if _, err := s.writeDB.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("wal checkpoint: %w", err)
+	}
+	if err := s.writeDB.Close(); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("close write db: %w", err)
+	}
+	return firstErr
 }
 
 // timeFormat is the format used for storing timestamps in SQLite.

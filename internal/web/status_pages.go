@@ -199,7 +199,11 @@ func (h *Handler) StatusPageUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) StatusPageDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/status-pages")
+		return
+	}
 	if err := h.store.DeleteStatusPage(r.Context(), id); err != nil {
 		h.logger.Error("web: delete status page", "error", err)
 	}

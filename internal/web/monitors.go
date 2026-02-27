@@ -605,8 +605,17 @@ func (h *Handler) MonitorDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) MonitorPause(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
-	h.store.SetMonitorEnabled(r.Context(), id, false)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/monitors")
+		return
+	}
+	if err := h.store.SetMonitorEnabled(r.Context(), id, false); err != nil {
+		h.logger.Error("web: pause monitor", "error", err)
+		h.setFlash(w, "Failed to pause monitor")
+		h.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
+		return
+	}
 	if h.pipeline != nil {
 		h.pipeline.ReloadMonitors()
 	}
@@ -615,8 +624,17 @@ func (h *Handler) MonitorPause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) MonitorResume(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
-	h.store.SetMonitorEnabled(r.Context(), id, true)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/monitors")
+		return
+	}
+	if err := h.store.SetMonitorEnabled(r.Context(), id, true); err != nil {
+		h.logger.Error("web: resume monitor", "error", err)
+		h.setFlash(w, "Failed to resume monitor")
+		h.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
+		return
+	}
 	if h.pipeline != nil {
 		h.pipeline.ReloadMonitors()
 	}
@@ -667,12 +685,16 @@ func (h *Handler) MonitorClone(w http.ResponseWriter, r *http.Request) {
 
 	channelIDs, _ := h.store.GetMonitorNotificationChannelIDs(ctx, id)
 	if len(channelIDs) > 0 {
-		h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs)
+		if err := h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs); err != nil {
+			h.logger.Error("web: clone monitor channels", "error", err)
+		}
 	}
 
 	srcTags, _ := h.store.GetMonitorTags(ctx, id)
 	if len(srcTags) > 0 {
-		h.store.SetMonitorTags(ctx, clone.ID, srcTags)
+		if err := h.store.SetMonitorTags(ctx, clone.ID, srcTags); err != nil {
+			h.logger.Error("web: clone monitor tags", "error", err)
+		}
 	}
 
 	if h.pipeline != nil {
@@ -698,13 +720,28 @@ func (h *Handler) MonitorBulk(w http.ResponseWriter, r *http.Request) {
 
 	switch action {
 	case "pause":
-		h.store.BulkSetMonitorsEnabled(ctx, ids, false)
+		if _, err := h.store.BulkSetMonitorsEnabled(ctx, ids, false); err != nil {
+			h.logger.Error("web: bulk pause", "error", err)
+			h.setFlash(w, "Failed to pause monitors")
+			h.redirect(w, r, "/monitors")
+			return
+		}
 		msg = strconv.Itoa(len(ids)) + " monitors paused"
 	case "resume":
-		h.store.BulkSetMonitorsEnabled(ctx, ids, true)
+		if _, err := h.store.BulkSetMonitorsEnabled(ctx, ids, true); err != nil {
+			h.logger.Error("web: bulk resume", "error", err)
+			h.setFlash(w, "Failed to resume monitors")
+			h.redirect(w, r, "/monitors")
+			return
+		}
 		msg = strconv.Itoa(len(ids)) + " monitors resumed"
 	case "delete":
-		h.store.BulkDeleteMonitors(ctx, ids)
+		if _, err := h.store.BulkDeleteMonitors(ctx, ids); err != nil {
+			h.logger.Error("web: bulk delete", "error", err)
+			h.setFlash(w, "Failed to delete monitors")
+			h.redirect(w, r, "/monitors")
+			return
+		}
 		msg = strconv.Itoa(len(ids)) + " monitors deleted"
 	case "set_group":
 		var gid *int64
@@ -713,7 +750,12 @@ func (h *Handler) MonitorBulk(w http.ResponseWriter, r *http.Request) {
 				gid = &parsed
 			}
 		}
-		h.store.BulkSetMonitorGroup(ctx, ids, gid)
+		if _, err := h.store.BulkSetMonitorGroup(ctx, ids, gid); err != nil {
+			h.logger.Error("web: bulk set group", "error", err)
+			h.setFlash(w, "Failed to update monitors")
+			h.redirect(w, r, "/monitors")
+			return
+		}
 		msg = strconv.Itoa(len(ids)) + " monitors updated"
 	default:
 		h.setFlash(w, "Invalid action")

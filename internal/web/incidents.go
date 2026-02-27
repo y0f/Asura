@@ -69,7 +69,11 @@ func (h *Handler) IncidentDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) IncidentAck(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
 	ctx := r.Context()
 
 	inc, err := h.store.GetIncident(ctx, id)
@@ -90,9 +94,14 @@ func (h *Handler) IncidentAck(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.UpdateIncident(ctx, inc); err != nil {
 		h.logger.Error("web: ack incident", "error", err)
+		h.setFlash(w, "Failed to acknowledge incident")
+		h.redirect(w, r, "/incidents/"+r.PathValue("id"))
+		return
 	}
 
-	h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy))
+	if err := h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventAcknowledged, "Acknowledged by "+inc.AcknowledgedBy)); err != nil {
+		h.logger.Error("web: insert ack event", "error", err)
+	}
 
 	if h.notifier != nil {
 		h.notifier.NotifyWithPayload(&notifier.Payload{
@@ -106,7 +115,11 @@ func (h *Handler) IncidentAck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) IncidentResolve(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
 	ctx := r.Context()
 
 	inc, err := h.store.GetIncident(ctx, id)
@@ -122,9 +135,14 @@ func (h *Handler) IncidentResolve(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.store.UpdateIncident(ctx, inc); err != nil {
 		h.logger.Error("web: resolve incident", "error", err)
+		h.setFlash(w, "Failed to resolve incident")
+		h.redirect(w, r, "/incidents/"+r.PathValue("id"))
+		return
 	}
 
-	h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy))
+	if err := h.store.InsertIncidentEvent(ctx, newIncidentEvent(inc.ID, incident.EventResolved, "Manually resolved by "+inc.ResolvedBy)); err != nil {
+		h.logger.Error("web: insert resolve event", "error", err)
+	}
 
 	if h.notifier != nil {
 		h.notifier.NotifyWithPayload(&notifier.Payload{
@@ -138,7 +156,11 @@ func (h *Handler) IncidentResolve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) IncidentDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/incidents")
+		return
+	}
 	if err := h.store.DeleteIncident(r.Context(), id); err != nil {
 		h.logger.Error("web: delete incident", "error", err)
 	}

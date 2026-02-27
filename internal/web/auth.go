@@ -243,7 +243,9 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	if cookie, err := r.Cookie(sessionCookie); err == nil && cookie.Value != "" {
 		tokenHash := hashSessionToken(cookie.Value)
-		h.store.DeleteSession(r.Context(), tokenHash)
+		if err := h.store.DeleteSession(r.Context(), tokenHash); err != nil {
+			h.logger.Error("web: delete session on logout", "error", err)
+		}
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -295,7 +297,9 @@ func (h *Handler) RequireAuth(next http.Handler) http.Handler {
 
 		now := time.Now()
 		if now.After(sess.ExpiresAt) {
-			h.store.DeleteSession(r.Context(), tokenHash)
+			if err := h.store.DeleteSession(r.Context(), tokenHash); err != nil {
+				h.logger.Error("web: delete expired session", "error", err)
+			}
 			h.clearSessionCookie(w)
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
@@ -303,14 +307,18 @@ func (h *Handler) RequireAuth(next http.Handler) http.Handler {
 
 		apiKey := h.cfg.LookupAPIKeyByName(sess.APIKeyName)
 		if apiKey == nil {
-			h.store.DeleteSession(r.Context(), tokenHash)
+			if err := h.store.DeleteSession(r.Context(), tokenHash); err != nil {
+				h.logger.Error("web: delete orphaned session", "error", err)
+			}
 			h.clearSessionCookie(w)
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 
 		if sess.KeyHash != "" && sess.KeyHash != apiKey.Hash {
-			h.store.DeleteSession(r.Context(), tokenHash)
+			if err := h.store.DeleteSession(r.Context(), tokenHash); err != nil {
+				h.logger.Error("web: delete rotated session", "error", err)
+			}
 			h.clearSessionCookie(w)
 			h.auditLogin("session_key_rotated", sess.APIKeyName, httputil.ExtractIP(r, h.cfg.TrustedNets()))
 			http.Redirect(w, r, loginURL, http.StatusSeeOther)
@@ -320,7 +328,9 @@ func (h *Handler) RequireAuth(next http.Handler) http.Handler {
 		lifetime := h.cfg.Auth.Session.Lifetime
 		if now.After(sess.ExpiresAt.Add(-lifetime / 2)) {
 			newExpiry := now.Add(lifetime)
-			h.store.ExtendSession(r.Context(), tokenHash, newExpiry)
+			if err := h.store.ExtendSession(r.Context(), tokenHash, newExpiry); err != nil {
+				h.logger.Error("web: extend session", "error", err)
+			}
 			http.SetCookie(w, &http.Cookie{
 				Name:     sessionCookie,
 				Value:    cookie.Value,

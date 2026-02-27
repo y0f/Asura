@@ -86,6 +86,8 @@ func (h *Handler) CreateStatusPage(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := h.store.SetStatusPageMonitors(ctx, sp.ID, input.Monitors); err != nil {
 			h.logger.Error("set status page monitors", "error", err)
+			writeError(w, http.StatusInternalServerError, "status page created but failed to set monitors")
+			return
 		}
 	}
 
@@ -148,6 +150,8 @@ func (h *Handler) UpdateStatusPage(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := h.store.SetStatusPageMonitors(ctx, id, *input.Monitors); err != nil {
 			h.logger.Error("set status page monitors", "error", err)
+			writeError(w, http.StatusInternalServerError, "status page updated but failed to set monitors")
+			return
 		}
 	}
 

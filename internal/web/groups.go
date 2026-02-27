@@ -77,7 +77,11 @@ func (h *Handler) GroupCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GroupUpdate(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/groups")
+		return
+	}
 	r.ParseForm()
 	g := &storage.MonitorGroup{
 		ID:   id,
@@ -105,7 +109,11 @@ func (h *Handler) GroupUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GroupDelete(w http.ResponseWriter, r *http.Request) {
-	id, _ := httputil.ParseID(r)
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/groups")
+		return
+	}
 	if err := h.store.DeleteMonitorGroup(r.Context(), id); err != nil {
 		h.logger.Error("web: delete group", "error", err)
 	}
