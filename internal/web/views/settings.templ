@@ -32,22 +32,18 @@ templ SettingsPage(p SettingsParams) {
 					<p class="text-[12px] text-muted-light mb-4">Upload a previously exported JSON file to restore or merge configuration.</p>
 					<form action={ templ.SafeURL(p.BasePath + "/settings/import") } method="POST" enctype="multipart/form-data" class="space-y-3">
 						<div>
-							<label class="block text-[12px] text-muted-light mb-1">Mode</label>
-							<select name="mode" class="input w-full text-[12px]">
+							<label class="form-label">Mode</label>
+							<select name="mode" class="form-select">
 								<option value="merge">Merge (skip existing)</option>
 								<option value="replace">Replace (overwrite all)</option>
 							</select>
 						</div>
 						<div>
-							<label class="block text-[12px] text-muted-light mb-1">File</label>
+							<label class="form-label">File</label>
 							<input type="file" name="file" accept=".json,application/json" required
 								class="block w-full text-[12px] text-muted-light file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[12px] file:font-medium file:bg-surface-200 file:text-white hover:file:bg-surface-200/80 file:cursor-pointer file:transition-colors"/>
 						</div>
-						<button type="submit"
-							class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">
-							<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-							Import
-						</button>
+						<button type="submit" class="btn-primary">Import</button>
 					</form>
 				</div>
 			</div>
