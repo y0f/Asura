@@ -275,6 +275,72 @@ func (h *Handler) ListChanges(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 
+func (h *Handler) CloneMonitor(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx := r.Context()
+	src, err := h.store.GetMonitor(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "monitor not found")
+			return
+		}
+		h.logger.Error("get monitor for clone", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to get monitor")
+		return
+	}
+
+	clone := &storage.Monitor{
+		Name:             src.Name + " (copy)",
+		Description:      src.Description,
+		Type:             src.Type,
+		Target:           src.Target,
+		Interval:         src.Interval,
+		Timeout:          src.Timeout,
+		Enabled:          false,
+		Tags:             src.Tags,
+		Settings:         src.Settings,
+		Assertions:       src.Assertions,
+		TrackChanges:     src.TrackChanges,
+		FailureThreshold: src.FailureThreshold,
+		SuccessThreshold: src.SuccessThreshold,
+		UpsideDown:       src.UpsideDown,
+		ResendInterval:   src.ResendInterval,
+		GroupID:          src.GroupID,
+		ProxyID:          src.ProxyID,
+	}
+	if clone.Tags == nil {
+		clone.Tags = []string{}
+	}
+
+	if err := h.store.CreateMonitor(ctx, clone); err != nil {
+		h.logger.Error("clone monitor", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to clone monitor")
+		return
+	}
+
+	channelIDs, _ := h.store.GetMonitorNotificationChannelIDs(ctx, id)
+	if len(channelIDs) > 0 {
+		h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs)
+	}
+
+	if clone.Type == "heartbeat" {
+		h.createHeartbeat(ctx, clone)
+	}
+
+	h.audit(r, "clone", "monitor", clone.ID, fmt.Sprintf("from=%d", id))
+
+	if h.pipeline != nil {
+		h.pipeline.ReloadMonitors()
+	}
+
+	writeJSON(w, http.StatusCreated, clone)
+}
+
 type bulkRequest struct {
 	Action  string  `json:"action"`
 	IDs     []int64 `json:"ids"`

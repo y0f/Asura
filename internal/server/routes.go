@@ -50,6 +50,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/monitors/{id}/delete"), webPerm("monitors.write", s.web.MonitorDelete))
 		mux.Handle("POST "+s.p("/monitors/{id}/pause"), webPerm("monitors.write", s.web.MonitorPause))
 		mux.Handle("POST "+s.p("/monitors/{id}/resume"), webPerm("monitors.write", s.web.MonitorResume))
+		mux.Handle("POST "+s.p("/monitors/{id}/clone"), webPerm("monitors.write", s.web.MonitorClone))
 		mux.Handle("POST "+s.p("/monitors/bulk"), webPerm("monitors.write", s.web.MonitorBulk))
 		mux.Handle("GET "+s.p("/monitors/{id}/chart"), webAuth(http.HandlerFunc(s.api.MonitorChart)))
 
@@ -129,6 +130,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("DELETE "+s.p("/api/v1/monitors/{id}"), monWrite(http.HandlerFunc(s.api.DeleteMonitor)))
 	mux.Handle("POST "+s.p("/api/v1/monitors/{id}/pause"), monWrite(http.HandlerFunc(s.api.PauseMonitor)))
 	mux.Handle("POST "+s.p("/api/v1/monitors/{id}/resume"), monWrite(http.HandlerFunc(s.api.ResumeMonitor)))
+	mux.Handle("POST "+s.p("/api/v1/monitors/{id}/clone"), monWrite(http.HandlerFunc(s.api.CloneMonitor)))
 	mux.Handle("POST "+s.p("/api/v1/monitors/bulk"), monWrite(http.HandlerFunc(s.api.BulkMonitors)))
 
 	mux.Handle("POST "+s.p("/api/v1/incidents/{id}/ack"), incWrite(http.HandlerFunc(s.api.AckIncident)))

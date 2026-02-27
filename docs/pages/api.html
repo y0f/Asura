@@ -40,6 +40,7 @@
     <tr><td><code>DELETE</code></td><td><code>/api/v1/monitors/{id}</code></td><td>Delete</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/pause</code></td><td>Pause</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/resume</code></td><td>Resume</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/clone</code></td><td>Clone</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/monitors/bulk</code></td><td>Bulk pause/resume/delete/set_group</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/checks</code></td><td>Check history</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/metrics</code></td><td>Analytics</td></tr>
@@ -60,6 +61,10 @@
 }</code></pre>
 
 <p>Returns <code>{"status": "pause", "affected": 3}</code>. Max 500 monitors per request.</p>
+
+<h3>Clone</h3>
+
+<p><code>POST /api/v1/monitors/{id}/clone</code> creates a duplicate of the monitor with <code>" (copy)"</code> appended to the name. The clone starts paused (<code>enabled: false</code>). Notification channel assignments are copied. Returns the new monitor.</p>
 
 <h2>Status Pages</h2>
 

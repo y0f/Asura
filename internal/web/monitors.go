@@ -599,6 +599,64 @@ func (h *Handler) MonitorResume(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
 }
 
+func (h *Handler) MonitorClone(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		h.redirect(w, r, "/monitors")
+		return
+	}
+
+	ctx := r.Context()
+	src, err := h.store.GetMonitor(ctx, id)
+	if err != nil {
+		h.setFlash(w, "Monitor not found")
+		h.redirect(w, r, "/monitors")
+		return
+	}
+
+	clone := &storage.Monitor{
+		Name:             src.Name + " (copy)",
+		Description:      src.Description,
+		Type:             src.Type,
+		Target:           src.Target,
+		Interval:         src.Interval,
+		Timeout:          src.Timeout,
+		Enabled:          false,
+		Tags:             src.Tags,
+		Settings:         src.Settings,
+		Assertions:       src.Assertions,
+		TrackChanges:     src.TrackChanges,
+		FailureThreshold: src.FailureThreshold,
+		SuccessThreshold: src.SuccessThreshold,
+		UpsideDown:       src.UpsideDown,
+		ResendInterval:   src.ResendInterval,
+		GroupID:          src.GroupID,
+		ProxyID:          src.ProxyID,
+	}
+	if clone.Tags == nil {
+		clone.Tags = []string{}
+	}
+
+	if err := h.store.CreateMonitor(ctx, clone); err != nil {
+		h.logger.Error("web: clone monitor", "error", err)
+		h.setFlash(w, "Failed to clone monitor")
+		h.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
+		return
+	}
+
+	channelIDs, _ := h.store.GetMonitorNotificationChannelIDs(ctx, id)
+	if len(channelIDs) > 0 {
+		h.store.SetMonitorNotificationChannels(ctx, clone.ID, channelIDs)
+	}
+
+	if h.pipeline != nil {
+		h.pipeline.ReloadMonitors()
+	}
+
+	h.setFlash(w, "Monitor cloned")
+	h.redirect(w, r, "/monitors/"+strconv.FormatInt(clone.ID, 10)+"/edit")
+}
+
 func (h *Handler) MonitorBulk(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	action := r.FormValue("action")
