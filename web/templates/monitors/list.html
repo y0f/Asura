@@ -1,6 +1,17 @@
 {{define "title"}}Monitors{{end}}
 {{define "content"}}
-<div>
+<div x-data="{
+    selected: [],
+    allIds: [{{range .Data.Result.Data}}{{.ID}},{{end}}],
+    get allSelected() { return this.allIds.length > 0 && this.selected.length === this.allIds.length },
+    toggleAll() { this.selected = this.allSelected ? [] : [...this.allIds] },
+    toggle(id) {
+        const i = this.selected.indexOf(id);
+        if (i === -1) this.selected.push(id); else this.selected.splice(i, 1);
+    },
+    bulkAction: '',
+    bulkGroupId: ''
+}">
     <div class="flex items-center justify-between mb-5">
         <h1 class="text-[15px] font-medium text-white">Monitors</h1>
         {{if index .Perms "monitors.write"}}
@@ -28,6 +39,36 @@
         {{end}}
     </div>
 
+    {{if index .Perms "monitors.write"}}
+    <div x-show="selected.length > 0" x-cloak class="mb-3 px-4 py-2.5 border border-brand/30 bg-brand/5 rounded-lg flex items-center gap-3 flex-wrap">
+        <span class="text-[12px] text-white font-medium" x-text="selected.length + ' selected'"></span>
+        <form method="POST" action="{{$.BasePath}}/monitors/bulk" x-ref="bulkForm" class="contents">
+            <template x-for="id in selected" :key="id">
+                <input type="hidden" name="ids[]" :value="id">
+            </template>
+            <input type="hidden" name="action" :value="bulkAction">
+            <input type="hidden" name="group_id" :value="bulkGroupId">
+            <button type="button" @click="bulkAction='pause'; $nextTick(() => $refs.bulkForm.submit())"
+                    class="px-2.5 py-1 text-[11px] text-yellow-400 border border-yellow-500/20 rounded hover:bg-yellow-500/5 transition-colors">Pause</button>
+            <button type="button" @click="bulkAction='resume'; $nextTick(() => $refs.bulkForm.submit())"
+                    class="px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors">Resume</button>
+            {{if .Data.Groups}}
+            <select x-model="bulkGroupId" @change="if(bulkGroupId !== '') { bulkAction='set_group'; $nextTick(() => $refs.bulkForm.submit()) }"
+                    class="px-2 py-1 text-[11px] bg-transparent border border-line rounded text-muted-light focus:border-brand/40 focus:outline-none">
+                <option value="">Set Group...</option>
+                <option value="0">No Group</option>
+                {{range .Data.Groups}}
+                <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
+            </select>
+            {{end}}
+            <button type="button" @click="if(confirm('Delete ' + selected.length + ' monitors?')) { bulkAction='delete'; $nextTick(() => $refs.bulkForm.submit()) }"
+                    class="px-2.5 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors">Delete</button>
+            <button type="button" @click="selected = []" class="px-2 py-1 text-[11px] text-muted hover:text-muted-light transition-colors">Clear</button>
+        </form>
+    </div>
+    {{end}}
+
     <div id="monitor-list" hx-get="" hx-trigger="every 30s" hx-select="#monitor-list" hx-swap="outerHTML" hx-push-url="false"
          class="border border-line rounded-lg overflow-hidden">
         {{if and .Data.Result .Data.Result.Data}}
@@ -35,6 +76,11 @@
             <table class="w-full min-w-[640px]">
                 <thead>
                     <tr class="border-b border-line text-left">
+                        {{if index $.Perms "monitors.write"}}
+                        <th class="th w-8">
+                            <input type="checkbox" :checked="allSelected" @change="toggleAll()" class="form-checkbox">
+                        </th>
+                        {{end}}
                         <th class="th">Monitor</th>
                         <th class="th">Type</th>
                         <th class="th">Status</th>
@@ -44,7 +90,12 @@
                 </thead>
                 <tbody class="divide-y divide-line">
                     {{range .Data.Result.Data}}
-                    <tr class="hover:bg-surface-200/20 transition-colors">
+                    <tr class="hover:bg-surface-200/20 transition-colors" :class="selected.includes({{.ID}}) && 'bg-brand/5'">
+                        {{if index $.Perms "monitors.write"}}
+                        <td class="px-4 py-3">
+                            <input type="checkbox" :checked="selected.includes({{.ID}})" @change="toggle({{.ID}})" class="form-checkbox">
+                        </td>
+                        {{end}}
                         <td class="px-4 py-3">
                             <a href="{{$.BasePath}}/monitors/{{.ID}}" class="text-[13px] text-muted-light hover:text-white transition-colors font-medium">{{.Name}}</a>
                             <div class="text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono">{{.Target}}</div>

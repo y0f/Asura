@@ -178,6 +178,64 @@ func (s *SQLiteStore) SetMonitorEnabled(ctx context.Context, id int64, enabled b
 	return err
 }
 
+func (s *SQLiteStore) BulkSetMonitorsEnabled(ctx context.Context, ids []int64, enabled bool) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	placeholders, args := bulkArgs(ids)
+	args = append([]any{boolToInt(enabled), formatTime(time.Now())}, args...)
+	res, err := s.writeDB.ExecContext(ctx,
+		"UPDATE monitors SET enabled=?, updated_at=? WHERE id IN ("+placeholders+")", args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+func (s *SQLiteStore) BulkDeleteMonitors(ctx context.Context, ids []int64) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	placeholders, args := bulkArgs(ids)
+	res, err := s.writeDB.ExecContext(ctx,
+		"DELETE FROM monitors WHERE id IN ("+placeholders+")", args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+func (s *SQLiteStore) BulkSetMonitorGroup(ctx context.Context, ids []int64, groupID *int64) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	placeholders, args := bulkArgs(ids)
+	var gid any
+	if groupID != nil {
+		gid = *groupID
+	}
+	args = append([]any{gid, formatTime(time.Now())}, args...)
+	res, err := s.writeDB.ExecContext(ctx,
+		"UPDATE monitors SET group_id=?, updated_at=? WHERE id IN ("+placeholders+")", args...)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+func bulkArgs(ids []int64) (string, []any) {
+	placeholders := make([]byte, 0, len(ids)*2)
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		if i > 0 {
+			placeholders = append(placeholders, ',')
+		}
+		placeholders = append(placeholders, '?')
+		args[i] = id
+	}
+	return string(placeholders), args
+}
+
 func (s *SQLiteStore) GetAllEnabledMonitors(ctx context.Context) ([]*Monitor, error) {
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT m.id, m.name, m.description, m.type, m.target, m.interval_secs, m.timeout_secs, m.enabled,

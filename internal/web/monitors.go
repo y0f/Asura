@@ -341,11 +341,14 @@ func (h *Handler) Monitors(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("web: list monitors", "error", err)
 	}
 
+	groups, _ := h.store.ListMonitorGroups(r.Context())
+
 	pd := h.newPageData(r, "Monitors", "monitors")
 	pd.Data = map[string]any{
 		"Result": result,
 		"Search": q,
 		"Type":   typeFilter,
+		"Groups": groups,
 	}
 	h.render(w, "monitors/list.html", pd)
 }
@@ -594,6 +597,51 @@ func (h *Handler) MonitorResume(w http.ResponseWriter, r *http.Request) {
 	}
 	h.setFlash(w, "Monitor resumed")
 	h.redirect(w, r, "/monitors/"+strconv.FormatInt(id, 10))
+}
+
+func (h *Handler) MonitorBulk(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	action := r.FormValue("action")
+	ids := parseIDList(r.Form["ids[]"])
+	if len(ids) == 0 {
+		h.setFlash(w, "No monitors selected")
+		h.redirect(w, r, "/monitors")
+		return
+	}
+
+	ctx := r.Context()
+	var msg string
+
+	switch action {
+	case "pause":
+		h.store.BulkSetMonitorsEnabled(ctx, ids, false)
+		msg = strconv.Itoa(len(ids)) + " monitors paused"
+	case "resume":
+		h.store.BulkSetMonitorsEnabled(ctx, ids, true)
+		msg = strconv.Itoa(len(ids)) + " monitors resumed"
+	case "delete":
+		h.store.BulkDeleteMonitors(ctx, ids)
+		msg = strconv.Itoa(len(ids)) + " monitors deleted"
+	case "set_group":
+		var gid *int64
+		if v := r.FormValue("group_id"); v != "" {
+			if parsed, err := strconv.ParseInt(v, 10, 64); err == nil && parsed > 0 {
+				gid = &parsed
+			}
+		}
+		h.store.BulkSetMonitorGroup(ctx, ids, gid)
+		msg = strconv.Itoa(len(ids)) + " monitors updated"
+	default:
+		h.setFlash(w, "Invalid action")
+		h.redirect(w, r, "/monitors")
+		return
+	}
+
+	if h.pipeline != nil {
+		h.pipeline.ReloadMonitors()
+	}
+	h.setFlash(w, msg)
+	h.redirect(w, r, "/monitors")
 }
 
 func (h *Handler) applyMonitorDefaults(m *storage.Monitor) {

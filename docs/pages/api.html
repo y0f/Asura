@@ -40,6 +40,7 @@
     <tr><td><code>DELETE</code></td><td><code>/api/v1/monitors/{id}</code></td><td>Delete</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/pause</code></td><td>Pause</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/monitors/{id}/resume</code></td><td>Resume</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/monitors/bulk</code></td><td>Bulk pause/resume/delete/set_group</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/checks</code></td><td>Check history</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/metrics</code></td><td>Analytics</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/monitors/{id}/changes</code></td><td>Content changes</td></tr>
@@ -48,6 +49,17 @@
 </table>
 
 <p>See <a href="#monitors">Monitors</a> for the full field reference and protocol settings.</p>
+
+<h3>Bulk Operations</h3>
+
+<pre><code>POST /api/v1/monitors/bulk
+{
+  "action": "pause",   // pause | resume | delete | set_group
+  "ids": [1, 2, 3],
+  "group_id": 5        // only for set_group (null to unset)
+}</code></pre>
+
+<p>Returns <code>{"status": "pause", "affected": 3}</code>. Max 500 monitors per request.</p>
 
 <h2>Status Pages</h2>
 

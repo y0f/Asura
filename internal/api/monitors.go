@@ -275,6 +275,63 @@ func (h *Handler) ListChanges(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 
+type bulkRequest struct {
+	Action  string  `json:"action"`
+	IDs     []int64 `json:"ids"`
+	GroupID *int64  `json:"group_id,omitempty"`
+}
+
+func (h *Handler) BulkMonitors(w http.ResponseWriter, r *http.Request) {
+	var req bulkRequest
+	if err := readJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(req.IDs) == 0 {
+		writeError(w, http.StatusBadRequest, "ids is required")
+		return
+	}
+	if len(req.IDs) > 500 {
+		writeError(w, http.StatusBadRequest, "max 500 monitors per request")
+		return
+	}
+
+	ctx := r.Context()
+	var affected int64
+	var err error
+
+	switch req.Action {
+	case "pause":
+		affected, err = h.store.BulkSetMonitorsEnabled(ctx, req.IDs, false)
+	case "resume":
+		affected, err = h.store.BulkSetMonitorsEnabled(ctx, req.IDs, true)
+	case "delete":
+		affected, err = h.store.BulkDeleteMonitors(ctx, req.IDs)
+	case "set_group":
+		affected, err = h.store.BulkSetMonitorGroup(ctx, req.IDs, req.GroupID)
+	default:
+		writeError(w, http.StatusBadRequest, "action must be one of: pause, resume, delete, set_group")
+		return
+	}
+
+	if err != nil {
+		h.logger.Error("bulk monitors", "action", req.Action, "error", err)
+		writeError(w, http.StatusInternalServerError, "bulk operation failed")
+		return
+	}
+
+	h.audit(r, "bulk_"+req.Action, "monitor", 0, fmt.Sprintf("ids=%v", req.IDs))
+
+	if h.pipeline != nil {
+		h.pipeline.ReloadMonitors()
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":   req.Action,
+		"affected": affected,
+	})
+}
+
 func applyMonitorDefaults(m *storage.Monitor, cfg config.MonitorConfig) {
 	if m.Interval == 0 {
 		m.Interval = int(cfg.DefaultInterval.Seconds())

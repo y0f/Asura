@@ -967,3 +967,137 @@ func TestTags(t *testing.T) {
 		t.Fatalf("expected 3 tags, got %d: %v", len(tags), tags)
 	}
 }
+
+func createTestMonitor(t *testing.T, store *SQLiteStore, ctx context.Context, name string) *Monitor {
+	t.Helper()
+	m := &Monitor{
+		Name: name, Type: "http", Target: "https://example.com",
+		Interval: 60, Timeout: 10, Enabled: true,
+		FailureThreshold: 3, SuccessThreshold: 1,
+	}
+	if err := store.CreateMonitor(ctx, m); err != nil {
+		t.Fatal(err)
+	}
+	return m
+}
+
+func TestBulkSetMonitorsEnabled(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	m1 := createTestMonitor(t, store, ctx, "Mon1")
+	m2 := createTestMonitor(t, store, ctx, "Mon2")
+	m3 := createTestMonitor(t, store, ctx, "Mon3")
+
+	affected, err := store.BulkSetMonitorsEnabled(ctx, []int64{m1.ID, m2.ID}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 2 {
+		t.Fatalf("expected 2 affected, got %d", affected)
+	}
+
+	got1, _ := store.GetMonitor(ctx, m1.ID)
+	got2, _ := store.GetMonitor(ctx, m2.ID)
+	got3, _ := store.GetMonitor(ctx, m3.ID)
+	if got1.Enabled {
+		t.Error("m1 should be disabled")
+	}
+	if got2.Enabled {
+		t.Error("m2 should be disabled")
+	}
+	if !got3.Enabled {
+		t.Error("m3 should still be enabled")
+	}
+
+	affected, err = store.BulkSetMonitorsEnabled(ctx, []int64{m1.ID, m2.ID}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 2 {
+		t.Fatalf("expected 2 affected, got %d", affected)
+	}
+}
+
+func TestBulkSetMonitorsEnabledEmpty(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	affected, err := store.BulkSetMonitorsEnabled(ctx, nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 0 {
+		t.Fatalf("expected 0 affected, got %d", affected)
+	}
+}
+
+func TestBulkDeleteMonitors(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	m1 := createTestMonitor(t, store, ctx, "Del1")
+	m2 := createTestMonitor(t, store, ctx, "Del2")
+	m3 := createTestMonitor(t, store, ctx, "Del3")
+
+	affected, err := store.BulkDeleteMonitors(ctx, []int64{m1.ID, m3.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 2 {
+		t.Fatalf("expected 2 affected, got %d", affected)
+	}
+
+	_, err = store.GetMonitor(ctx, m1.ID)
+	if !strings.Contains(err.Error(), "no rows") {
+		t.Error("m1 should be deleted")
+	}
+	got2, err := store.GetMonitor(ctx, m2.ID)
+	if err != nil {
+		t.Fatal("m2 should still exist:", err)
+	}
+	if got2.Name != "Del2" {
+		t.Error("m2 name mismatch")
+	}
+}
+
+func TestBulkSetMonitorGroup(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+
+	g := &MonitorGroup{Name: "TestGroup"}
+	if err := store.CreateMonitorGroup(ctx, g); err != nil {
+		t.Fatal(err)
+	}
+
+	m1 := createTestMonitor(t, store, ctx, "Grp1")
+	m2 := createTestMonitor(t, store, ctx, "Grp2")
+
+	affected, err := store.BulkSetMonitorGroup(ctx, []int64{m1.ID, m2.ID}, &g.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 2 {
+		t.Fatalf("expected 2 affected, got %d", affected)
+	}
+
+	got1, _ := store.GetMonitor(ctx, m1.ID)
+	got2, _ := store.GetMonitor(ctx, m2.ID)
+	if got1.GroupID == nil || *got1.GroupID != g.ID {
+		t.Error("m1 should be in group")
+	}
+	if got2.GroupID == nil || *got2.GroupID != g.ID {
+		t.Error("m2 should be in group")
+	}
+
+	affected, err = store.BulkSetMonitorGroup(ctx, []int64{m1.ID}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if affected != 1 {
+		t.Fatalf("expected 1 affected, got %d", affected)
+	}
+	got1, _ = store.GetMonitor(ctx, m1.ID)
+	if got1.GroupID != nil {
+		t.Error("m1 should have no group")
+	}
+}

@@ -141,8 +141,8 @@ func Defaults() *Config {
 			WriteTimeout:    30 * time.Second,
 			IdleTimeout:     120 * time.Second,
 			MaxBodySize:     1 << 20, // 1MB
-			RateLimitPerSec: 10,
-			RateLimitBurst:  20,
+			RateLimitPerSec: 30,
+			RateLimitBurst:  60,
 		},
 		Database: DatabaseConfig{
 			Path:                    "asura.db",
