@@ -40,7 +40,7 @@ Asura monitors your infrastructure from a single Go binary backed by SQLite. No 
 | **11 protocols** | HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Domain (WHOIS), gRPC, MQTT |
 | **Assertion engine** | 9 types -- status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records |
 | **Incidents** | Automatic creation, thresholds, ack, recovery |
-| **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy |
+| **Notifications** | Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy, Teams, PagerDuty, Opsgenie, Pushover |
 | **Status pages** | Multiple public status pages with custom slugs and grouping |
 | **Prometheus** | `/metrics` endpoint with per-monitor, incident, and request metrics |
 
@@ -79,7 +79,7 @@ docker compose up -d
 | [Getting Started](https://y0f.github.io/Asura/#getting-started) | Install via VPS, Docker, or source |
 | [Configuration](https://y0f.github.io/Asura/#configuration) | Config reference, auth, adaptive intervals |
 | [Monitors](https://y0f.github.io/Asura/#monitors) | 11 protocols, assertions, heartbeats |
-| [Notifications](https://y0f.github.io/Asura/#notifications) | 6 channels, webhook signing, per-monitor routing |
+| [Notifications](https://y0f.github.io/Asura/#notifications) | 10 channels, webhook signing, per-monitor routing |
 | [Deployment](https://y0f.github.io/Asura/#deployment) | Production nginx/caddy setup, TLS |
 | [API Reference](https://y0f.github.io/Asura/#api) | All endpoints, fields, pagination |
 | [Architecture](https://y0f.github.io/Asura/#architecture) | Pipeline, storage, checker registry |

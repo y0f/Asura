@@ -9,7 +9,9 @@
     │              │                 │                   │
  Min-heap      Concurrent       Incidents +        Webhook/Email
  dispatch       Checks         Change Diffs      Telegram/Discord
-                                                   Slack/ntfy</code></pre>
+                                                   Slack/ntfy/Teams
+                                                  PagerDuty/Opsgenie
+                                                    Pushover</code></pre>
 </div>
 
 <h2>Scheduler</h2>
@@ -41,7 +43,7 @@
 
 <h2>Dispatcher</h2>
 
-<p>Routes events to notification channels. Each channel type has its own sender behind the <code>Notifier</code> interface. If a monitor has <code>notification_channel_ids</code> set, only those channels fire. Otherwise all matching channels get the event.</p>
+<p>Routes events to notification channels. Each channel type has its own sender behind the <code>Sender</code> interface. 10 implementations: Webhook, Email, Telegram, Discord, Slack, ntfy, Microsoft Teams, PagerDuty, Opsgenie, and Pushover. If a monitor has <code>notification_channel_ids</code> set, only those channels fire. Otherwise all matching channels get the event.</p>
 
 <h2>Storage</h2>
 
@@ -52,7 +54,7 @@
   <li><strong>Read pool</strong>: Multiple concurrent readers via <code>readerPool()</code> — all SELECT queries</li>
 </ul>
 
-<p>Reads never block on writes. The <code>Store</code> interface has 141 methods covering everything from monitors to request logs.</p>
+<p>Reads never block on writes. The <code>Store</code> interface has 89 methods covering everything from monitors to request logs.</p>
 
 <h2>Checker Registry</h2>
 
@@ -80,19 +82,26 @@
 <h2>Project Structure</h2>
 
 <pre><code>asura/
-├── cmd/asura/         # Entry point
+├── cmd/asura/         # Entry point, setup
 ├── internal/
-│   ├── checker/       # 11 protocol checkers + assertion engine
-│   ├── pipeline/      # Scheduler, workers, result processor
-│   ├── notifier/      # 6 notification channel senders
-│   ├── storage/       # SQLite store (141 methods), migrations
-│   ├── server/        # HTTP server, routes, middleware
+│   ├── analytics/     # Request log analytics and rollups
 │   ├── api/           # API handlers (JSON endpoints)
-│   ├── web/           # Web UI handlers (template rendering)
+│   ├── assertion/     # Assertion engine for check results
+│   ├── checker/       # 11 protocol checkers
+│   ├── config/        # YAML configuration loading
+│   ├── diff/          # Content change diff computation
+│   ├── httputil/      # HTTP utilities (ID parsing, JSON helpers)
+│   ├── incident/      # Incident lifecycle management
+│   ├── monitor/       # Scheduler, workers, result processor
+│   ├── notifier/      # 10 notification channel senders
+│   ├── safenet/       # SSRF protection (private IP blocking)
+│   ├── server/        # HTTP server, routes, middleware
+│   ├── storage/       # SQLite store (89 methods), migrations
+│   ├── totp/          # TOTP two-factor authentication
 │   ├── validate/      # Input validation
-│   └── httputil/      # HTTP utilities
+│   └── web/           # Web UI handlers (template rendering)
 ├── web/
 │   ├── templates/     # HTML templates (layout + feature dirs)
 │   └── static/        # CSS, JS, images
 ├── deploy/            # nginx.conf, Dockerfile, docker-compose
-└── docs/              # This documentation site</code></pre>
+└── docs/              # Documentation site</code></pre>

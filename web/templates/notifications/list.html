@@ -12,6 +12,10 @@
     slack: {webhook_url:'', channel:''},
     email: {host:'', port:587, username:'', password:'', from:'', to:''},
     ntfy: {server_url:'', topic:'', priority:'3', tags:'', click_url:''},
+    teams: {webhook_url:''},
+    pagerduty: {routing_key:''},
+    opsgenie: {api_key:'', region:''},
+    pushover: {user_key:'', app_token:'', priority:'0', sound:'', device:''},
     resetForm() {
         this.editId = 0;
         this.advancedNotifSettings = false;
@@ -23,6 +27,10 @@
         this.slack = {webhook_url:'', channel:''};
         this.email = {host:'', port:587, username:'', password:'', from:'', to:''};
         this.ntfy = {server_url:'', topic:'', priority:3, tags:'', click_url:''};
+        this.teams = {webhook_url:''};
+        this.pagerduty = {routing_key:''};
+        this.opsgenie = {api_key:'', region:''};
+        this.pushover = {user_key:'', app_token:'', priority:'0', sound:'', device:''};
     },
     editChannel(ch) {
         this.resetForm();
@@ -49,6 +57,10 @@
             case 'slack': this.slack = {webhook_url: s.webhook_url||'', channel: s.channel||''}; break;
             case 'email': this.email = {host: s.host||'', port: s.port||587, username: s.username||'', password: s.password||'', from: s.from||'', to: (s.to||[]).join(', ')}; break;
             case 'ntfy': this.ntfy = {server_url: s.server_url||'', topic: s.topic||'', priority: String(s.priority||3), tags: s.tags||'', click_url: s.click_url||''}; break;
+            case 'teams': this.teams = {webhook_url: s.webhook_url||''}; break;
+            case 'pagerduty': this.pagerduty = {routing_key: s.routing_key||''}; break;
+            case 'opsgenie': this.opsgenie = {api_key: s.api_key||'', region: s.region||''}; break;
+            case 'pushover': this.pushover = {user_key: s.user_key||'', app_token: s.app_token||'', priority: String(s.priority||0), sound: s.sound||'', device: s.device||''}; break;
         }
         this.showForm = true;
     }
@@ -122,6 +134,10 @@
                         <option value="discord">Discord</option>
                         <option value="slack">Slack</option>
                         <option value="ntfy">ntfy</option>
+                        <option value="teams">Microsoft Teams</option>
+                        <option value="pagerduty">PagerDuty</option>
+                        <option value="opsgenie">Opsgenie</option>
+                        <option value="pushover">Pushover</option>
                     </select>
                 </div>
 
@@ -266,6 +282,78 @@
                         <div>
                             <label class="form-label-sm">Click URL</label>
                             <input type="url" name="notif_ntfy_click_url" x-model="ntfy.click_url" placeholder="https://status.example.com"
+                                   class="form-input">
+                        </div>
+                    </div>
+
+                    <!-- Microsoft Teams -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'teams'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="form-label-sm">Webhook URL</label>
+                            <input type="url" name="notif_teams_webhook_url" x-model="teams.webhook_url" :required="!advancedNotifSettings && formData.type === 'teams'" placeholder="https://outlook.office.com/webhook/..."
+                                   class="form-input">
+                        </div>
+                    </div>
+
+                    <!-- PagerDuty -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'pagerduty'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="form-label-sm">Routing Key</label>
+                            <input type="text" name="notif_pagerduty_routing_key" x-model="pagerduty.routing_key" :required="!advancedNotifSettings && formData.type === 'pagerduty'" placeholder="Events API v2 integration key"
+                                   class="form-input">
+                            <p class="text-[10px] text-muted mt-1">From your PagerDuty service integration</p>
+                        </div>
+                    </div>
+
+                    <!-- Opsgenie -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'opsgenie'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="form-label-sm">API Key</label>
+                            <input type="text" name="notif_opsgenie_api_key" x-model="opsgenie.api_key" :required="!advancedNotifSettings && formData.type === 'opsgenie'" placeholder="Opsgenie API integration key"
+                                   class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label-sm">Region</label>
+                            <select name="notif_opsgenie_region" x-model="opsgenie.region"
+                                    class="form-select">
+                                <option value="">US (default)</option>
+                                <option value="eu">EU</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pushover -->
+                    <div x-show="!advancedNotifSettings && formData.type === 'pushover'" x-cloak class="space-y-3">
+                        <div>
+                            <label class="form-label-sm">User Key</label>
+                            <input type="text" name="notif_pushover_user_key" x-model="pushover.user_key" :required="!advancedNotifSettings && formData.type === 'pushover'" placeholder="Your Pushover user key"
+                                   class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label-sm">App Token</label>
+                            <input type="text" name="notif_pushover_app_token" x-model="pushover.app_token" :required="!advancedNotifSettings && formData.type === 'pushover'" placeholder="Your Pushover application token"
+                                   class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label-sm">Priority</label>
+                            <select name="notif_pushover_priority" x-model="pushover.priority"
+                                    class="form-select">
+                                <option value="-2">Lowest</option>
+                                <option value="-1">Low</option>
+                                <option value="0">Normal (default)</option>
+                                <option value="1">High</option>
+                                <option value="2">Emergency</option>
+                            </select>
+                            <p class="text-[10px] text-muted mt-1">0 = auto-select based on event type</p>
+                        </div>
+                        <div>
+                            <label class="form-label-sm">Sound</label>
+                            <input type="text" name="notif_pushover_sound" x-model="pushover.sound" placeholder="pushover (default)"
+                                   class="form-input">
+                        </div>
+                        <div>
+                            <label class="form-label-sm">Device</label>
+                            <input type="text" name="notif_pushover_device" x-model="pushover.device" placeholder="All devices (default)"
                                    class="form-input">
                         </div>
                     </div>

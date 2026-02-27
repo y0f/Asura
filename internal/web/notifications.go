@@ -186,36 +186,78 @@ func assembleNotificationSettings(r *http.Request, chType string) json.RawMessag
 		b, _ := json.Marshal(s)
 		return b
 	case "email":
-		port, _ := strconv.Atoi(r.FormValue("notif_email_port"))
-		s := notifier.EmailSettings{
-			Host:     r.FormValue("notif_email_host"),
-			Port:     port,
-			Username: r.FormValue("notif_email_username"),
-			Password: r.FormValue("notif_email_password"),
-			From:     r.FormValue("notif_email_from"),
-		}
-		if toStr := strings.TrimSpace(r.FormValue("notif_email_to")); toStr != "" {
-			for _, addr := range strings.Split(toStr, ",") {
-				if trimmed := strings.TrimSpace(addr); trimmed != "" {
-					s.To = append(s.To, trimmed)
-				}
-			}
-		}
-		b, _ := json.Marshal(s)
-		return b
+		return assembleEmailSettings(r)
 	case "ntfy":
-		s := notifier.NtfySettings{
-			ServerURL: r.FormValue("notif_ntfy_server_url"),
-			Topic:     r.FormValue("notif_ntfy_topic"),
-			Tags:      r.FormValue("notif_ntfy_tags"),
-			ClickURL:  r.FormValue("notif_ntfy_click_url"),
-		}
-		if v := r.FormValue("notif_ntfy_priority"); v != "" {
-			s.Priority, _ = strconv.Atoi(v)
-		}
-		b, _ := json.Marshal(s)
-		return b
+		return assembleNtfySettings(r)
+	case "teams", "pagerduty", "opsgenie", "pushover":
+		return assembleExtendedSettings(r, chType)
 	default:
 		return json.RawMessage("{}")
 	}
+}
+
+func assembleEmailSettings(r *http.Request) json.RawMessage {
+	port, _ := strconv.Atoi(r.FormValue("notif_email_port"))
+	s := notifier.EmailSettings{
+		Host:     r.FormValue("notif_email_host"),
+		Port:     port,
+		Username: r.FormValue("notif_email_username"),
+		Password: r.FormValue("notif_email_password"),
+		From:     r.FormValue("notif_email_from"),
+	}
+	if toStr := strings.TrimSpace(r.FormValue("notif_email_to")); toStr != "" {
+		for _, addr := range strings.Split(toStr, ",") {
+			if trimmed := strings.TrimSpace(addr); trimmed != "" {
+				s.To = append(s.To, trimmed)
+			}
+		}
+	}
+	b, _ := json.Marshal(s)
+	return b
+}
+
+func assembleNtfySettings(r *http.Request) json.RawMessage {
+	s := notifier.NtfySettings{
+		ServerURL: r.FormValue("notif_ntfy_server_url"),
+		Topic:     r.FormValue("notif_ntfy_topic"),
+		Tags:      r.FormValue("notif_ntfy_tags"),
+		ClickURL:  r.FormValue("notif_ntfy_click_url"),
+	}
+	if v := r.FormValue("notif_ntfy_priority"); v != "" {
+		s.Priority, _ = strconv.Atoi(v)
+	}
+	b, _ := json.Marshal(s)
+	return b
+}
+
+func assembleExtendedSettings(r *http.Request, chType string) json.RawMessage {
+	var v any
+	switch chType {
+	case "teams":
+		v = notifier.TeamsSettings{
+			WebhookURL: r.FormValue("notif_teams_webhook_url"),
+		}
+	case "pagerduty":
+		v = notifier.PagerDutySettings{
+			RoutingKey: r.FormValue("notif_pagerduty_routing_key"),
+		}
+	case "opsgenie":
+		v = notifier.OpsgenieSettings{
+			APIKey: r.FormValue("notif_opsgenie_api_key"),
+			Region: r.FormValue("notif_opsgenie_region"),
+		}
+	case "pushover":
+		s := notifier.PushoverSettings{
+			UserKey:  r.FormValue("notif_pushover_user_key"),
+			AppToken: r.FormValue("notif_pushover_app_token"),
+			Sound:    r.FormValue("notif_pushover_sound"),
+			Device:   r.FormValue("notif_pushover_device"),
+		}
+		if p := r.FormValue("notif_pushover_priority"); p != "" {
+			s.Priority, _ = strconv.Atoi(p)
+		}
+		v = s
+	}
+	b, _ := json.Marshal(v)
+	return b
 }

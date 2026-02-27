@@ -46,6 +46,10 @@ func NewDispatcher(store storage.Store, logger *slog.Logger, allowPrivateTargets
 	d.RegisterSender(&DiscordSender{})
 	d.RegisterSender(&SlackSender{})
 	d.RegisterSender(&NtfySender{})
+	d.RegisterSender(&TeamsSender{})
+	d.RegisterSender(&PagerDutySender{})
+	d.RegisterSender(&OpsgenieSender{})
+	d.RegisterSender(&PushoverSender{})
 	return d
 }
 
