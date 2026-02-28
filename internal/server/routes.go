@@ -66,6 +66,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/groups/{id}"), webPerm("monitors.write", s.web.GroupUpdate))
 		mux.Handle("POST "+s.p("/groups/{id}/delete"), webPerm("monitors.write", s.web.GroupDelete))
 
+		mux.Handle("GET "+s.p("/tags"), webAuth(http.HandlerFunc(s.web.Tags)))
+		mux.Handle("POST "+s.p("/tags"), webPerm("monitors.write", s.web.TagCreate))
+		mux.Handle("POST "+s.p("/tags/{id}"), webPerm("monitors.write", s.web.TagUpdate))
+		mux.Handle("POST "+s.p("/tags/{id}/delete"), webPerm("monitors.write", s.web.TagDelete))
+
 		mux.Handle("GET "+s.p("/notifications"), webAuth(http.HandlerFunc(s.web.Notifications)))
 		mux.Handle("POST "+s.p("/notifications"), webPerm("notifications.write", s.web.NotificationCreate))
 		mux.Handle("POST "+s.p("/notifications/{id}"), webPerm("notifications.write", s.web.NotificationUpdate))
