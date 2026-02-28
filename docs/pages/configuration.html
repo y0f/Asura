@@ -2,9 +2,25 @@
 
 <p>Everything lives in <code>config.yaml</code>. See <a href="https://github.com/y0f/Asura/blob/main/config.example.yaml" target="_blank">config.example.yaml</a> for the full reference. Environment variables expand via <code>${VAR_NAME}</code>.</p>
 
+<h2>Server Settings</h2>
+
+<table>
+  <thead>
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>listen</code></td><td><code>127.0.0.1:8090</code></td><td>Address to bind. Keep this localhost-only and put a reverse proxy in front</td></tr>
+    <tr><td><code>base_path</code></td><td><code>""</code></td><td>URL prefix for all routes (e.g. <code>/asura</code>)</td></tr>
+    <tr><td><code>external_url</code></td><td>auto</td><td>Public URL used in notification links</td></tr>
+    <tr><td><code>trusted_proxies</code></td><td><code>[]</code></td><td>IPs/CIDRs whose <code>X-Real-IP</code>/<code>X-Forwarded-For</code> headers are trusted</td></tr>
+    <tr><td><code>rate_limit_per_sec</code></td><td><code>10</code></td><td>Per-IP request rate limit</td></tr>
+    <tr><td><code>web_ui_enabled</code></td><td><code>true</code></td><td>Serve the web dashboard. Set <code>false</code> to run in API-only mode — all REST endpoints remain available</td></tr>
+  </tbody>
+</table>
+
 <h2>Authentication</h2>
 
-<p>API keys are hashed with SHA-256 and stored in <code>config.yaml</code>. There's no user registration and no database-stored auth — Asura reads keys directly from the config file on startup.</p>
+<p>API keys are hashed with SHA-256 and stored in <code>config.yaml</code>. There's no user registration and no database-stored auth.</p>
 
 <h3>Generating a Key</h3>
 
@@ -18,7 +34,7 @@
   Put the hash in config.yaml under auth.api_keys[].hash
   Save the API key -- it cannot be recovered.</code></pre>
 
-<p>The <code>ak_</code> prefix makes keys easy to identify in logs without leaking the secret. If you already have a secret and just need the hash:</p>
+<p>The <code>ak_</code> prefix makes keys easy to identify in logs without leaking the secret. If you already have a key and just need the hash:</p>
 
 <pre><code>./asura --hash-key "your-secret-key"</code></pre>
 
@@ -64,22 +80,6 @@
 <pre><code>curl -H "X-API-Key: ak_a8f3e7b2c1d9..." https://example.com/asura/api/v1/monitors</code></pre>
 
 <p><strong>Web UI</strong>: Enter the key on the login page. Asura creates a session cookie (24h, HttpOnly, Secure). Login is rate-limited per IP. You can have multiple keys with different roles or permission sets.</p>
-
-<h2>Server Settings</h2>
-
-<table>
-  <thead>
-    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
-  </thead>
-  <tbody>
-    <tr><td><code>listen</code></td><td><code>127.0.0.1:8090</code></td><td>Address to bind. Keep this localhost-only and use a reverse proxy in production</td></tr>
-    <tr><td><code>base_path</code></td><td><code>""</code></td><td>URL prefix for all routes (e.g. <code>/asura</code>)</td></tr>
-    <tr><td><code>external_url</code></td><td>auto</td><td>Public URL used in notification links</td></tr>
-    <tr><td><code>trusted_proxies</code></td><td><code>[]</code></td><td>IPs/CIDRs whose <code>X-Real-IP</code>/<code>X-Forwarded-For</code> headers are trusted</td></tr>
-    <tr><td><code>rate_limit_per_sec</code></td><td><code>10</code></td><td>Per-IP request rate limit</td></tr>
-    <tr><td><code>web_ui_enabled</code></td><td><code>true</code></td><td>Serve the web dashboard. Set <code>false</code> to run in API-only mode — all REST endpoints remain available</td></tr>
-  </tbody>
-</table>
 
 <h2>Monitor Settings</h2>
 
