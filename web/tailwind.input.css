@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/inter.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono.woff2") format("woff2");
+}
+
 @source "../internal/web/views";
 @source inline("bg-emerald-500 bg-yellow-500 bg-red-500 bg-emerald-400 bg-red-400 bg-yellow-400 bg-gray-500 text-emerald-400 text-red-400 text-yellow-400 text-gray-500 text-gray-400 text-blue-400 bg-emerald-500/10 bg-red-500/10 bg-yellow-500/10 bg-gray-500/10 border-emerald-500/20 border-red-500/20 border-yellow-500/20 border-gray-500/20 bg-muted/20");
 

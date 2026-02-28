@@ -2,24 +2,69 @@
 
 Thanks for your interest in contributing. This guide covers the basics.
 
-## Development Workflow
+## Running Locally
 
-Requires Go 1.24+ and [templ](https://templ.guide/) CLI.
+Requires Go 1.24+ and [templ](https://templ.guide/) CLI:
 
 ```bash
 go install github.com/a-h/templ/cmd/templ@v0.3.977
 ```
 
+```bash
+# copy and edit config
+cp config.example.yaml config.yaml
+
+# generate an API key + hash, paste the hash into config.yaml under auth.api_keys[].hash
+go run ./cmd/asura --setup
+
+# set cookie_secure: false in config.yaml (no TLS locally)
+
+# build and run
+templ generate
+CGO_ENABLED=0 go build -o asura ./cmd/asura
+./asura -config config.yaml
+```
+
+Open http://localhost:8090 and log in with the key from `--setup`.
+
+`config.yaml` is gitignored — it won't be committed.
+
+## Development Workflow
+
+All commands run from inside the `asura/` directory.
+
+**Linux / macOS / Git Bash:**
+```bash
+make dev   # terminal 1: watches templates + CSS, rebuilds on save
+make run   # terminal 2: builds and starts the server
+```
+
+**Windows (PowerShell)** — run each in a separate terminal:
+```powershell
+# terminal 1: watch templates
+templ generate --watch
+
+# terminal 1b: watch CSS (separate terminal)
+.\tailwindcss.exe -i web\tailwind.input.css -o web\static\tailwind.css --watch
+
+# terminal 2: build and run
+$env:CGO_ENABLED="0"; go build -o asura.exe ./cmd/asura; .\asura.exe -config config.yaml
+```
+
+After `.go` changes: stop the server (`Ctrl+C`), rebuild, and restart.
+
+To run tests: `make test` or `go test -race -count=1 ./...`
+
 1. Fork the repo and create a branch from `main`
-2. Run `make dev` to watch for template and CSS changes (or run `templ generate` and `make css` manually)
+2. Start the watchers and server as above
 3. Make your changes
-4. Run `make test` to verify
+4. Run tests to verify
 5. Commit with a clear message (see below)
 6. Open a pull request
 
 ## Commit Messages
 
-Use imperative mood, keep the subject line under 72 characters.
+Keep the subject line under 72 characters.
 
 ```
 Add DNS record assertion type
