@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"slices"
 	"strconv"
 	"strings"
@@ -284,4 +285,223 @@ func statusPageMonitorGroup(data map[int64]storage.StatusPageMonitor, monID int6
 		return spm.GroupName
 	}
 	return ""
+}
+
+// RenderMarkdown converts a markdown subset to safe HTML for display.
+// Supports: headers, bold, italic, inline code, fenced code blocks,
+// unordered/ordered lists, links (http/https only), and paragraphs.
+func RenderMarkdown(text string) string {
+	if text == "" {
+		return ""
+	}
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	lines := strings.Split(text, "\n")
+
+	var buf strings.Builder
+	var pendingLines []string
+	var inCodeBlock bool
+	var codeBuf strings.Builder
+	var inList bool
+	var listTag string
+
+	flushPara := func() {
+		if len(pendingLines) == 0 {
+			return
+		}
+		buf.WriteString(`<p class="mb-2 text-[13px] text-muted-light leading-relaxed">`)
+		buf.WriteString(mdInline(strings.Join(pendingLines, "\n")))
+		buf.WriteString("</p>")
+		pendingLines = nil
+	}
+	flushList := func() {
+		if !inList {
+			return
+		}
+		buf.WriteString("</" + listTag + ">")
+		inList = false
+		listTag = ""
+	}
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "```") {
+			if inCodeBlock {
+				buf.WriteString(`<pre class="text-[12px] bg-surface-100 border border-line rounded p-3 overflow-x-auto mb-2"><code>`)
+				buf.WriteString(html.EscapeString(codeBuf.String()))
+				buf.WriteString("</code></pre>")
+				codeBuf.Reset()
+				inCodeBlock = false
+			} else {
+				flushPara()
+				flushList()
+				inCodeBlock = true
+			}
+			continue
+		}
+		if inCodeBlock {
+			if codeBuf.Len() > 0 {
+				codeBuf.WriteByte('\n')
+			}
+			codeBuf.WriteString(line)
+			continue
+		}
+
+		switch {
+		case strings.HasPrefix(line, "### "):
+			flushPara()
+			flushList()
+			buf.WriteString(`<h3 class="text-[13px] font-semibold text-white mt-4 mb-1">`)
+			buf.WriteString(mdInline(line[4:]))
+			buf.WriteString("</h3>")
+		case strings.HasPrefix(line, "## "):
+			flushPara()
+			flushList()
+			buf.WriteString(`<h2 class="text-[14px] font-semibold text-white mt-4 mb-1">`)
+			buf.WriteString(mdInline(line[3:]))
+			buf.WriteString("</h2>")
+		case strings.HasPrefix(line, "# "):
+			flushPara()
+			flushList()
+			buf.WriteString(`<h1 class="text-[15px] font-semibold text-white mt-4 mb-2">`)
+			buf.WriteString(mdInline(line[2:]))
+			buf.WriteString("</h1>")
+		case strings.HasPrefix(line, "- ") || strings.HasPrefix(line, "* "):
+			flushPara()
+			if !inList || listTag != "ul" {
+				flushList()
+				buf.WriteString(`<ul class="list-disc list-inside mb-2 space-y-0.5 text-[13px] text-muted-light">`)
+				inList = true
+				listTag = "ul"
+			}
+			buf.WriteString("<li>")
+			buf.WriteString(mdInline(line[2:]))
+			buf.WriteString("</li>")
+		default:
+			if content, ok := mdOrderedItem(line); ok {
+				flushPara()
+				if !inList || listTag != "ol" {
+					flushList()
+					buf.WriteString(`<ol class="list-decimal list-inside mb-2 space-y-0.5 text-[13px] text-muted-light">`)
+					inList = true
+					listTag = "ol"
+				}
+				buf.WriteString("<li>")
+				buf.WriteString(mdInline(content))
+				buf.WriteString("</li>")
+			} else if strings.TrimSpace(line) == "" {
+				flushPara()
+				flushList()
+			} else {
+				flushList()
+				pendingLines = append(pendingLines, line)
+			}
+		}
+	}
+
+	flushPara()
+	flushList()
+	if inCodeBlock {
+		buf.WriteString(`<pre class="text-[12px] bg-surface-100 border border-line rounded p-3 overflow-x-auto mb-2"><code>`)
+		buf.WriteString(html.EscapeString(codeBuf.String()))
+		buf.WriteString("</code></pre>")
+	}
+	return buf.String()
+}
+
+func mdOrderedItem(line string) (string, bool) {
+	i := 0
+	for i < len(line) && line[i] >= '0' && line[i] <= '9' {
+		i++
+	}
+	if i > 0 && i+1 < len(line) && line[i] == '.' && line[i+1] == ' ' {
+		return line[i+2:], true
+	}
+	return "", false
+}
+
+// mdInline processes inline markdown within a single text span:
+// bold (**text**), italic (*text*), inline code (`text`), links ([text](url)).
+// All text content is HTML-escaped. Only http/https links are allowed.
+func mdInline(s string) string {
+	var buf strings.Builder
+	i := 0
+	for i < len(s) {
+		c := s[i]
+		switch {
+		case c == '`' && i+1 < len(s):
+			if j := strings.Index(s[i+1:], "`"); j >= 0 {
+				buf.WriteString(`<code class="text-[12px] bg-surface-100 border border-line rounded px-1">`)
+				buf.WriteString(html.EscapeString(s[i+1 : i+1+j]))
+				buf.WriteString("</code>")
+				i += j + 2
+				continue
+			}
+		case c == '*' && i+1 < len(s) && s[i+1] == '*':
+			if j := strings.Index(s[i+2:], "**"); j >= 0 {
+				buf.WriteString("<strong>")
+				buf.WriteString(html.EscapeString(s[i+2 : i+2+j]))
+				buf.WriteString("</strong>")
+				i += j + 4
+				continue
+			}
+		case c == '_' && i+1 < len(s) && s[i+1] == '_':
+			if j := strings.Index(s[i+2:], "__"); j >= 0 {
+				buf.WriteString("<strong>")
+				buf.WriteString(html.EscapeString(s[i+2 : i+2+j]))
+				buf.WriteString("</strong>")
+				i += j + 4
+				continue
+			}
+		case c == '*':
+			if j := strings.Index(s[i+1:], "*"); j >= 0 && (i+1 >= len(s) || s[i+1] != '*') {
+				buf.WriteString("<em>")
+				buf.WriteString(html.EscapeString(s[i+1 : i+1+j]))
+				buf.WriteString("</em>")
+				i += j + 2
+				continue
+			}
+		case c == '_':
+			if j := strings.Index(s[i+1:], "_"); j >= 0 && (i+1 >= len(s) || s[i+1] != '_') {
+				buf.WriteString("<em>")
+				buf.WriteString(html.EscapeString(s[i+1 : i+1+j]))
+				buf.WriteString("</em>")
+				i += j + 2
+				continue
+			}
+		case c == '[':
+			te := strings.Index(s[i+1:], "]")
+			if te >= 0 && i+te+2 < len(s) && s[i+te+2] == '(' {
+				if ue := strings.Index(s[i+te+3:], ")"); ue >= 0 {
+					linkText := s[i+1 : i+1+te]
+					linkURL := s[i+te+3 : i+te+3+ue]
+					if strings.HasPrefix(linkURL, "http://") || strings.HasPrefix(linkURL, "https://") {
+						buf.WriteString(`<a href="`)
+						buf.WriteString(html.EscapeString(linkURL))
+						buf.WriteString(`" target="_blank" rel="noopener" class="text-brand hover:underline">`)
+						buf.WriteString(html.EscapeString(linkText))
+						buf.WriteString("</a>")
+					} else {
+						buf.WriteString(html.EscapeString(linkText))
+					}
+					i += te + ue + 4
+					continue
+				}
+			}
+		case c == '\n':
+			buf.WriteString("<br>")
+			i++
+			continue
+		}
+		switch c {
+		case '&':
+			buf.WriteString("&amp;")
+		case '<':
+			buf.WriteString("&lt;")
+		case '>':
+			buf.WriteString("&gt;")
+		default:
+			buf.WriteByte(c)
+		}
+		i++
+	}
+	return buf.String()
 }

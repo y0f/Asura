@@ -666,8 +666,8 @@ templ MonitorDetailPage(p MonitorDetailParams) {
 					}
 					if p.Monitor.Description != "" {
 						<div class="col-span-full">
-							<span class="text-muted block mb-1">Description</span>
-							<pre class="text-[12px] text-muted-light whitespace-pre-wrap font-sans leading-relaxed">{ p.Monitor.Description }</pre>
+							<span class="text-muted block mb-2">Description</span>
+							<div class="leading-relaxed">@templ.Raw(RenderMarkdown(p.Monitor.Description))</div>
 						</div>
 					}
 					if len(p.Tags) > 0 {
