@@ -304,6 +304,8 @@ type MonitorListFilter struct {
 	Search  string
 	GroupID *int64
 	TagID   *int64
+	Status  string // up, down, degraded, paused
+	Sort    string // name, status, last_check, response_time
 }
 
 // AuditLogFilter holds filter parameters for listing audit log entries.

@@ -315,7 +315,26 @@ func (h *Handler) Monitors(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	f := storage.MonitorListFilter{Type: typeFilter, Search: q, TagID: tagFilter}
+	var groupFilter *int64
+	if v := r.URL.Query().Get("group"); v != "" {
+		if gid, err := strconv.ParseInt(v, 10, 64); err == nil {
+			groupFilter = &gid
+		}
+	}
+
+	statusFilter := r.URL.Query().Get("status")
+	validStatuses := map[string]bool{"up": true, "down": true, "degraded": true, "paused": true}
+	if !validStatuses[statusFilter] {
+		statusFilter = ""
+	}
+
+	sortParam := r.URL.Query().Get("sort")
+	validSorts := map[string]bool{"name": true, "status": true, "last_check": true, "response_time": true}
+	if !validSorts[sortParam] {
+		sortParam = ""
+	}
+
+	f := storage.MonitorListFilter{Type: typeFilter, Search: q, TagID: tagFilter, GroupID: groupFilter, Status: statusFilter, Sort: sortParam}
 	result, err := h.store.ListMonitors(r.Context(), f, p)
 	if err != nil {
 		h.logger.Error("web: list monitors", "error", err)
@@ -340,14 +359,17 @@ func (h *Handler) Monitors(w http.ResponseWriter, r *http.Request) {
 
 	lp := h.newLayoutParams(r, "Monitors", "monitors")
 	h.renderComponent(w, r, views.MonitorListPage(views.MonitorListParams{
-		LayoutParams: lp,
-		Result:       result,
-		Search:       q,
-		Type:         typeFilter,
-		Groups:       groups,
-		TagMap:       tagMap,
-		AllTags:      allTags,
-		TagFilter:    tagFilter,
+		LayoutParams:  lp,
+		Result:        result,
+		Search:        q,
+		Type:          typeFilter,
+		Groups:        groups,
+		TagMap:        tagMap,
+		AllTags:       allTags,
+		TagFilter:     tagFilter,
+		GroupFilter:   groupFilter,
+		StatusFilter:  statusFilter,
+		SortParam:     sortParam,
 	}))
 }
 

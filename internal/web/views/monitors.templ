@@ -10,13 +10,16 @@ import (
 
 type MonitorListParams struct {
 	LayoutParams
-	Result    *storage.PaginatedResult
-	Search    string
-	Type      string
-	Groups    []*storage.MonitorGroup
-	TagMap    map[int64][]storage.MonitorTag
-	AllTags   []*storage.Tag
-	TagFilter *int64
+	Result       *storage.PaginatedResult
+	Search       string
+	Type         string
+	Groups       []*storage.MonitorGroup
+	TagMap       map[int64][]storage.MonitorTag
+	AllTags      []*storage.Tag
+	TagFilter    *int64
+	GroupFilter  *int64
+	StatusFilter string
+	SortParam    string
 }
 
 type MonitorDetailParams struct {
@@ -75,6 +78,15 @@ func (p MonitorListParams) pageHref(page int) string {
 	}
 	if p.TagFilter != nil {
 		href += "&tag=" + strconv.FormatInt(*p.TagFilter, 10)
+	}
+	if p.GroupFilter != nil {
+		href += "&group=" + strconv.FormatInt(*p.GroupFilter, 10)
+	}
+	if p.StatusFilter != "" {
+		href += "&status=" + p.StatusFilter
+	}
+	if p.SortParam != "" {
+		href += "&sort=" + p.SortParam
 	}
 	return href
 }
@@ -279,10 +291,37 @@ templ MonitorListPage(p MonitorListParams) {
 				if p.Type != "" {
 					<input type="hidden" name="type" value={ p.Type }/>
 				}
-				<div class="relative max-w-xs">
-					<svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-					<input type="text" name="q" value={ p.Search } placeholder="Search monitors..."
-						class="w-full pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-hidden focus:border-brand/40 transition-colors"/>
+				<div class="flex flex-wrap gap-2">
+					<div class="relative">
+						<svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+						<input type="text" name="q" value={ p.Search } placeholder="Search monitors..."
+							class="pl-8 pr-3 py-1.5 bg-transparent border border-line rounded text-[12px] text-white placeholder-muted/50 focus:outline-hidden focus:border-brand/40 transition-colors w-56"/>
+					</div>
+					<select name="status" class="form-select text-[12px] py-1.5 w-auto">
+						<option value="" if p.StatusFilter == "" { selected }  >All Statuses</option>
+						<option value="up" if p.StatusFilter == "up" { selected } >Up</option>
+						<option value="down" if p.StatusFilter == "down" { selected } >Down</option>
+						<option value="degraded" if p.StatusFilter == "degraded" { selected } >Degraded</option>
+						<option value="paused" if p.StatusFilter == "paused" { selected } >Paused</option>
+					</select>
+					if len(p.Groups) > 0 {
+						<select name="group" class="form-select text-[12px] py-1.5 w-auto">
+							<option value="" if p.GroupFilter == nil { selected } >All Groups</option>
+							for _, g := range p.Groups {
+								<option value={ fmt.Sprint(g.ID) } if p.GroupFilter != nil && *p.GroupFilter == g.ID { selected } >{ g.Name }</option>
+							}
+						</select>
+					}
+					<select name="sort" class="form-select text-[12px] py-1.5 w-auto">
+						<option value="" if p.SortParam == "" { selected } >Sort: Name</option>
+						<option value="status" if p.SortParam == "status" { selected } >Sort: Status</option>
+						<option value="last_check" if p.SortParam == "last_check" { selected } >Sort: Last Check</option>
+						<option value="response_time" if p.SortParam == "response_time" { selected } >Sort: Response Time</option>
+					</select>
+					<button type="submit" class="px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] rounded transition-colors">Filter</button>
+					if p.Search != "" || p.StatusFilter != "" || p.GroupFilter != nil || p.SortParam != "" {
+						<a href={ templ.SafeURL(p.BasePath + "/monitors") } class="px-3 py-1.5 text-[12px] text-muted hover:text-muted-light transition-colors">Clear</a>
+					}
 				</div>
 			</form>
 			<div class="flex gap-1.5 mb-4 overflow-x-auto pb-1">

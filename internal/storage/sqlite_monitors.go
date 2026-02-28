@@ -96,6 +96,22 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 		where += " AND EXISTS (SELECT 1 FROM monitor_tags WHERE monitor_id=m.id AND tag_id=?)"
 		args = append(args, *f.TagID)
 	}
+	if f.Status == "paused" {
+		where += " AND m.enabled=0"
+	} else if f.Status != "" {
+		where += " AND m.enabled=1 AND COALESCE(ms.status, 'pending')=?"
+		args = append(args, f.Status)
+	}
+
+	orderBy := "m.name COLLATE NOCASE ASC"
+	switch f.Sort {
+	case "status":
+		orderBy = "COALESCE(ms.status, 'pending') ASC, m.name COLLATE NOCASE ASC"
+	case "last_check":
+		orderBy = "ms.last_check_at DESC, m.name COLLATE NOCASE ASC"
+	case "response_time":
+		orderBy = "ms.response_time DESC, m.name COLLATE NOCASE ASC"
+	}
 
 	var total int64
 	countArgs := make([]any, len(args))
@@ -116,7 +132,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 		 FROM monitors m
 		 LEFT JOIN monitor_status ms ON ms.monitor_id = m.id
 		 WHERE `+where+`
-		 ORDER BY m.name COLLATE NOCASE ASC
+		 ORDER BY `+orderBy+`
 		 LIMIT ? OFFSET ?`, args...)
 	if err != nil {
 		return nil, err
