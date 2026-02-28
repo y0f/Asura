@@ -96,14 +96,18 @@
   <tbody>
     <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/status</code></td><td>Status badge (up/down/degraded)</td></tr>
     <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/uptime</code></td><td>30-day uptime percentage</td></tr>
-    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/response</code></td><td>24h median response time</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/response</code></td><td>24h average response time</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/badge/{id}/cert</code></td><td>TLS certificate expiry (days remaining)</td></tr>
   </tbody>
 </table>
+
+<p>All badges accept a <code>?label=</code> query parameter to override the left-hand label text. Colors are automatic based on the metric value.</p>
 
 <p>Embed in a README:</p>
 
 <pre><code>![Status](https://example.com/asura/api/v1/badge/1/status)
-![Uptime](https://example.com/asura/api/v1/badge/1/uptime)</code></pre>
+![Uptime](https://example.com/asura/api/v1/badge/1/uptime)
+![Cert](https://example.com/asura/api/v1/badge/1/cert?label=TLS)</code></pre>
 
 <h2>Monitor Groups</h2>
 
@@ -190,12 +194,13 @@
     <tr><td><code>PUT</code></td><td><code>/api/v1/notifications/{id}</code></td><td>Update</td></tr>
     <tr><td><code>DELETE</code></td><td><code>/api/v1/notifications/{id}</code></td><td>Delete</td></tr>
     <tr><td><code>POST</code></td><td><code>/api/v1/notifications/{id}/test</code></td><td>Test</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/notifications/history</code></td><td>Delivery history (filter: channel_id, status, event_type)</td></tr>
   </tbody>
 </table>
 
-<p>Types: <code>webhook</code> <code>email</code> <code>telegram</code> <code>discord</code> <code>slack</code> <code>ntfy</code></p>
+<p>Types: <code>webhook</code> <code>email</code> <code>telegram</code> <code>discord</code> <code>slack</code> <code>ntfy</code> <code>teams</code> <code>pagerduty</code> <code>opsgenie</code> <code>pushover</code> <code>googlechat</code> <code>matrix</code> <code>gotify</code></p>
 
-<p>Events: <code>incident.created</code> <code>incident.acknowledged</code> <code>incident.resolved</code> <code>incident.reminder</code> <code>content.changed</code></p>
+<p>Events: <code>incident.created</code> <code>incident.acknowledged</code> <code>incident.resolved</code> <code>incident.reminder</code> <code>content.changed</code> <code>cert.changed</code></p>
 
 <p>See <a href="#notifications">Notifications</a> for per-type settings and webhook signing.</p>
 
@@ -275,6 +280,20 @@
 </table>
 
 <p>Tags are global. Assign tags to a monitor by including <code>tag_ids</code> (array of tag IDs) and optional <code>tag_values</code> (array of per-monitor values) when creating or updating a monitor. Filter the monitor list with <code>?tag={id}</code>. Deleting a tag removes it from all monitors. Tags and per-monitor values are included in Prometheus metrics and exports.</p>
+
+<h2>Admin</h2>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/v1/admin/db-size</code></td><td>Database file size and page stats</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/admin/vacuum</code></td><td>Run SQLite VACUUM to reclaim space</td></tr>
+  </tbody>
+</table>
+
+<p>Admin endpoints require read-level auth (same key used for metrics).</p>
 
 <h2>Other</h2>
 

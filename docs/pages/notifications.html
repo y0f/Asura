@@ -37,9 +37,14 @@
     "username": "alerts@example.com",
     "password": "...",
     "from": "alerts@example.com",
-    "to": ["ops@example.com", "oncall@example.com"]
+    "to": ["ops@example.com", "oncall@example.com"],
+    "cc": ["manager@example.com"],
+    "bcc": ["archive@example.com"],
+    "tls_mode": "starttls"
   }
 }</code></pre>
+
+<p><code>tls_mode</code>: <code>starttls</code> (default, upgrades plain connection), <code>smtps</code> (TLS from the start, typically port 465), or <code>none</code> (plaintext). Emails are sent as HTML with a plain-text fallback.</p>
 
 <h2>Telegram</h2>
 
@@ -132,6 +137,39 @@
 }</code></pre>
 
 <p><code>priority</code> defaults to auto-select based on event type (1=high for created, 0=normal for reminders, -1=low for resolved). Set explicitly to override. <code>sound</code> and <code>device</code> are optional.</p>
+
+<h2>Google Chat</h2>
+
+<pre><code>{
+  "type": "googlechat",
+  "settings": {
+    "webhook_url": "https://chat.googleapis.com/v1/spaces/..."
+  }
+}</code></pre>
+
+<h2>Matrix</h2>
+
+<pre><code>{
+  "type": "matrix",
+  "settings": {
+    "homeserver": "https://matrix.example.com",
+    "access_token": "syt_...",
+    "room_id": "!roomid:example.com"
+  }
+}</code></pre>
+
+<h2>Gotify</h2>
+
+<pre><code>{
+  "type": "gotify",
+  "settings": {
+    "server_url": "https://gotify.example.com",
+    "app_token": "your-app-token",
+    "priority": 5
+  }
+}</code></pre>
+
+<p><code>priority</code> is optional (default: 5). Higher values show as more urgent in Gotify.</p>
 
 <h2>Per-Monitor Routing</h2>
 
