@@ -177,8 +177,8 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	mux.Handle("GET "+s.p("/api/v1/audit"), metricsRead(http.HandlerFunc(s.api.ListAuditLog)))
 
-	mux.Handle("GET "+s.p("/api/v1/admin/db-size"), metricsRead(http.HandlerFunc(s.api.DBSize)))
-	mux.Handle("POST "+s.p("/api/v1/admin/vacuum"), monWrite(http.HandlerFunc(s.api.DBVacuum)))
+	mux.Handle("GET "+s.p("/api/v1/db/size"), metricsRead(http.HandlerFunc(s.api.DBSize)))
+	mux.Handle("POST "+s.p("/api/v1/db/vacuum"), monWrite(http.HandlerFunc(s.api.DBVacuum)))
 
 	mux.Handle("GET "+s.p("/api/v1/export"), monRead(http.HandlerFunc(s.api.Export)))
 	mux.Handle("POST "+s.p("/api/v1/import"), monWrite(http.HandlerFunc(s.api.Import)))

@@ -281,19 +281,19 @@
 
 <p>Tags are global. Assign tags to a monitor by including <code>tag_ids</code> (array of tag IDs) and optional <code>tag_values</code> (array of per-monitor values) when creating or updating a monitor. Filter the monitor list with <code>?tag={id}</code>. Deleting a tag removes it from all monitors. Tags and per-monitor values are included in Prometheus metrics and exports.</p>
 
-<h2>Admin</h2>
+<h2>Database</h2>
 
 <table>
   <thead>
     <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>GET</code></td><td><code>/api/v1/admin/db-size</code></td><td>Database file size and page stats</td></tr>
-    <tr><td><code>POST</code></td><td><code>/api/v1/admin/vacuum</code></td><td>Run SQLite VACUUM to reclaim space</td></tr>
+    <tr><td><code>GET</code></td><td><code>/api/v1/db/size</code></td><td>Database file size and page stats</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/v1/db/vacuum</code></td><td>Run SQLite VACUUM to reclaim space</td></tr>
   </tbody>
 </table>
 
-<p>Admin endpoints require read-level auth (same key used for metrics).</p>
+<p><code>db/size</code> requires <code>metrics.read</code>. <code>db/vacuum</code> requires <code>monitors.write</code>.</p>
 
 <h2>Other</h2>
 
