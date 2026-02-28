@@ -186,10 +186,11 @@ func monitorChartXData() string {
     loading: true,
     chart: null,
     points: [],
+    chartUrl: '',
     async fetchData() {
         this.loading = true;
         try {
-            const resp = await fetch(this.$el.dataset.chartUrl + '?range=' + this.range, {credentials: 'same-origin'});
+            const resp = await fetch(this.chartUrl + '?range=' + this.range, {credentials: 'same-origin'});
             const data = await resp.json();
             this.points = data.points || [];
         } catch(e) {
@@ -264,6 +265,7 @@ func monitorChartXData() string {
     resizeObs: null,
     themeHandler: null,
     init() {
+        this.chartUrl = this.$el.dataset.chartUrl;
         this.fetchData();
         this.resizeObs = new ResizeObserver(() => {
             if (this.chart && this.$refs.chart) this.chart.setSize({width: this.$refs.chart.clientWidth, height: 200});
