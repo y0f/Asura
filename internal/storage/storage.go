@@ -99,6 +99,7 @@ type Store interface {
 
 	// Audit
 	InsertAudit(ctx context.Context, entry *AuditEntry) error
+	ListAuditLog(ctx context.Context, f AuditLogFilter, p Pagination) (*PaginatedResult, error)
 
 	// TOTP keys
 	CreateTOTPKey(ctx context.Context, key *TOTPKey) error

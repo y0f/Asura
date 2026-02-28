@@ -78,6 +78,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("POST "+s.p("/maintenance/{id}/delete"), webPerm("maintenance.write", s.web.MaintenanceDelete))
 
 		mux.Handle("GET "+s.p("/logs"), webAuth(http.HandlerFunc(s.web.RequestLogs)))
+		mux.Handle("GET "+s.p("/audit"), webAuth(http.HandlerFunc(s.web.AuditLog)))
 
 		mux.Handle("GET "+s.p("/proxies"), webAuth(http.HandlerFunc(s.web.Proxies)))
 		mux.Handle("GET "+s.p("/proxies/new"), webAuth(http.HandlerFunc(s.web.ProxyForm)))
@@ -164,6 +165,8 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 
 	mux.Handle("GET "+s.p("/api/v1/request-logs"), metricsRead(http.HandlerFunc(s.api.ListRequestLogs)))
 	mux.Handle("GET "+s.p("/api/v1/request-logs/stats"), metricsRead(http.HandlerFunc(s.api.RequestLogStats)))
+
+	mux.Handle("GET "+s.p("/api/v1/audit"), metricsRead(http.HandlerFunc(s.api.ListAuditLog)))
 
 	mux.Handle("GET "+s.p("/api/v1/export"), monRead(http.HandlerFunc(s.api.Export)))
 	mux.Handle("POST "+s.p("/api/v1/import"), monWrite(http.HandlerFunc(s.api.Import)))

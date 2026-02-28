@@ -300,6 +300,15 @@ type MonitorListFilter struct {
 	TagID   *int64
 }
 
+// AuditLogFilter holds filter parameters for listing audit log entries.
+type AuditLogFilter struct {
+	Action     string
+	Entity     string
+	APIKeyName string
+	From       time.Time
+	To         time.Time
+}
+
 // RequestLogFilter holds filter parameters for listing request logs.
 type RequestLogFilter struct {
 	Method     string

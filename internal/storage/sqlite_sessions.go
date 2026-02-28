@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"math"
 	"strings"
 	"time"
 )
@@ -13,6 +14,80 @@ func (s *SQLiteStore) InsertAudit(ctx context.Context, entry *AuditEntry) error 
 		 VALUES (?, ?, ?, ?, ?, ?)`,
 		entry.Action, entry.Entity, entry.EntityID, entry.APIKeyName, entry.Detail, now)
 	return err
+}
+
+func buildAuditWhere(f AuditLogFilter) (string, []any) {
+	where := "1=1"
+	var args []any
+	if f.Action != "" {
+		where += " AND action=?"
+		args = append(args, f.Action)
+	}
+	if f.Entity != "" {
+		where += " AND entity=?"
+		args = append(args, f.Entity)
+	}
+	if f.APIKeyName != "" {
+		where += " AND api_key_name=?"
+		args = append(args, f.APIKeyName)
+	}
+	if !f.From.IsZero() {
+		where += " AND created_at >= ?"
+		args = append(args, formatTime(f.From))
+	}
+	if !f.To.IsZero() {
+		where += " AND created_at < ?"
+		args = append(args, formatTime(f.To))
+	}
+	return where, args
+}
+
+func (s *SQLiteStore) ListAuditLog(ctx context.Context, f AuditLogFilter, p Pagination) (*PaginatedResult, error) {
+	where, args := buildAuditWhere(f)
+
+	var total int64
+	countArgs := make([]any, len(args))
+	copy(countArgs, args)
+	err := s.readDB.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM audit_log WHERE "+where, countArgs...).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
+	offset := (p.Page - 1) * p.PerPage
+	args = append(args, p.PerPage, offset)
+	rows, err := s.readDB.QueryContext(ctx,
+		`SELECT id, action, entity, entity_id, api_key_name, detail, created_at
+		 FROM audit_log WHERE `+where+` ORDER BY created_at DESC LIMIT ? OFFSET ?`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []*AuditEntry
+	for rows.Next() {
+		var e AuditEntry
+		var createdAt string
+		if err := rows.Scan(&e.ID, &e.Action, &e.Entity, &e.EntityID, &e.APIKeyName, &e.Detail, &createdAt); err != nil {
+			return nil, err
+		}
+		e.CreatedAt = parseTime(createdAt)
+		entries = append(entries, &e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if entries == nil {
+		entries = []*AuditEntry{}
+	}
+
+	return &PaginatedResult{
+		Data:       entries,
+		Total:      total,
+		Page:       p.Page,
+		PerPage:    p.PerPage,
+		TotalPages: int(math.Ceil(float64(total) / float64(p.PerPage))),
+	}, nil
 }
 
 // --- Sessions ---
