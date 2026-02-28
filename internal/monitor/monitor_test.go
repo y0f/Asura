@@ -66,8 +66,8 @@ func TestEvaluateAssertions(t *testing.T) {
 		}
 	})
 
-	t.Run("empty assertions array returns original", func(t *testing.T) {
-		mon := &storage.Monitor{Assertions: json.RawMessage(`[]`)}
+	t.Run("empty conditions returns original", func(t *testing.T) {
+		mon := &storage.Monitor{Assertions: json.RawMessage(`{"operator":"and","groups":[]}`)}
 		result := &checker.Result{Status: "up"}
 		got := evaluateAssertions(mon, result)
 		if got != "up" {
@@ -76,7 +76,7 @@ func TestEvaluateAssertions(t *testing.T) {
 	})
 
 	t.Run("failing hard assertion returns down", func(t *testing.T) {
-		assertions := `[{"type":"status_code","operator":"eq","value":"200"}]`
+		assertions := `{"operator":"and","groups":[{"operator":"and","conditions":[{"type":"status_code","operator":"eq","value":"200"}]}]}`
 		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
 		result := &checker.Result{Status: "up", StatusCode: 500}
 		got := evaluateAssertions(mon, result)
@@ -86,7 +86,7 @@ func TestEvaluateAssertions(t *testing.T) {
 	})
 
 	t.Run("failing soft assertion returns degraded", func(t *testing.T) {
-		assertions := `[{"type":"status_code","operator":"eq","value":"200","degraded":true}]`
+		assertions := `{"operator":"and","groups":[{"operator":"and","conditions":[{"type":"status_code","operator":"eq","value":"200","degraded":true}]}]}`
 		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
 		result := &checker.Result{Status: "up", StatusCode: 500}
 		got := evaluateAssertions(mon, result)
@@ -96,7 +96,7 @@ func TestEvaluateAssertions(t *testing.T) {
 	})
 
 	t.Run("passing assertion keeps status", func(t *testing.T) {
-		assertions := `[{"type":"status_code","operator":"eq","value":"200"}]`
+		assertions := `{"operator":"and","groups":[{"operator":"and","conditions":[{"type":"status_code","operator":"eq","value":"200"}]}]}`
 		mon := &storage.Monitor{Assertions: json.RawMessage(assertions)}
 		result := &checker.Result{Status: "up", StatusCode: 200}
 		got := evaluateAssertions(mon, result)

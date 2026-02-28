@@ -29,9 +29,9 @@ func monitorToFormData(mon *storage.Monitor) *views.MonitorFormParams {
 		fd.HTTP.BodyEncoding = "json"
 		fd.HeadersJSON = "[]"
 		fd.WsHeadersJSON = "[]"
-		fd.AssertionsJSON = "[]"
+		fd.AssertionsJSON = `{"operator":"and","groups":[]}`
 		fd.SettingsJSON = "{}"
-		fd.AssertionsRaw = "[]"
+		fd.AssertionsRaw = "{}"
 		return fd
 	}
 
@@ -39,7 +39,7 @@ func monitorToFormData(mon *storage.Monitor) *views.MonitorFormParams {
 	if len(mon.Settings) > 0 {
 		fd.SettingsJSON = string(mon.Settings)
 	}
-	fd.AssertionsRaw = "[]"
+	fd.AssertionsRaw = "{}"
 	if len(mon.Assertions) > 0 {
 		fd.AssertionsRaw = string(mon.Assertions)
 	}
@@ -109,12 +109,15 @@ func headersToJSON(headers map[string]string) string {
 }
 
 func assertionsToJSON(raw json.RawMessage) string {
-	if len(raw) == 0 {
-		return "{}"
-	}
 	var cs assertion.ConditionSet
-	if err := json.Unmarshal(raw, &cs); err != nil {
-		return "{}"
+	if len(raw) > 0 {
+		json.Unmarshal(raw, &cs)
+	}
+	if cs.Operator == "" {
+		cs.Operator = "and"
+	}
+	if cs.Groups == nil {
+		cs.Groups = []assertion.ConditionGroup{}
 	}
 	return views.ToJSON(cs)
 }

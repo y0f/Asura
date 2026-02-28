@@ -260,79 +260,95 @@ func TestAssembleSettingsUnknownType(t *testing.T) {
 
 func TestAssembleAssertions(t *testing.T) {
 	form := url.Values{
-		"assertion_count":      {"2"},
-		"assertion_type_0":     {"status_code"},
-		"assertion_operator_0": {"eq"},
-		"assertion_value_0":    {"200"},
-		"assertion_type_1":     {"response_time"},
-		"assertion_operator_1": {"lt"},
-		"assertion_value_1":    {"5000"},
-		"assertion_degraded_1": {"on"},
+		"group_count":              {"1"},
+		"condition_set_operator":   {"and"},
+		"group_0_operator":         {"and"},
+		"group_0_count":            {"2"},
+		"group_0_type_0":           {"status_code"},
+		"group_0_operator_0":       {"eq"},
+		"group_0_value_0":          {"200"},
+		"group_0_type_1":           {"response_time"},
+		"group_0_operator_1":       {"lt"},
+		"group_0_value_1":          {"5000"},
+		"group_0_degraded_1":       {"on"},
 	}
 	r := buildFormRequest(form)
 	raw := assembleAssertions(r)
 
-	var assertions []assertion.Assertion
-	if err := json.Unmarshal(raw, &assertions); err != nil {
+	var cs assertion.ConditionSet
+	if err := json.Unmarshal(raw, &cs); err != nil {
 		t.Fatal(err)
 	}
 
-	if len(assertions) != 2 {
-		t.Fatalf("expected 2 assertions, got %d", len(assertions))
+	if len(cs.Groups) != 1 {
+		t.Fatalf("expected 1 group, got %d", len(cs.Groups))
 	}
-	if assertions[0].Type != "status_code" || assertions[0].Operator != "eq" || assertions[0].Value != "200" {
-		t.Errorf("assertion[0] = %+v", assertions[0])
+	if len(cs.Groups[0].Conditions) != 2 {
+		t.Fatalf("expected 2 conditions, got %d", len(cs.Groups[0].Conditions))
 	}
-	if assertions[1].Type != "response_time" || !assertions[1].Degraded {
-		t.Errorf("assertion[1] = %+v", assertions[1])
+	c0 := cs.Groups[0].Conditions[0]
+	if c0.Type != "status_code" || c0.Operator != "eq" || c0.Value != "200" {
+		t.Errorf("condition[0] = %+v", c0)
+	}
+	c1 := cs.Groups[0].Conditions[1]
+	if c1.Type != "response_time" || !c1.Degraded {
+		t.Errorf("condition[1] = %+v", c1)
 	}
 }
 
 func TestAssembleAssertionsEmpty(t *testing.T) {
-	r := buildFormRequest(url.Values{"assertion_count": {"0"}})
+	r := buildFormRequest(url.Values{})
 	raw := assembleAssertions(r)
 	if raw != nil {
-		t.Errorf("expected nil for 0 assertions, got %s", raw)
+		t.Errorf("expected nil for empty form, got %s", raw)
 	}
 }
 
 func TestAssembleAssertionsSkipsEmptyType(t *testing.T) {
 	form := url.Values{
-		"assertion_count":      {"2"},
-		"assertion_type_0":     {"status_code"},
-		"assertion_operator_0": {"eq"},
-		"assertion_value_0":    {"200"},
-		"assertion_type_1":     {""},
-		"assertion_operator_1": {"lt"},
-		"assertion_value_1":    {"5000"},
+		"group_count":            {"1"},
+		"condition_set_operator": {"and"},
+		"group_0_operator":       {"and"},
+		"group_0_count":          {"2"},
+		"group_0_type_0":         {"status_code"},
+		"group_0_operator_0":     {"eq"},
+		"group_0_value_0":        {"200"},
+		"group_0_type_1":         {""},
+		"group_0_operator_1":     {"lt"},
+		"group_0_value_1":        {"5000"},
 	}
 	r := buildFormRequest(form)
 	raw := assembleAssertions(r)
 
-	var assertions []assertion.Assertion
-	json.Unmarshal(raw, &assertions)
+	var cs assertion.ConditionSet
+	json.Unmarshal(raw, &cs)
 
-	if len(assertions) != 1 {
-		t.Fatalf("expected 1 assertion (skipping empty type), got %d", len(assertions))
+	if len(cs.Groups) != 1 || len(cs.Groups[0].Conditions) != 1 {
+		t.Fatalf("expected 1 condition (skipping empty type), got %d", len(cs.Groups[0].Conditions))
 	}
 }
 
 func TestAssembleAssertionsCap(t *testing.T) {
-	form := url.Values{"assertion_count": {"100"}}
-	for i := 0; i < 100; i++ {
-		idx := strconv.Itoa(i)
-		form.Set("assertion_type_"+idx, "status_code")
-		form.Set("assertion_operator_"+idx, "eq")
-		form.Set("assertion_value_"+idx, "200")
+	form := url.Values{
+		"group_count":            {"30"},
+		"condition_set_operator": {"and"},
+	}
+	for g := 0; g < 30; g++ {
+		gi := strconv.Itoa(g)
+		form.Set("group_"+gi+"_operator", "and")
+		form.Set("group_"+gi+"_count", "1")
+		form.Set("group_"+gi+"_type_0", "status_code")
+		form.Set("group_"+gi+"_operator_0", "eq")
+		form.Set("group_"+gi+"_value_0", "200")
 	}
 	r := buildFormRequest(form)
 	raw := assembleAssertions(r)
 
-	var assertions []assertion.Assertion
-	json.Unmarshal(raw, &assertions)
+	var cs assertion.ConditionSet
+	json.Unmarshal(raw, &cs)
 
-	if len(assertions) != 50 {
-		t.Fatalf("expected cap at 50, got %d", len(assertions))
+	if len(cs.Groups) != 20 {
+		t.Fatalf("expected cap at 20 groups, got %d", len(cs.Groups))
 	}
 }
 
@@ -416,11 +432,14 @@ func TestParseMonitorFormFormMode(t *testing.T) {
 		"settings_mode":        {"form"},
 		"settings_method":      {"GET"},
 		"settings_auth_method": {"none"},
-		"assertions_mode":      {"form"},
-		"assertion_count":      {"1"},
-		"assertion_type_0":     {"status_code"},
-		"assertion_operator_0": {"eq"},
-		"assertion_value_0":    {"200"},
+		"assertions_mode":        {"form"},
+		"group_count":            {"1"},
+		"condition_set_operator": {"and"},
+		"group_0_operator":       {"and"},
+		"group_0_count":          {"1"},
+		"group_0_type_0":         {"status_code"},
+		"group_0_operator_0":     {"eq"},
+		"group_0_value_0":        {"200"},
 	}
 
 	h := testWebHandler(t)

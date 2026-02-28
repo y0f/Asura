@@ -71,16 +71,18 @@ func (p MonitorFormParams) httpMethodOrDefault() string {
 	return "GET"
 }
 
-func monitorFormXData(monType, httpMethod, authMethod, headersJSON, wsHeadersJSON, assertionsJSON string) string {
+func monitorFormXData(monType, httpMethod, authMethod, headersJSON, wsHeadersJSON, conditionsJSON string) string {
 	return `{
     monitorType: '` + JSEscapeString(monType) + `',
     advancedSettings: false,
     advancedAssertions: false,
     httpHeaders: ` + headersJSON + `,
     wsHeaders: ` + wsHeadersJSON + `,
-    assertions: ` + assertionsJSON + `,
+    conditions: ` + conditionsJSON + `,
     httpMethod: '` + JSEscapeString(httpMethod) + `',
     authMethod: '` + JSEscapeString(authMethod) + `',
+    newCond() { return {type:'status_code',operator:'eq',target:'',value:'',degraded:false}; },
+    addGroup() { this.conditions.groups.push({operator:'and',conditions:[this.newCond()]}); },
     operatorsFor(type) {
         switch(type) {
             case 'status_code': case 'response_time': case 'cert_expiry':
@@ -99,12 +101,8 @@ func monitorFormXData(monType, httpMethod, authMethod, headersJSON, wsHeadersJSO
                 return [['eq','='],['neq','!=']];
         }
     },
-    needsTarget(type) {
-        return type === 'json_path' || type === 'header';
-    },
-    needsValue(op) {
-        return op !== 'exists';
-    }
+    needsTarget(type) { return type === 'json_path' || type === 'header'; },
+    needsValue(op) { return op !== 'exists'; }
 }`
 }
 
@@ -638,66 +636,95 @@ templ monitorMQTTSettings(p MonitorFormParams) {
 templ monitorAssertions(p MonitorFormParams) {
 	<div class="border border-line rounded-lg p-5">
 		<div class="flex items-center justify-between mb-4">
-			<span class="text-[11px] text-muted uppercase tracking-widest">Assertions</span>
+			<span class="text-[11px] text-muted uppercase tracking-widest">Conditions</span>
 			<button type="button" @click="advancedAssertions = !advancedAssertions" class="text-[11px] text-brand hover:text-brand/80 transition-colors">
 				<span x-text="advancedAssertions ? 'Form Mode' : 'Advanced (JSON)'"></span>
 			</button>
 		</div>
 		<input type="hidden" name="assertions_mode" :value="advancedAssertions ? 'json' : 'form'"/>
+		<!-- Advanced JSON mode -->
 		<div x-show="advancedAssertions" x-cloak>
-			<textarea name="assertions_json" rows="6" placeholder="[]" class="form-input font-mono resize-y">{ p.AssertionsRaw }</textarea>
+			<textarea name="assertions_json" rows="8" placeholder="{}" class="form-input font-mono text-[12px] resize-y">{ p.AssertionsRaw }</textarea>
 		</div>
+		<!-- Form mode -->
 		<div x-show="!advancedAssertions">
-			<input type="hidden" name="assertion_count" :value="assertions.length"/>
-			<div x-show="assertions.length === 0" class="text-[12px] text-muted py-2">No assertions configured</div>
-			<div class="space-y-3">
-				<template x-for="(a, i) in assertions" :key="i">
-					<div class="border border-line/50 rounded p-3 space-y-3">
-						<div class="flex items-center justify-between">
-							<span class="text-[11px] text-muted" x-text="'Assertion ' + (i+1)"></span>
-							<button type="button" @click="assertions.splice(i, 1)" class="text-red-400 hover:text-red-300 transition-colors text-[14px]">&times;</button>
+			<input type="hidden" name="group_count" :value="conditions.groups.length"/>
+			<input type="hidden" name="condition_set_operator" :value="conditions.operator"/>
+			<div x-show="conditions.groups.length === 0" class="text-[12px] text-muted py-2">No conditions configured</div>
+			<div class="space-y-1">
+				<template x-for="(g, gi) in conditions.groups" :key="gi">
+					<div>
+						<!-- AND/OR connector between groups -->
+						<div x-show="gi > 0" class="flex items-center gap-2 my-2">
+							<div class="flex-1 border-t border-line/30"></div>
+							<select x-model="conditions.operator" class="form-select py-0.5 px-2 text-[11px] font-medium w-20">
+								<option value="and">AND</option>
+								<option value="or">OR</option>
+							</select>
+							<div class="flex-1 border-t border-line/30"></div>
 						</div>
-						<div class="grid grid-cols-2 gap-3">
-							<div>
-								<label class="form-label-sm">Type</label>
-								<select :name="'assertion_type_' + i" x-model="a.type" class="form-select py-1.5 text-[12px]">
-									<option value="status_code">Status Code</option>
-									<option value="body_contains">Body Contains</option>
-									<option value="body_regex">Body Regex</option>
-									<option value="json_path">JSON Path</option>
-									<option value="header">Header</option>
-									<option value="response_time">Response Time</option>
-									<option value="cert_expiry">Cert Expiry</option>
-									<option value="dns_record">DNS Record</option>
-								</select>
+						<!-- Per-group hidden structural inputs -->
+						<input type="hidden" :name="'group_' + gi + '_operator'" :value="g.operator"/>
+						<input type="hidden" :name="'group_' + gi + '_count'" :value="g.conditions.length"/>
+						<!-- Group card -->
+						<div class="border border-line/60 rounded-lg overflow-hidden">
+							<div class="flex items-center justify-between px-3 py-2 bg-surface-200/40 border-b border-line/40">
+								<div class="flex items-center gap-2">
+									<span class="text-[11px] text-muted">Match</span>
+									<select x-model="g.operator" class="form-select py-0.5 px-2 text-[11px] font-medium w-20">
+										<option value="and">ALL</option>
+										<option value="or">ANY</option>
+									</select>
+									<span class="text-[11px] text-muted">conditions</span>
+								</div>
+								<button type="button" @click="conditions.groups.splice(gi, 1)" class="text-muted hover:text-red-400 transition-colors" title="Remove group">
+									<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+								</button>
 							</div>
-							<div>
-								<label class="form-label-sm">Operator</label>
-								<select :name="'assertion_operator_' + i" x-model="a.operator" class="form-select py-1.5 text-[12px]">
-									<template x-for="op in operatorsFor(a.type)" :key="op[0]">
-										<option :value="op[0]" x-text="op[1]"></option>
-									</template>
-								</select>
+							<div class="p-3 space-y-2">
+								<template x-for="(c, ci) in g.conditions" :key="ci">
+									<div class="flex items-start gap-2">
+										<div class="flex-1 grid grid-cols-2 gap-1.5">
+											<select :name="'group_' + gi + '_type_' + ci" x-model="c.type" class="form-select py-1.5 text-[12px]">
+												<option value="status_code">Status Code</option>
+												<option value="body_contains">Body Contains</option>
+												<option value="body_regex">Body Regex</option>
+												<option value="json_path">JSON Path</option>
+												<option value="header">Header</option>
+												<option value="response_time">Response Time (ms)</option>
+												<option value="cert_expiry">Cert Expiry (days)</option>
+												<option value="dns_record">DNS Record</option>
+											</select>
+											<select :name="'group_' + gi + '_operator_' + ci" x-model="c.operator" class="form-select py-1.5 text-[12px]">
+												<template x-for="op in operatorsFor(c.type)" :key="op[0]">
+													<option :value="op[0]" x-text="op[1]"></option>
+												</template>
+											</select>
+											<div x-show="needsTarget(c.type)">
+												<input type="text" :name="'group_' + gi + '_target_' + ci" x-model="c.target" placeholder="Header name or JSON path" class="form-input py-1.5 text-[12px]"/>
+											</div>
+											<div x-show="needsValue(c.operator)" :class="needsTarget(c.type) ? '' : 'col-span-2'">
+												<input type="text" :name="'group_' + gi + '_value_' + ci" x-model="c.value" placeholder="Expected value" class="form-input py-1.5 text-[12px]"/>
+											</div>
+										</div>
+										<div class="flex items-center gap-2 pt-1.5 shrink-0">
+											<label class="flex items-center gap-1 cursor-pointer" title="Soft: mark as degraded instead of down">
+												<input type="checkbox" :name="'group_' + gi + '_degraded_' + ci" value="on" :checked="c.degraded" @change="c.degraded = $event.target.checked" class="form-checkbox w-3 h-3"/>
+												<span class="text-[11px] text-muted">soft</span>
+											</label>
+											<button type="button" @click="g.conditions.splice(ci, 1)" class="text-muted hover:text-red-400 transition-colors" title="Remove condition">
+												<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+											</button>
+										</div>
+									</div>
+								</template>
+								<button type="button" @click="g.conditions.push(newCond())" class="text-[12px] text-brand hover:text-brand/80 transition-colors">+ Add Condition</button>
 							</div>
 						</div>
-						<div class="grid gap-3" :class="needsTarget(a.type) ? 'grid-cols-2' : 'grid-cols-1'">
-							<div x-show="needsTarget(a.type)">
-								<label class="form-label-sm">Target</label>
-								<input type="text" :name="'assertion_target_' + i" x-model="a.target" placeholder="e.g. $.status or Content-Type" class="form-input py-1.5 text-[12px]"/>
-							</div>
-							<div x-show="needsValue(a.operator)">
-								<label class="form-label-sm">Value</label>
-								<input type="text" :name="'assertion_value_' + i" x-model="a.value" placeholder="Expected value" class="form-input py-1.5 text-[12px]"/>
-							</div>
-						</div>
-						<label class="flex items-center gap-2 cursor-pointer">
-							<input type="checkbox" :name="'assertion_degraded_' + i" :checked="a.degraded" class="form-checkbox w-3 h-3"/>
-							<span class="text-[11px] text-muted-light">Soft (mark as degraded instead of down)</span>
-						</label>
 					</div>
 				</template>
 			</div>
-			<button type="button" @click="assertions.push({type:'status_code', operator:'eq', target:'', value:'', degraded:false})" class="mt-3 text-[12px] text-brand hover:text-brand/80 transition-colors">+ Add Assertion</button>
+			<button type="button" @click="addGroup()" class="mt-3 text-[12px] text-brand hover:text-brand/80 transition-colors">+ Add Group</button>
 		</div>
 	</div>
 }
