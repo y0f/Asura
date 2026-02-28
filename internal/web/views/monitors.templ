@@ -627,7 +627,10 @@ templ MonitorDetailPage(p MonitorDetailParams) {
 						<div><span class="text-muted">Resend every</span> <span class="text-muted-light ml-1">{ fmt.Sprint(p.Monitor.ResendInterval) }s</span></div>
 					}
 					if p.Monitor.Description != "" {
-						<div class="col-span-full"><span class="text-muted">Description</span> <span class="text-muted-light ml-1">{ p.Monitor.Description }</span></div>
+						<div class="col-span-full">
+							<span class="text-muted block mb-1">Description</span>
+							<pre class="text-[12px] text-muted-light whitespace-pre-wrap font-sans leading-relaxed">{ p.Monitor.Description }</pre>
+						</div>
 					}
 					if len(p.Tags) > 0 {
 						<div class="col-span-full flex items-center gap-1.5">

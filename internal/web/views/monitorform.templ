@@ -148,8 +148,8 @@ templ MonitorFormPage(p MonitorFormParams) {
 						<input type="text" name="name" value={ p.Monitor.Name } required class="form-input"/>
 					</div>
 					<div>
-						<label class="form-label">Description</label>
-						<textarea name="description" rows="2" placeholder="Optional description" class="form-input resize-y">{ p.Monitor.Description }</textarea>
+						<label class="form-label">Description <span class="text-muted/50 font-normal">(optional, max 5000 chars)</span></label>
+						<textarea name="description" rows="2" maxlength="5000" placeholder="Runbook notes, context, links…" class="form-input resize-y">{ p.Monitor.Description }</textarea>
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>

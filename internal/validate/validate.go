@@ -42,6 +42,9 @@ func ValidateMonitor(m *storage.Monitor) error {
 	if len(m.Name) > 255 {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
+	if len(m.Description) > 5000 {
+		return fmt.Errorf("description must be at most 5000 characters")
+	}
 	if !ValidMonitorTypes[m.Type] {
 		return fmt.Errorf("type must be one of: http, tcp, dns, icmp, tls, websocket, command, heartbeat, docker, domain, grpc, mqtt")
 	}
