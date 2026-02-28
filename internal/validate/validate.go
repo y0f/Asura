@@ -6,6 +6,9 @@ import (
 	"regexp"
 	"strings"
 
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
+
 	"github.com/y0f/asura/internal/incident"
 	"github.com/y0f/asura/internal/storage"
 )
@@ -219,9 +222,11 @@ func ValidateStatusPage(sp *storage.StatusPage) error {
 	if len(sp.CustomHeaderHTML) > 5000 {
 		return fmt.Errorf("custom_header_html must be at most 5000 characters")
 	}
+	sp.CustomHeaderHTML = sanitizeHTML(sp.CustomHeaderHTML)
 	if len(sp.AnalyticsScript) > 5000 {
 		return fmt.Errorf("analytics_script must be at most 5000 characters")
 	}
+	sp.AnalyticsScript = sanitizeAnalyticsScript(sp.AnalyticsScript)
 	return nil
 }
 
@@ -392,6 +397,159 @@ func splitCSSRules(css string) []string {
 		}
 	}
 	return rules
+}
+
+// sanitizeHTML strips dangerous tags and attributes from HTML, allowing only
+// safe structural elements. Used for CustomHeaderHTML on public status pages.
+func sanitizeHTML(input string) string {
+	if input == "" {
+		return ""
+	}
+	tokenizer := html.NewTokenizer(strings.NewReader(input))
+	var buf strings.Builder
+	skipDepth := 0
+	for {
+		tt := tokenizer.Next()
+		switch tt {
+		case html.ErrorToken:
+			return buf.String()
+		case html.TextToken:
+			if skipDepth == 0 {
+				buf.WriteString(html.EscapeString(tokenizer.Token().Data))
+			}
+		case html.StartTagToken, html.SelfClosingTagToken:
+			t := tokenizer.Token()
+			tag := t.DataAtom
+			if !_safeHTMLTags[tag] {
+				if tt == html.StartTagToken {
+					skipDepth++
+				}
+				continue
+			}
+			if skipDepth > 0 {
+				continue
+			}
+			buf.WriteByte('<')
+			buf.WriteString(t.Data)
+			for _, a := range t.Attr {
+				key := strings.ToLower(a.Key)
+				if strings.HasPrefix(key, "on") {
+					continue
+				}
+				if !_safeHTMLAttrs[key] {
+					continue
+				}
+				val := strings.TrimSpace(a.Val)
+				valLower := strings.ToLower(val)
+				if (key == "href" || key == "src" || key == "action") &&
+					!strings.HasPrefix(valLower, "http://") &&
+					!strings.HasPrefix(valLower, "https://") &&
+					!strings.HasPrefix(valLower, "/") &&
+					!strings.HasPrefix(valLower, "#") {
+					continue
+				}
+				buf.WriteByte(' ')
+				buf.WriteString(key)
+				buf.WriteString(`="`)
+				buf.WriteString(html.EscapeString(val))
+				buf.WriteByte('"')
+			}
+			if tt == html.SelfClosingTagToken {
+				buf.WriteString("/>")
+			} else {
+				buf.WriteByte('>')
+			}
+		case html.EndTagToken:
+			t := tokenizer.Token()
+			if !_safeHTMLTags[t.DataAtom] {
+				if skipDepth > 0 {
+					skipDepth--
+				}
+				continue
+			}
+			if skipDepth > 0 {
+				continue
+			}
+			buf.WriteString("</")
+			buf.WriteString(t.Data)
+			buf.WriteByte('>')
+		}
+	}
+}
+
+var _safeHTMLTags = map[atom.Atom]bool{
+	atom.Div: true, atom.Span: true, atom.P: true, atom.A: true,
+	atom.Img: true, atom.Br: true, atom.Hr: true,
+	atom.H1: true, atom.H2: true, atom.H3: true, atom.H4: true, atom.H5: true, atom.H6: true,
+	atom.Strong: true, atom.Em: true, atom.B: true, atom.I: true, atom.U: true, atom.Small: true,
+	atom.Ul: true, atom.Ol: true, atom.Li: true,
+	atom.Blockquote: true, atom.Code: true, atom.Pre: true,
+	atom.Table: true, atom.Thead: true, atom.Tbody: true, atom.Tr: true, atom.Th: true, atom.Td: true,
+	atom.Figure: true, atom.Figcaption: true,
+}
+
+var _safeHTMLAttrs = map[string]bool{
+	"class": true, "id": true, "style": true, "title": true, "alt": true,
+	"href": true, "src": true, "target": true, "rel": true,
+	"width": true, "height": true, "loading": true,
+	"colspan": true, "rowspan": true, "align": true,
+}
+
+// sanitizeAnalyticsScript allows only <script> tags with a src attribute
+// pointing to https URLs. Inline script bodies are stripped.
+func sanitizeAnalyticsScript(input string) string {
+	if input == "" {
+		return ""
+	}
+	tokenizer := html.NewTokenizer(strings.NewReader(input))
+	var buf strings.Builder
+	for {
+		tt := tokenizer.Next()
+		switch tt {
+		case html.ErrorToken:
+			return buf.String()
+		case html.StartTagToken, html.SelfClosingTagToken:
+			t := tokenizer.Token()
+			if t.DataAtom != atom.Script {
+				continue
+			}
+			var src string
+			var safeAttrs []html.Attribute
+			for _, a := range t.Attr {
+				key := strings.ToLower(a.Key)
+				if strings.HasPrefix(key, "on") {
+					continue
+				}
+				if key == "src" {
+					val := strings.TrimSpace(a.Val)
+					if strings.HasPrefix(strings.ToLower(val), "https://") {
+						src = val
+						safeAttrs = append(safeAttrs, html.Attribute{Key: "src", Val: val})
+					}
+				} else if key == "async" || key == "defer" || key == "type" ||
+					key == "crossorigin" || key == "integrity" ||
+					key == "data-domain" || key == "data-website-id" ||
+					key == "data-host-url" || key == "data-do-not-track" ||
+					key == "data-api" || key == "data-exclude" {
+					safeAttrs = append(safeAttrs, html.Attribute{Key: key, Val: a.Val})
+				}
+			}
+			if src == "" {
+				continue
+			}
+			buf.WriteString("<script")
+			for _, a := range safeAttrs {
+				buf.WriteByte(' ')
+				buf.WriteString(a.Key)
+				buf.WriteString(`="`)
+				buf.WriteString(html.EscapeString(a.Val))
+				buf.WriteByte('"')
+			}
+			buf.WriteString("></script>\n")
+		case html.EndTagToken:
+			// script end tags handled inline above
+		}
+	}
 }
 
 func sanitizeCSSDeclarations(body string) string {

@@ -495,6 +495,72 @@ func TestValidateTag(t *testing.T) {
 	}
 }
 
+func TestSanitizeHTML(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"empty", "", ""},
+		{"plain text", "Hello world", "Hello world"},
+		{"safe tags", `<p>Hello <strong>world</strong></p>`, `<p>Hello <strong>world</strong></p>`},
+		{"safe link", `<a href="https://example.com">link</a>`, `<a href="https://example.com">link</a>`},
+		{"safe image", `<img src="https://img.example.com/logo.png" alt="Logo"/>`, `<img src="https://img.example.com/logo.png" alt="Logo"/>`},
+		{"strips script", `<p>Hello</p><script>alert(1)</script>`, `<p>Hello</p>`},
+		{"strips iframe", `<div><iframe src="https://evil.com"></iframe></div>`, `<div></div>`},
+		{"strips object", `<object data="evil.swf"></object>`, ``},
+		{"strips form", `<form action="/steal"><input></form>`, ``},
+		{"strips event handlers", `<div onclick="alert(1)">click</div>`, `<div>click</div>`},
+		{"strips onload", `<img src="https://img.example.com/x.png" onload="alert(1)"/>`, `<img src="https://img.example.com/x.png"/>`},
+		{"strips onerror", `<img src="/logo.png" onerror="alert(1)"/>`, `<img src="/logo.png"/>`},
+		{"strips javascript href", `<a href="javascript:alert(1)">xss</a>`, `<a>xss</a>`},
+		{"strips data href", `<a href="data:text/html,<script>alert(1)</script>">xss</a>`, `<a>xss</a>`},
+		{"strips style tag", `<style>body{display:none}</style><p>hi</p>`, `<p>hi</p>`},
+		{"keeps class attribute", `<div class="banner">hi</div>`, `<div class="banner">hi</div>`},
+		{"keeps style attribute", `<div style="color:red">hi</div>`, `<div style="color:red">hi</div>`},
+		{"strips unknown attributes", `<div data-evil="x" draggable="true">hi</div>`, `<div>hi</div>`},
+		{"nested safe", `<div><p><strong>bold</strong> and <em>italic</em></p></div>`, `<div><p><strong>bold</strong> and <em>italic</em></p></div>`},
+		{"relative src ok", `<img src="/static/logo.png" alt="ok"/>`, `<img src="/static/logo.png" alt="ok"/>`},
+		{"anchor href ok", `<a href="#section">jump</a>`, `<a href="#section">jump</a>`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeHTML(tt.input)
+			if got != tt.want {
+				t.Errorf("sanitizeHTML() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSanitizeAnalyticsScript(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"empty", "", ""},
+		{"valid plausible", `<script defer data-domain="example.com" src="https://plausible.io/js/script.js"></script>`, `<script defer="" data-domain="example.com" src="https://plausible.io/js/script.js"></script>` + "\n"},
+		{"valid umami", `<script async src="https://analytics.umami.is/script.js" data-website-id="abc123"></script>`, `<script async="" src="https://analytics.umami.is/script.js" data-website-id="abc123"></script>` + "\n"},
+		{"strips inline script", `<script>alert(document.cookie)</script>`, ``},
+		{"strips http src", `<script src="http://evil.com/track.js"></script>`, ``},
+		{"strips non-script tags", `<div>hello</div><script src="https://ok.com/a.js"></script>`, `<script src="https://ok.com/a.js"></script>` + "\n"},
+		{"strips event handlers", `<script src="https://ok.com/a.js" onload="alert(1)"></script>`, `<script src="https://ok.com/a.js"></script>` + "\n"},
+		{"strips javascript src", `<script src="javascript:alert(1)"></script>`, ``},
+		{"plain text stripped", `alert('xss')`, ``},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeAnalyticsScript(tt.input)
+			if got != tt.want {
+				t.Errorf("sanitizeAnalyticsScript() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestValidateMonitorTags(t *testing.T) {
 	tests := []struct {
 		name    string
