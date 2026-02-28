@@ -311,7 +311,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(monitorListXData(p.monitorIDs()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 268, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 268, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -329,7 +329,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var4 templ.SafeURL
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors/new"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 272, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 272, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -347,7 +347,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 			var templ_7745c5c3_Var5 templ.SafeURL
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 278, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 278, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -365,7 +365,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Type)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 280, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 280, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -383,7 +383,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Search)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 284, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 284, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -405,7 +405,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 			var templ_7745c5c3_Var9 templ.SafeURL
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.filterHref("")))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 289, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 289, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -418,7 +418,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -441,7 +441,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var12 templ.SafeURL
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.filterHref(t)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 292, Col: 45}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 292, Col: 45}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -454,7 +454,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var11).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -467,7 +467,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(TypeLabel(t))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 293, Col: 125}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 293, Col: 125}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -491,7 +491,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var16 templ.SafeURL
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.tagFilterHref(tag.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 296, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 296, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -504,7 +504,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var15).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -517,7 +517,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 298, Col: 98}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 298, Col: 98}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -530,7 +530,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 298, Col: 118}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 298, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -553,7 +553,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 				var templ_7745c5c3_Var20 templ.SafeURL
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors/bulk"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 305, Col: 78}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 305, Col: 78}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
@@ -576,7 +576,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 						var templ_7745c5c3_Var21 string
 						templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(g.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 321, Col: 41}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 321, Col: 41}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 						if templ_7745c5c3_Err != nil {
@@ -589,7 +589,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 						var templ_7745c5c3_Var22 string
 						templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(g.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 321, Col: 52}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 321, Col: 52}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 						if templ_7745c5c3_Err != nil {
@@ -637,7 +637,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 					var templ_7745c5c3_Var23 string
 					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("selected.includes(%d) && 'bg-brand/5'", m.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 352, Col: 130}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 352, Col: 130}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 					if templ_7745c5c3_Err != nil {
@@ -655,7 +655,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 						var templ_7745c5c3_Var24 string
 						templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("selected.includes(%d)", m.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 355, Col: 88}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 355, Col: 88}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 						if templ_7745c5c3_Err != nil {
@@ -668,7 +668,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 						var templ_7745c5c3_Var25 string
 						templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("toggle(%d)", m.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 355, Col: 132}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 355, Col: 132}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 						if templ_7745c5c3_Err != nil {
@@ -679,14 +679,14 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<td class=\"px-4 py-3\"><div class=\"flex items-center gap-1.5\"><a href=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<td class=\"px-4 py-3\"><div class=\"flex items-center gap-2 flex-wrap\"><a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var26 templ.SafeURL
 					templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 360, Col: 84}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 360, Col: 84}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 					if templ_7745c5c3_Err != nil {
@@ -699,7 +699,7 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 					var templ_7745c5c3_Var27 string
 					templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(m.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 360, Col: 179}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 360, Col: 179}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 					if templ_7745c5c3_Err != nil {
@@ -709,244 +709,267 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					for _, tag := range p.TagMap[m.ID] {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<span class=\"inline-block w-1.5 h-1.5 rounded-full shrink-0\" style=\"")
+					if tags := p.TagMap[m.ID]; len(tags) > 0 {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div class=\"flex items-center gap-1\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var28 string
-						templ_7745c5c3_Var28, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
-						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 362, Col: 114}
+						for _, tag := range tags {
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<span class=\"inline-flex items-center gap-1 px-1.5 py-px rounded-full text-[10px] border border-line\" title=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var28 string
+							templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(tagTooltip(tag))
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 364, Col: 140}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><span class=\"w-1.5 h-1.5 rounded-full\" style=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var29 string
+							templ_7745c5c3_Var29, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 365, Col: 95}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\"></span> <span class=\"text-muted-light\">")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var30 string
+							templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 366, Col: 57}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</span></span>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" title=\"")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						var templ_7745c5c3_Var29 string
-						templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(tagTooltip(tag))
-						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 362, Col: 140}
-						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"></span>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div><div class=\"text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var30 string
-					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(m.Target)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 365, Col: 92}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></td><td class=\"px-4 py-3\"><span class=\"text-[10px] text-brand uppercase tracking-wider\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div><div class=\"text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var31 string
-					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(TypeLabel(m.Type))
+					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(m.Target)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 368, Col: 92}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 372, Col: 92}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span></td><td class=\"px-4 py-3\"><div class=\"flex items-center gap-2\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></td><td class=\"px-4 py-3\"><span class=\"text-[10px] text-brand uppercase tracking-wider\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var32 = []any{"w-1.5 h-1.5 rounded-full", StatusDot(m.Status), templ.KV("animate-pulse-dot", m.Status == "down")}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var32...)
+					var templ_7745c5c3_Var32 string
+					templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(TypeLabel(m.Type))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 375, Col: 92}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<div class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span></td><td class=\"px-4 py-3\"><div class=\"flex items-center gap-2\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var33 string
-					templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var32).String())
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
+					var templ_7745c5c3_Var33 = []any{"w-1.5 h-1.5 rounded-full", StatusDot(m.Status), templ.KV("animate-pulse-dot", m.Status == "down")}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\"></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<div class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var34 = []any{"text-[12px]", StatusColor(m.Status)}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var34...)
+					var templ_7745c5c3_Var34 string
+					templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<span class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "\"></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var35 string
-					templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var34).String())
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+					var templ_7745c5c3_Var35 = []any{"text-[12px]", StatusColor(m.Status)}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var35...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<span class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var36 string
-					templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(m.Status)
+					templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var35).String())
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 373, Col: 75}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</span></div></td><td class=\"px-4 py-3 text-[12px] text-muted\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var37 string
+					templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(m.Status)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 380, Col: 75}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</span></div></td><td class=\"px-4 py-3 text-[12px] text-muted\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if m.LastCheckAt != nil {
-						var templ_7745c5c3_Var37 string
-						templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(m.LastCheckAt))
+						var templ_7745c5c3_Var38 string
+						templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(m.LastCheckAt))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 378, Col: 36}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 385, Col: 36}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<span class=\"text-muted/40\">—</span>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<span class=\"text-muted/40\">—</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</td><td class=\"px-4 py-3 text-right\"><div class=\"flex items-center justify-end gap-2\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</td><td class=\"px-4 py-3 text-right\"><div class=\"flex items-center justify-end gap-2\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if p.Perms["monitors.write"] {
 						if m.Enabled {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<form method=\"POST\" action=\"")
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							var templ_7745c5c3_Var38 templ.SafeURL
-							templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, m.ID)))
-							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 387, Col: 111}
-							}
-							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" class=\"contents\"><button type=\"submit\" class=\"inline-flex items-center text-muted hover:text-yellow-400 transition-colors\" title=\"Pause\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg></button></form>")
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-						} else {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<form method=\"POST\" action=\"")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<form method=\"POST\" action=\"")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var39 templ.SafeURL
-							templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, m.ID)))
+							templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, m.ID)))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 393, Col: 112}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 394, Col: 111}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "\" class=\"contents\"><button type=\"submit\" class=\"inline-flex items-center text-muted hover:text-emerald-400 transition-colors\" title=\"Resume\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg></button></form>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" class=\"contents\"><button type=\"submit\" class=\"inline-flex items-center text-muted hover:text-yellow-400 transition-colors\" title=\"Pause\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg></button></form>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+						} else {
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<form method=\"POST\" action=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var40 templ.SafeURL
+							templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, m.ID)))
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 400, Col: 112}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" class=\"contents\"><button type=\"submit\" class=\"inline-flex items-center text-muted hover:text-emerald-400 transition-colors\" title=\"Resume\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg></button></form>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<a href=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var40 templ.SafeURL
-					templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)))
+					var templ_7745c5c3_Var41 templ.SafeURL
+					templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 400, Col: 84}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 407, Col: 84}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" class=\"inline-flex items-center text-muted hover:text-white transition-colors\" title=\"View\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"></path><circle cx=\"12\" cy=\"12\" r=\"3\"></circle></svg></a> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\" class=\"inline-flex items-center text-muted hover:text-white transition-colors\" title=\"View\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\"></path><circle cx=\"12\" cy=\"12\" r=\"3\"></circle></svg></a> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if p.Perms["monitors.write"] {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<a href=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<a href=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var41 templ.SafeURL
-						templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, m.ID)))
+						var templ_7745c5c3_Var42 templ.SafeURL
+						templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, m.ID)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 404, Col: 90}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 411, Col: 90}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "\" class=\"inline-flex items-center text-muted hover:text-brand transition-colors\" title=\"Edit\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"></path><path d=\"m15 5 4 4\"></path></svg></a>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "\" class=\"inline-flex items-center text-muted hover:text-brand transition-colors\" title=\"Edit\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"></path><path d=\"m15 5 4 4\"></path></svg></a>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</div></td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</div></td></tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "</tbody></table></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</tbody></table></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Result != nil && p.Result.TotalPages > 1 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var42 string
-					templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d · %d monitors", p.Result.Page, p.Result.TotalPages, p.Result.Total))
+					var templ_7745c5c3_Var43 string
+					templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d · %d monitors", p.Result.Page, p.Result.TotalPages, p.Result.Total))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 417, Col: 153}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 424, Col: 153}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "</span><div class=\"flex gap-1\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</span><div class=\"flex gap-1\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -962,59 +985,59 @@ func MonitorListPage(p MonitorListParams) templ.Component {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div class=\"px-4 py-16 text-center\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<div class=\"px-4 py-16 text-center\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Search != "" || p.Type != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<p class=\"text-muted text-[13px] mb-2\">No monitors match your search</p><a href=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var43 templ.SafeURL
-					templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 432, Col: 56}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\" class=\"text-[12px] text-brand hover:text-brand/80 transition-colors\">Clear filters</a>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<p class=\"text-muted text-[13px] mb-2\">No monitors configured</p><a href=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "<p class=\"text-muted text-[13px] mb-2\">No monitors match your search</p><a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var44 templ.SafeURL
-					templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors/new"))
+					templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 435, Col: 60}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 439, Col: 56}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\" class=\"text-[12px] text-brand hover:text-brand/80 transition-colors\">Create your first monitor</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "\" class=\"text-[12px] text-brand hover:text-brand/80 transition-colors\">Clear filters</a>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<p class=\"text-muted text-[13px] mb-2\">No monitors configured</p><a href=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var45 templ.SafeURL
+					templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors/new"))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 442, Col: 60}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "\" class=\"text-[12px] text-brand hover:text-brand/80 transition-colors\">Create your first monitor</a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1044,12 +1067,12 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var45 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var45 == nil {
-			templ_7745c5c3_Var45 = templ.NopComponent
+		templ_7745c5c3_Var46 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var46 == nil {
+			templ_7745c5c3_Var46 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var46 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var47 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1061,318 +1084,283 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<div id=\"monitor-detail\" hx-get=\"\" hx-trigger=\"every 15s\" hx-select=\"#monitor-detail\" hx-swap=\"outerHTML\" hx-push-url=\"false\"><div class=\"flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6\"><div><a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<div id=\"monitor-detail\" hx-get=\"\" hx-trigger=\"every 15s\" hx-select=\"#monitor-detail\" hx-swap=\"outerHTML\" hx-push-url=\"false\"><div class=\"flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6\"><div><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var47 templ.SafeURL
-			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
+			var templ_7745c5c3_Var48 templ.SafeURL
+			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 449, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 456, Col: 54}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "\" class=\"inline-flex items-center gap-1 text-[11px] text-muted hover:text-muted-light transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m15 18-6-6 6-6\"></path></svg> Monitors</a><div class=\"flex items-center gap-2.5 mt-1.5\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var48 = []any{"w-2 h-2 rounded-full", StatusDot(p.Monitor.Status), templ.KV("animate-pulse-dot", p.Monitor.Status == "down")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var48...)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "\" class=\"inline-flex items-center gap-1 text-[11px] text-muted hover:text-muted-light transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m15 18-6-6 6-6\"></path></svg> Monitors</a><div class=\"flex items-center gap-2.5 mt-1.5\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "<div class=\"")
+			var templ_7745c5c3_Var49 = []any{"w-2 h-2 rounded-full", StatusDot(p.Monitor.Status), templ.KV("animate-pulse-dot", p.Monitor.Status == "down")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var49...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var49 string
-			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var48).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "\"></div><h1 class=\"text-[17px] font-medium text-white\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<div class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var50 string
-			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Name)
+			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var49).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 455, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "</h1>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "\"></div><h1 class=\"text-[17px] font-medium text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var51 = []any{"text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(p.Monitor.Status)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var51...)
+			var templ_7745c5c3_Var51 string
+			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 462, Col: 69}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<span class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</h1>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var52 string
-			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var51).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
+			var templ_7745c5c3_Var52 = []any{"text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(p.Monitor.Status)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var52...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "<span class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var53 string
-			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Status)
+			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var52).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 456, Col: 136}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "</span> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if !p.Monitor.Enabled {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "<span class=\"text-[10px] tracking-wide px-1.5 py-px rounded border border-line text-muted\">paused</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "</div><div class=\"text-[11px] text-muted mt-1 ml-[18px] font-mono\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var54 string
-			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(TypeLabel(p.Monitor.Type))
+			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 461, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 463, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, " · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "</span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if !p.Monitor.Enabled {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "<span class=\"text-[10px] tracking-wide px-1.5 py-px rounded border border-line text-muted\">paused</span>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "</div><div class=\"text-[11px] text-muted mt-1 ml-[18px] font-mono\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var55 string
-			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Target)
+			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(TypeLabel(p.Monitor.Type))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 461, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 468, Col: 93}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, " · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, " · ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var56 string
-			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Interval))
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Target)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 461, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 468, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "s interval · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, " · ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var57 string
-			templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Timeout))
+			templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Interval))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 461, Col: 202}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 468, Col: 155}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, "s timeout</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "s interval · ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var58 string
+			templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Timeout))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 468, Col: 202}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "s timeout</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.Perms["monitors.write"] {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, "<div class=\"flex items-center gap-1.5 shrink-0\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "<div class=\"flex items-center gap-1.5 shrink-0\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Monitor.Enabled {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "<form method=\"POST\" action=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var58 templ.SafeURL
-					templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, p.Monitor.ID)))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 466, Col: 112}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-yellow-400 hover:border-yellow-500/20 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg> Pause</button></form>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, "<form method=\"POST\" action=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "<form method=\"POST\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var59 templ.SafeURL
-					templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, p.Monitor.ID)))
+					templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/pause", p.BasePath, p.Monitor.ID)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 473, Col: 113}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 473, Col: 112}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg> Resume</button></form>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-yellow-400 hover:border-yellow-500/20 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg> Pause</button></form>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "<form method=\"POST\" action=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var60 templ.SafeURL
+					templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/resume", p.BasePath, p.Monitor.ID)))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 480, Col: 113}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg> Resume</button></form>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, "<form method=\"POST\" action=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var60 templ.SafeURL
-				templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/clone", p.BasePath, p.Monitor.ID)))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 480, Col: 111}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-brand hover:border-brand/20 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"></rect><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"></path></svg> Clone</button></form><a href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "<form method=\"POST\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var61 templ.SafeURL
-				templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, p.Monitor.ID)))
+				templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/clone", p.BasePath, p.Monitor.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 486, Col: 91}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 487, Col: 111}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"></path><path d=\"m15 5 4 4\"></path></svg> Edit</a><form method=\"POST\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-muted border border-line rounded hover:text-brand hover:border-brand/20 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"></rect><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"></path></svg> Clone</button></form><a href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var62 templ.SafeURL
-				templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/delete", p.BasePath, p.Monitor.ID)))
+				templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/edit", p.BasePath, p.Monitor.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 490, Col: 112}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 493, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "\" x-data x-on:submit.prevent=\"if(confirm('Delete this monitor?')) $el.submit()\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h18\"></path><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"></path><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"></path></svg> Delete</button></form></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-brand border border-brand/20 rounded hover:bg-brand/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"></path><path d=\"m15 5 4 4\"></path></svg> Edit</a><form method=\"POST\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if p.OpenIncident != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "<div class=\"mb-5 px-4 py-2.5 border border-red-500/15 rounded text-[13px] text-red-400 flex items-center gap-2\"><svg class=\"w-3.5 h-3.5 shrink-0\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"></path><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"></line><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"></line></svg> Active incident: ")
+				var templ_7745c5c3_Var63 templ.SafeURL
+				templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d/delete", p.BasePath, p.Monitor.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var63 string
-				templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(p.OpenIncident.Cause)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 502, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 497, Col: 112}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, " <a href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\" x-data x-on:submit.prevent=\"if(confirm('Delete this monitor?')) $el.submit()\"><button type=\"submit\" class=\"inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-red-400 border border-red-500/20 rounded hover:bg-red-500/5 transition-colors\"><svg class=\"w-3.5 h-3.5\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h18\"></path><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"></path><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"></path></svg> Delete</button></form></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var64 templ.SafeURL
-				templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/incidents/%d", p.BasePath, p.OpenIncident.ID)))
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if p.OpenIncident != nil {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<div class=\"mb-5 px-4 py-2.5 border border-red-500/15 rounded text-[13px] text-red-400 flex items-center gap-2\"><svg class=\"w-3.5 h-3.5 shrink-0\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"></path><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"></line><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"></line></svg> Active incident: ")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 503, Col: 91}
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var64 string
+				templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinStringErrs(p.OpenIncident.Cause)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 509, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var64))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "\" class=\"text-red-400/80 hover:text-red-300 underline underline-offset-2 ml-1\">View &rarr;</a></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, " <a href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var65 templ.SafeURL
+				templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/incidents/%d", p.BasePath, p.OpenIncident.ID)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 510, Col: 91}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\" class=\"text-red-400/80 hover:text-red-300 underline underline-offset-2 ml-1\">View &rarr;</a></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<div class=\"grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5\"><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 24h</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<div class=\"grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5\"><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 24h</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var65 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime24h)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var65...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<div class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var66 string
-			templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var65).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var66))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var67 string
-			templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime24h))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 509, Col: 107}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 7d</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var68 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime7d)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var68...)
+			var templ_7745c5c3_Var66 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime24h)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var66...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1380,12 +1368,12 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var69 string
-			templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var68).String())
+			var templ_7745c5c3_Var67 string
+			templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var66).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1393,21 +1381,21 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var70 string
-			templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime7d))
+			var templ_7745c5c3_Var68 string
+			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime24h))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 513, Col: 105}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 516, Col: 107}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 30d</div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var68))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var71 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime30d)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var71...)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 7d</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var69 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime7d)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var69...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1415,12 +1403,12 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var72 string
-			templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var71).String())
+			var templ_7745c5c3_Var70 string
+			templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var69).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1428,586 +1416,621 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var73 string
-			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime30d))
+			var templ_7745c5c3_Var71 string
+			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime7d))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 517, Col: 107}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 520, Col: 105}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Uptime 30d</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var72 = []any{"text-lg font-semibold tabular-nums", UptimeColor(p.Uptime30d)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var72...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var73 string
+			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var72).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Checks 24h</div><div class=\"text-lg font-semibold text-white tabular-nums\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var74 string
-			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.TotalChecks))
+			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(UptimeFmt(p.Uptime30d))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 521, Col: 91}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 524, Col: 107}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var74))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">Checks 24h</div><div class=\"text-lg font-semibold text-white tabular-nums\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var75 string
+			templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.TotalChecks))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 528, Col: 91}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.TotalChecks > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<div class=\"flex items-center gap-2 mt-0.5\"><span class=\"text-[10px] text-emerald-400\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "<div class=\"flex items-center gap-2 mt-0.5\"><span class=\"text-[10px] text-emerald-400\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var75 string
-				templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.UpChecks))
+				var templ_7745c5c3_Var76 string
+				templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.UpChecks))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 524, Col: 74}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 531, Col: 74}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var76))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, " up</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, " up</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.DownChecks > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "<span class=\"text-[10px] text-red-400\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "<span class=\"text-[10px] text-red-400\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var76 string
-					templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.DownChecks))
+					var templ_7745c5c3_Var77 string
+					templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.DownChecks))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 526, Col: 73}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 533, Col: 73}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var76))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var77))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, " down</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, " down</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.showPercentiles() {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "<div class=\"grid grid-cols-3 gap-3 mb-5\"><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p50</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var77 string
-				templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P50))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 536, Col: 95}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var77))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p95</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "<div class=\"grid grid-cols-3 gap-3 mb-5\"><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p50</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var78 string
-				templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P95))
+				templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P50))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 540, Col: 95}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 543, Col: 95}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var78))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p99</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p95</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var79 string
-				templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P99))
+				templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P95))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 544, Col: 95}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 547, Col: 95}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var79))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</div></div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "</div></div><div class=\"border border-line rounded-lg px-4 py-3\"><div class=\"stat-label\">p99</div><div class=\"text-lg font-semibold text-white tabular-nums font-mono\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var80 string
+				templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.JoinStringErrs(FormatFloat(p.P99))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 551, Col: 95}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var80))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "<div id=\"response-chart\" hx-preserve=\"true\" data-chart-url=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var80 string
-			templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/monitors/%d/chart", p.BasePath, p.Monitor.ID))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 549, Col: 82}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var80))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "\" class=\"border border-line rounded-lg px-4 py-3 mb-5\" x-data=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "<div id=\"response-chart\" hx-preserve=\"true\" data-chart-url=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var81 string
-			templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(monitorChartXData())
+			templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/monitors/%d/chart", p.BasePath, p.Monitor.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 551, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 556, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "\" x-init=\"init()\" x-cloak><div class=\"flex items-center justify-between mb-3\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Response Time</h2><div class=\"flex gap-1\"><template x-for=\"r in ['1h','6h','24h','7d','30d']\" :key=\"r\"><button @click=\"range = r; fetchData()\" :class=\"range === r ? 'text-brand bg-brand/[0.08] border-brand/20' : 'text-muted hover:text-muted-light border-line hover:border-line-light'\" class=\"px-2 py-0.5 text-[10px] border rounded transition-colors\" x-text=\"r\"></button></template></div></div><div x-show=\"loading\" class=\"h-[200px] flex items-center justify-center\"><div class=\"text-[11px] text-muted\">Loading chart...</div></div><div x-show=\"!loading && !points.length\" class=\"h-[200px] flex items-center justify-center\"><div class=\"text-[11px] text-muted\">No data for this time range</div></div><div x-show=\"!loading && points.length\" class=\"relative\"><div x-ref=\"chart\"></div><div x-ref=\"tooltip\" class=\"chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10\" style=\"display:none\"><div class=\"tip-date text-[10px] text-muted\"></div><div class=\"tip-value text-[12px] text-white font-mono\"></div><div class=\"tip-status text-[10px] text-red-400\" style=\"display:none\"></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "\" class=\"border border-line rounded-lg px-4 py-3 mb-5\" x-data=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var82 string
+			templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(monitorChartXData())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 558, Col: 32}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "\" x-init=\"init()\" x-cloak><div class=\"flex items-center justify-between mb-3\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Response Time</h2><div class=\"flex gap-1\"><template x-for=\"r in ['1h','6h','24h','7d','30d']\" :key=\"r\"><button @click=\"range = r; fetchData()\" :class=\"range === r ? 'text-brand bg-brand/[0.08] border-brand/20' : 'text-muted hover:text-muted-light border-line hover:border-line-light'\" class=\"px-2 py-0.5 text-[10px] border rounded transition-colors\" x-text=\"r\"></button></template></div></div><div x-show=\"loading\" class=\"h-[200px] flex items-center justify-center\"><div class=\"text-[11px] text-muted\">Loading chart...</div></div><div x-show=\"!loading && !points.length\" class=\"h-[200px] flex items-center justify-center\"><div class=\"text-[11px] text-muted\">No data for this time range</div></div><div x-show=\"!loading && points.length\" class=\"relative\"><div x-ref=\"chart\"></div><div x-ref=\"tooltip\" class=\"chart-tooltip absolute pointer-events-none bg-surface-100 border border-line rounded px-2 py-1.5 z-10\" style=\"display:none\"><div class=\"tip-date text-[10px] text-muted\"></div><div class=\"tip-value text-[12px] text-white font-mono\"></div><div class=\"tip-status text-[10px] text-red-400\" style=\"display:none\"></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.LatestCheck != nil && p.Monitor.Type == "tls" && p.LatestCheck.CertExpiry != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5 flex items-center justify-between\"><div><div class=\"stat-label\">TLS Certificate</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5 flex items-center justify-between\"><div><div class=\"stat-label\">TLS Certificate</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var82 = []any{"text-[13px] font-medium", CertColor(p.LatestCheck.CertExpiry)}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var82...)
+				var templ_7745c5c3_Var83 = []any{"text-[13px] font-medium", CertColor(p.LatestCheck.CertExpiry)}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var83...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "<div class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var83 string
-				templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var82).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "<div class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var84 string
-				templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(CertDays(p.LatestCheck.CertExpiry)))
+				templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var83).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 581, Col: 132}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, " days remaining</div></div><div class=\"text-[11px] text-muted font-mono\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var85 string
-				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(p.LatestCheck.CertExpiry.Format("2006-01-02"))
+				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(CertDays(p.LatestCheck.CertExpiry)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 583, Col: 98}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 588, Col: 132}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var85))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "</div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, " days remaining</div></div><div class=\"text-[11px] text-muted font-mono\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var86 string
+				templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(p.LatestCheck.CertExpiry.Format("2006-01-02"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 590, Col: 98}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "</div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if p.LatestCheck != nil && p.Monitor.Type == "dns" {
 				if records := ParseDNS(p.LatestCheck.DNSRecords); len(records) > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5\"><div class=\"stat-label mb-2\">DNS Records</div><div class=\"space-y-0.5\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5\"><div class=\"stat-label mb-2\">DNS Records</div><div class=\"space-y-0.5\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					for _, rec := range records {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "<div class=\"text-[12px] text-muted-light font-mono\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "<div class=\"text-[12px] text-muted-light font-mono\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var86 string
-						templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(rec)
+						var templ_7745c5c3_Var87 string
+						templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(rec)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 592, Col: 65}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 599, Col: 65}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "</div>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "</div>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "</div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5\"><div class=\"stat-label mb-2\">Configuration</div><div class=\"grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]\"><div><span class=\"text-muted\">Interval</span> <span class=\"text-muted-light ml-1\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var87 string
-			templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Interval))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 601, Col: 119}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "s</span></div><div><span class=\"text-muted\">Timeout</span> <span class=\"text-muted-light ml-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "<div class=\"border border-line rounded-lg px-4 py-3 mb-5\"><div class=\"stat-label mb-2\">Configuration</div><div class=\"grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]\"><div><span class=\"text-muted\">Interval</span> <span class=\"text-muted-light ml-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var88 string
-			templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Timeout))
+			templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Interval))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 602, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 608, Col: 119}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var88))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "s</span></div><div><span class=\"text-muted\">Fail threshold</span> <span class=\"text-muted-light ml-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "s</span></div><div><span class=\"text-muted\">Timeout</span> <span class=\"text-muted-light ml-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var89 string
-			templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.FailureThreshold))
+			templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.Timeout))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 603, Col: 133}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 609, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var89))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "</span></div><div><span class=\"text-muted\">Success threshold</span> <span class=\"text-muted-light ml-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "s</span></div><div><span class=\"text-muted\">Fail threshold</span> <span class=\"text-muted-light ml-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var90 string
-			templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.SuccessThreshold))
+			templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.FailureThreshold))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 604, Col: 136}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 610, Col: 133}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var90))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "</span></div><div><span class=\"text-muted\">Enabled</span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "</span></div><div><span class=\"text-muted\">Success threshold</span> <span class=\"text-muted-light ml-1\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var91 string
+			templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.SuccessThreshold))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 611, Col: 136}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "</span></div><div><span class=\"text-muted\">Enabled</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.Monitor.Enabled {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "<span class=\"text-emerald-400 ml-1\">yes</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<span class=\"text-emerald-400 ml-1\">yes</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "<span class=\"text-muted ml-1\">no</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "<span class=\"text-muted ml-1\">no</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.Monitor.TrackChanges {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<div><span class=\"text-muted\">Track changes</span> <span class=\"text-brand ml-1\">yes</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "<div><span class=\"text-muted\">Track changes</span> <span class=\"text-brand ml-1\">yes</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if p.Monitor.UpsideDown {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "<div><span class=\"text-muted\">Upside-down</span> <span class=\"text-yellow-400 ml-1\">yes</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<div><span class=\"text-muted\">Upside-down</span> <span class=\"text-yellow-400 ml-1\">yes</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if p.Monitor.ResendInterval > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "<div><span class=\"text-muted\">Resend every</span> <span class=\"text-muted-light ml-1\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var91 string
-				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.ResendInterval))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 620, Col: 130}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "s</span></div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			if p.Monitor.Description != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<div class=\"col-span-full\"><span class=\"text-muted\">Description</span> <span class=\"text-muted-light ml-1\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "<div><span class=\"text-muted\">Resend every</span> <span class=\"text-muted-light ml-1\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var92 string
-				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Description)
+				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.ResendInterval))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 623, Col: 136}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 627, Col: 130}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var92))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "s</span></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if p.Monitor.Description != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "<div class=\"col-span-full\"><span class=\"text-muted\">Description</span> <span class=\"text-muted-light ml-1\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var93 string
+				templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Description)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 630, Col: 136}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if len(p.Tags) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "<div class=\"col-span-full flex items-center gap-1.5\"><span class=\"text-muted\">Tags</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "<div class=\"col-span-full flex items-center gap-1.5\"><span class=\"text-muted\">Tags</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, tag := range p.Tags {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, "<span class=\"inline-flex items-center gap-1 ml-1 px-1.5 py-px rounded text-[11px] border border-line\"><span class=\"inline-block w-1.5 h-1.5 rounded-full\" style=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var93 string
-					templ_7745c5c3_Var93, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 630, Col: 101}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "\"></span> <span class=\"text-muted-light\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "<span class=\"inline-flex items-center gap-1 ml-1 px-1.5 py-px rounded text-[11px] border border-line\"><span class=\"inline-block w-1.5 h-1.5 rounded-full\" style=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var94 string
-					templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
+					templ_7745c5c3_Var94, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 631, Col: 50}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 637, Col: 101}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var94))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "</span> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "\"></span> <span class=\"text-muted-light\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var95 string
+					templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 638, Col: 50}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "</span> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if tag.Value != "" {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "<span class=\"text-muted\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "<span class=\"text-muted\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var95 string
-						templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Value)
+						var templ_7745c5c3_Var96 string
+						templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Value)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 633, Col: 46}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 640, Col: 46}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "</span>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "</div></div><div class=\"border border-line rounded-lg mb-5 overflow-hidden\"><div class=\"px-4 py-2.5 border-b border-line flex items-center justify-between\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Recent Checks</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "</div></div><div class=\"border border-line rounded-lg mb-5 overflow-hidden\"><div class=\"px-4 py-2.5 border-b border-line flex items-center justify-between\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Recent Checks</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if p.Checks != nil && p.Checks.Total > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "<span class=\"text-[10px] text-muted/50 tabular-nums\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "<span class=\"text-[10px] text-muted/50 tabular-nums\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var96 string
-				templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Checks.Total))
+				var templ_7745c5c3_Var97 string
+				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Checks.Total))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 645, Col: 87}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 652, Col: 87}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var97))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, " total</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, " total</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if cks := p.checks(); len(cks) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "<div class=\"overflow-x-auto\"><table class=\"w-full min-w-[600px]\"><thead><tr class=\"border-b border-line text-left\"><th class=\"th py-2\">Status</th><th class=\"th py-2\">Response</th>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<div class=\"overflow-x-auto\"><table class=\"w-full min-w-[600px]\"><thead><tr class=\"border-b border-line text-left\"><th class=\"th py-2\">Status</th><th class=\"th py-2\">Response</th>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Monitor.Type == "http" || p.Monitor.Type == "websocket" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "<th class=\"th py-2\">Code</th>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "<th class=\"th py-2\">Code</th>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 				if p.Monitor.Type == "tls" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "<th class=\"th py-2\">Cert</th>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "<th class=\"th py-2\">Cert</th>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<th class=\"th py-2\">Message</th><th class=\"th py-2\">Time</th></tr></thead> <tbody class=\"divide-y divide-line\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "<th class=\"th py-2\">Message</th><th class=\"th py-2\">Time</th></tr></thead> <tbody class=\"divide-y divide-line\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, ck := range cks {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "<tr class=\"hover:bg-surface-200/20 transition-colors\"><td class=\"px-4 py-2\"><div class=\"flex items-center gap-2\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "<tr class=\"hover:bg-surface-200/20 transition-colors\"><td class=\"px-4 py-2\"><div class=\"flex items-center gap-2\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var97 = []any{"w-1.5 h-1.5 rounded-full", StatusDot(ck.Status)}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var97...)
+					var templ_7745c5c3_Var98 = []any{"w-1.5 h-1.5 rounded-full", StatusDot(ck.Status)}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var98...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "<div class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "<div class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var98 string
-					templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var97).String())
+					var templ_7745c5c3_Var99 string
+					templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var98).String())
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var98))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\"></div>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var99))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var99 = []any{"text-[11px]", StatusColor(ck.Status)}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var99...)
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "\"></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "<span class=\"")
+					var templ_7745c5c3_Var100 = []any{"text-[11px]", StatusColor(ck.Status)}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var100...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var100 string
-					templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var99).String())
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var100))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "<span class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var101 string
-					templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(ck.Status)
+					templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var100).String())
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 671, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var101))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "</span></div></td><td class=\"px-4 py-2 text-[11px] text-muted-light tabular-nums font-mono\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var102 string
-					templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.JoinStringErrs(FormatMs(ck.ResponseTime))
+					templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.JoinStringErrs(ck.Status)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 674, Col: 111}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 678, Col: 77}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var102))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "</td>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</span></div></td><td class=\"px-4 py-2 text-[11px] text-muted-light tabular-nums font-mono\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var103 string
+					templ_7745c5c3_Var103, templ_7745c5c3_Err = templ.JoinStringErrs(FormatMs(ck.ResponseTime))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 681, Col: 111}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var103))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "</td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if p.Monitor.Type == "http" || p.Monitor.Type == "websocket" {
 						if ck.StatusCode != 0 {
-							var templ_7745c5c3_Var103 = []any{"px-4 py-2 text-[11px] tabular-nums font-mono", HttpStatusColor(ck.StatusCode)}
-							templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var103...)
+							var templ_7745c5c3_Var104 = []any{"px-4 py-2 text-[11px] tabular-nums font-mono", HttpStatusColor(ck.StatusCode)}
+							templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var104...)
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "<td class=\"")
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							var templ_7745c5c3_Var104 string
-							templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var103).String())
-							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-							}
-							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "\">")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "<td class=\"")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var105 string
-							templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(ck.StatusCode))
+							templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var104).String())
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 677, Col: 132}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var105))
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "</td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "\">")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var106 string
+							templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(ck.StatusCode))
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 684, Col: 132}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var106))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "</td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 						} else {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "<td class=\"px-4 py-2 text-[11px] tabular-nums font-mono text-muted/30\">—</td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "<td class=\"px-4 py-2 text-[11px] tabular-nums font-mono text-muted/30\">—</td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
@@ -2015,105 +2038,105 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 					}
 					if p.Monitor.Type == "tls" {
 						if ck.CertExpiry != nil {
-							var templ_7745c5c3_Var106 = []any{"px-4 py-2 text-[11px]", CertColor(ck.CertExpiry)}
-							templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var106...)
+							var templ_7745c5c3_Var107 = []any{"px-4 py-2 text-[11px]", CertColor(ck.CertExpiry)}
+							templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var107...)
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "<td class=\"")
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							var templ_7745c5c3_Var107 string
-							templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var106).String())
-							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 1, Col: 0}
-							}
-							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var107))
-							if templ_7745c5c3_Err != nil {
-								return templ_7745c5c3_Err
-							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "\">")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "<td class=\"")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 							var templ_7745c5c3_Var108 string
-							templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(CertDays(ck.CertExpiry)))
+							templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var107).String())
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 684, Col: 113}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 1, Col: 0}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var108))
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "d</td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "\">")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var109 string
+							templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(CertDays(ck.CertExpiry)))
+							if templ_7745c5c3_Err != nil {
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 691, Col: 113}
+							}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var109))
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "d</td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 						} else {
-							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 181, "<td class=\"px-4 py-2 text-[11px] text-muted/30\">—</td>")
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "<td class=\"px-4 py-2 text-[11px] text-muted/30\">—</td>")
 							if templ_7745c5c3_Err != nil {
 								return templ_7745c5c3_Err
 							}
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 182, "<td class=\"px-4 py-2 text-[11px] text-muted truncate max-w-[200px]\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "<td class=\"px-4 py-2 text-[11px] text-muted truncate max-w-[200px]\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if ck.Message != "" {
-						var templ_7745c5c3_Var109 string
-						templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.JoinStringErrs(ck.Message)
+						var templ_7745c5c3_Var110 string
+						templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.JoinStringErrs(ck.Message)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 691, Col: 24}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 698, Col: 24}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var109))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var110))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 183, "—")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "—")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "</td><td class=\"px-4 py-2 text-[11px] text-muted/60\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var110 string
-					templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(ck.CreatedAt))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 696, Col: 81}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var110))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "</td></tr>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 186, "</tbody></table></div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if p.Checks != nil && p.Checks.TotalPages > 1 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 187, "</td><td class=\"px-4 py-2 text-[11px] text-muted/60\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var111 string
-					templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d", p.Checks.Page, p.Checks.TotalPages))
+					templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(ck.CreatedAt))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 704, Col: 122}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 703, Col: 81}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var111))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "</span><div class=\"flex gap-1\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 188, "</td></tr>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "</tbody></table></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if p.Checks != nil && p.Checks.TotalPages > 1 {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var112 string
+					templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d", p.Checks.Page, p.Checks.TotalPages))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 711, Col: 122}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var112))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "</span><div class=\"flex gap-1\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2129,115 +2152,115 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "</div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "</div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "<div class=\"px-4 py-10 text-center text-muted text-[12px]\">No check results yet</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "<div class=\"px-4 py-10 text-center text-muted text-[12px]\">No check results yet</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 191, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if chs := p.changes(); len(chs) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 192, "<div class=\"border border-line rounded-lg overflow-hidden\"><div class=\"px-4 py-2.5 border-b border-line flex items-center justify-between\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Content Changes</h2>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, "<div class=\"border border-line rounded-lg overflow-hidden\"><div class=\"px-4 py-2.5 border-b border-line flex items-center justify-between\"><h2 class=\"text-[11px] text-muted uppercase tracking-widest\">Content Changes</h2>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Changes != nil && p.Changes.Total > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 193, "<span class=\"text-[10px] text-muted/50 tabular-nums\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var112 string
-					templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Changes.Total))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 724, Col: 89}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var112))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, " total</span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 195, "</div><div class=\"divide-y divide-line\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				for _, ch := range chs {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, "<div class=\"px-4 py-2.5 flex items-center gap-3 min-w-0\"><span class=\"text-[10px] text-muted/60 whitespace-nowrap shrink-0 w-16\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 196, "<span class=\"text-[10px] text-muted/50 tabular-nums\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var113 string
-					templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(ch.CreatedAt))
+					templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Changes.Total))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 730, Col: 103}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 731, Col: 89}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var113))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, "</span> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 197, " total</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, "</div><div class=\"divide-y divide-line\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				for _, ch := range chs {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "<div class=\"px-4 py-2.5 flex items-center gap-3 min-w-0\"><span class=\"text-[10px] text-muted/60 whitespace-nowrap shrink-0 w-16\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var114 string
+					templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(TimeAgo(ch.CreatedAt))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 737, Col: 103}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, "</span> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if ch.Diff != "" {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 198, "<code class=\"text-[11px] text-muted-light font-mono truncate\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "<code class=\"text-[11px] text-muted-light font-mono truncate\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var114 string
-						templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Diff)
+						var templ_7745c5c3_Var115 string
+						templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Diff)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 732, Col: 80}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 739, Col: 80}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var115))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "</code>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "</code>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 200, "<span class=\"text-[11px] text-muted/40\">—</span>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, "<span class=\"text-[11px] text-muted/40\">—</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 201, "</div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, "</div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.Changes != nil && p.Changes.TotalPages > 1 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, "<div class=\"px-4 py-2.5 border-t border-line flex items-center justify-between\"><span class=\"text-[11px] text-muted tabular-nums\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var115 string
-					templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d", p.Changes.Page, p.Changes.TotalPages))
+					var templ_7745c5c3_Var116 string
+					templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("Page %d / %d", p.Changes.Page, p.Changes.TotalPages))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `asura/internal/web/views/monitors.templ`, Line: 741, Col: 124}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitors.templ`, Line: 748, Col: 124}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var115))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 204, "</span><div class=\"flex gap-1\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, "</span><div class=\"flex gap-1\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -2253,23 +2276,23 @@ func MonitorDetailPage(p MonitorDetailParams) templ.Component {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 205, "</div></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 208, "</div></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 206, "</div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 209, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 207, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 210, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Layout(p.LayoutParams).Render(templ.WithChildren(ctx, templ_7745c5c3_Var46), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout(p.LayoutParams).Render(templ.WithChildren(ctx, templ_7745c5c3_Var47), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

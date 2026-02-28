@@ -356,10 +356,17 @@ templ MonitorListPage(p MonitorListParams) {
 											</td>
 										}
 										<td class="px-4 py-3">
-											<div class="flex items-center gap-1.5">
+											<div class="flex items-center gap-2 flex-wrap">
 												<a href={ templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, m.ID)) } class="text-[13px] text-muted-light hover:text-white transition-colors font-medium">{ m.Name }</a>
-												for _, tag := range p.TagMap[m.ID] {
-													<span class="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={ "background-color: " + tag.Color } title={ tagTooltip(tag) }></span>
+												if tags := p.TagMap[m.ID]; len(tags) > 0 {
+													<div class="flex items-center gap-1">
+														for _, tag := range tags {
+															<span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full text-[10px] border border-line" title={ tagTooltip(tag) }>
+																<span class="w-1.5 h-1.5 rounded-full" style={ "background-color: " + tag.Color }></span>
+																<span class="text-muted-light">{ tag.Name }</span>
+															</span>
+														}
+													</div>
 												}
 											</div>
 											<div class="text-[11px] text-muted mt-0.5 truncate max-w-xs font-mono">{ m.Target }</div>

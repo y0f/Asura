@@ -125,7 +125,7 @@ templ MonitorFormPage(p MonitorFormParams) {
 				} else {
 					action={ templ.SafeURL(p.BasePath + "/monitors") }
 				}
-				class="max-w-2xl space-y-4">
+				class="max-w-4xl space-y-4">
 				<!-- Basic Info -->
 				<div class="border border-line rounded-lg p-5 space-y-4">
 					<div>
@@ -180,17 +180,19 @@ templ MonitorFormPage(p MonitorFormParams) {
 					if len(p.AllTags) > 0 {
 						<div>
 							<label class="form-label">Tags</label>
-							<p class="text-[10px] text-muted mb-2">Select tags and optionally set per-monitor values.</p>
-							<div class="space-y-1.5">
+							<div class="flex flex-wrap gap-2">
 								for _, tag := range p.AllTags {
-									<div class="flex items-center gap-2" x-data={ fmt.Sprintf("{checked: %v}", p.isTagSelected(tag.ID)) }>
-										<input type="checkbox" x-model="checked" class="form-checkbox" @change="if(!checked) { $el.closest('div').querySelector('input[name]')?.remove() }"/>
-										<span class="inline-block w-2 h-2 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
-										<span class="text-[12px] text-muted-light w-24 shrink-0">{ tag.Name }</span>
+									<div x-data={ fmt.Sprintf("{checked: %v}", p.isTagSelected(tag.ID)) }
+										class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none"
+										:class={ `checked ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'` }
+										@click="if ($event.target.tagName !== 'INPUT' || $event.target.type !== 'text') checked = !checked">
+										<span class="w-2 h-2 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
+										<span class="text-[12px]" :class="checked ? 'text-white' : 'text-muted-light'">{ tag.Name }</span>
 										<template x-if="checked">
-											<div class="flex-1 flex gap-1">
+											<div class="flex items-center gap-1" @click.stop>
 												<input type="hidden" name="tag_ids[]" value={ fmt.Sprint(tag.ID) }/>
-												<input type="text" name="tag_values[]" value={ p.tagValue(tag.ID) } placeholder="value (optional)" class="form-input py-1 text-[11px] flex-1"/>
+												<input type="text" name="tag_values[]" value={ p.tagValue(tag.ID) } placeholder="value"
+													class="bg-transparent border-0 border-b border-line/50 text-[11px] text-muted-light w-16 py-0 px-0.5 focus:outline-hidden focus:border-brand/30 placeholder-muted/40"/>
 											</div>
 										</template>
 									</div>
@@ -229,16 +231,17 @@ templ MonitorFormPage(p MonitorFormParams) {
 					if len(p.NotificationChannels) > 0 {
 						<div>
 							<label class="form-label">Notification Channels</label>
-							<p class="text-[10px] text-muted mb-2">Select which channels receive alerts for this monitor. Leave all unchecked to use all channels.</p>
-							<div class="space-y-1.5">
+							<p class="text-[10px] text-muted mb-2">Leave all unchecked to use all channels.</p>
+							<div class="flex flex-wrap gap-2">
 								for _, ch := range p.NotificationChannels {
-									<label class="flex items-center gap-2 cursor-pointer">
+									<label class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none has-checked:border-brand/30 has-checked:bg-brand/[0.06] border-line hover:border-line-light">
 										<input type="checkbox" name="notification_channel_ids[]" value={ fmt.Sprint(ch.ID) }
 											if InSlice(ch.ID, p.SelectedChannelIDs) {
 												checked
 											}
-											class="form-checkbox"/>
-										<span class="text-[12px] text-muted-light">{ ch.Name } <span class="text-muted">({ ch.Type })</span></span>
+											class="hidden"/>
+										<span class="text-[12px] text-muted-light">{ ch.Name }</span>
+										<span class="text-[10px] text-muted">{ ch.Type }</span>
 									</label>
 								}
 							</div>

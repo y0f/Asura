@@ -54,7 +54,7 @@ templ Layout(p LayoutParams) {
 					</button>
 					<img src={ p.BasePath + "/static/logo.gif" } alt="Asura" class="h-3"/>
 				</div>
-				<div class="px-5 py-6 md:px-8 md:py-8 max-w-6xl">
+				<div class="px-5 py-6 md:px-8 md:py-8 max-w-6xl mx-auto">
 					if p.Flash != "" {
 						@FlashMessage(p.Flash)
 					}
