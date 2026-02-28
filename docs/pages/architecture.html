@@ -11,7 +11,8 @@
  dispatch       Checks         Change Diffs      Telegram/Discord
                                                    Slack/ntfy/Teams
                                                   PagerDuty/Opsgenie
-                                                    Pushover</code></pre>
+                                                  Pushover/Gotify
+                                               Google Chat/Matrix</code></pre>
 </div>
 
 <h2>Scheduler</h2>
@@ -43,7 +44,7 @@
 
 <h2>Dispatcher</h2>
 
-<p>Routes events to notification channels. Each channel type has its own sender behind the <code>Sender</code> interface. 10 implementations: Webhook, Email, Telegram, Discord, Slack, ntfy, Microsoft Teams, PagerDuty, Opsgenie, and Pushover. If a monitor has <code>notification_channel_ids</code> set, only those channels fire. Otherwise all matching channels get the event.</p>
+<p>Routes events to notification channels. Each channel type has its own sender behind the <code>Sender</code> interface. 13 implementations: Webhook, Email, Telegram, Discord, Slack, ntfy, Microsoft Teams, PagerDuty, Opsgenie, Pushover, Google Chat, Matrix, and Gotify. If a monitor has <code>notification_channel_ids</code> set, only those channels fire. Otherwise all matching channels get the event.</p>
 
 <h2>Storage</h2>
 
@@ -93,7 +94,7 @@
 │   ├── httputil/      # HTTP utilities (ID parsing, JSON helpers)
 │   ├── incident/      # Incident lifecycle management
 │   ├── monitor/       # Scheduler, workers, result processor
-│   ├── notifier/      # 10 notification channel senders
+│   ├── notifier/      # 13 notification channel senders
 │   ├── safenet/       # SSRF protection (private IP blocking)
 │   ├── server/        # HTTP server, routes, middleware
 │   ├── storage/       # SQLite store (89 methods), migrations

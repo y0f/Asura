@@ -20,7 +20,7 @@
     <tr><td><code>proxy_id</code></td><td>int</td><td></td><td>Proxy ID for routing checks through a proxy</td></tr>
     <tr><td><code>notification_channel_ids</code></td><td>int[]</td><td></td><td>Notification channels to route to (empty = all)</td></tr>
     <tr><td><code>settings</code></td><td>object</td><td></td><td>Protocol-specific (see below)</td></tr>
-    <tr><td><code>assertions</code></td><td>array</td><td></td><td>Assertion rules (see below)</td></tr>
+    <tr><td><code>assertions</code></td><td>object</td><td></td><td>Condition groups (see below)</td></tr>
     <tr><td><code>track_changes</code></td><td>bool</td><td></td><td>Enable content change detection</td></tr>
     <tr><td><code>failure_threshold</code></td><td>int</td><td></td><td>Failures before incident (default: 3)</td></tr>
     <tr><td><code>success_threshold</code></td><td>int</td><td></td><td>Successes before recovery (default: 1)</td></tr>
@@ -195,7 +195,11 @@ curl -X POST https://example.com/asura/api/v1/monitors \
 
 <h2>Assertions</h2>
 
-<p>Evaluated after each check. Failed assertions mark a monitor <code>down</code> or <code>degraded</code>.</p>
+<p>Assertions are evaluated after each check. A failed assertion marks a monitor <code>down</code> or, if <code>degraded</code> is set, <code>degraded</code> instead.</p>
+
+<p>Conditions are organized into groups. Each group has its own <code>and</code>/<code>or</code> operator, and the top-level <code>operator</code> controls how the groups themselves are combined. The web UI lets you build this visually — API consumers send the structured object directly.</p>
+
+<h3>Condition Types</h3>
 
 <table>
   <thead>
@@ -213,11 +217,34 @@ curl -X POST https://example.com/asura/api/v1/monitors \
   </tbody>
 </table>
 
+<h3>Structure</h3>
+
 <pre><code>{
-  "assertions": [
-    {"type": "status_code", "operator": "eq", "value": "200"},
-    {"type": "response_time", "operator": "lt", "value": "2000"},
-    {"type": "json_path", "target": "status", "operator": "eq", "value": "ok"},
-    {"type": "response_time", "operator": "lt", "value": "5000", "degraded": true}
-  ]
+  "assertions": {
+    "operator": "and",
+    "groups": [
+      {
+        "operator": "or",
+        "conditions": [
+          {"type": "status_code", "operator": "eq", "value": "200"},
+          {"type": "status_code", "operator": "eq", "value": "201"}
+        ]
+      },
+      {
+        "operator": "and",
+        "conditions": [
+          {"type": "response_time", "operator": "lt", "value": "2000"},
+          {"type": "json_path", "target": "status", "operator": "eq", "value": "ok"}
+        ]
+      },
+      {
+        "operator": "and",
+        "conditions": [
+          {"type": "response_time", "operator": "lt", "value": "5000", "degraded": true}
+        ]
+      }
+    ]
+  }
 }</code></pre>
+
+<p>In this example: the monitor passes if the status code is 200 <em>or</em> 201 <strong>and</strong> the response time is under 2 s <strong>and</strong> the <code>status</code> JSON field equals <code>ok</code>. A response time between 2 s and 5 s marks the monitor degraded instead of down.</p>
