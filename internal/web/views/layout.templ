@@ -23,6 +23,8 @@ templ Layout(p LayoutParams) {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 		<title>{ p.Title } — Asura</title>
 		<link rel="icon" href={ p.BasePath + "/static/favicon.ico" }/>
+		<link rel="preload" href={ p.BasePath + "/static/fonts/inter.woff2" } as="font" type="font/woff2" crossorigin/>
+		<link rel="preload" href={ p.BasePath + "/static/fonts/jetbrains-mono.woff2" } as="font" type="font/woff2" crossorigin/>
 		<link rel="stylesheet" href={ p.BasePath + "/static/tailwind.css" }/>
 		<link rel="stylesheet" href={ p.BasePath + "/static/uplot.min.css" }/>
 		<script src={ p.BasePath + "/static/uplot.iife.min.js" }></script>

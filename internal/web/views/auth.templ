@@ -19,6 +19,7 @@ templ authHead(basePath, title string) {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>{ title } — Asura</title>
 	<link rel="icon" href={ basePath + "/static/favicon.ico" }/>
+	<link rel="preload" href={ basePath + "/static/fonts/inter.woff2" } as="font" type="font/woff2" crossorigin/>
 	<link rel="stylesheet" href={ basePath + "/static/tailwind.css" }/>
 	<style>::selection { background: rgba(0,128,255,.15); }</style>
 }
