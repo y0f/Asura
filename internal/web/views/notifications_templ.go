@@ -30,7 +30,7 @@ func notifXData() string {
     telegram: {bot_token:'', chat_id:''},
     discord: {webhook_url:''},
     slack: {webhook_url:'', channel:''},
-    email: {host:'', port:587, username:'', password:'', from:'', to:''},
+    email: {host:'', port:587, username:'', password:'', from:'', to:'', tls_mode:'starttls', cc:'', bcc:''},
     ntfy: {server_url:'', topic:'', priority:3, tags:'', click_url:''},
     teams: {webhook_url:''},
     pagerduty: {routing_key:''},
@@ -48,7 +48,7 @@ func notifXData() string {
         this.telegram = {bot_token:'', chat_id:''};
         this.discord = {webhook_url:''};
         this.slack = {webhook_url:'', channel:''};
-        this.email = {host:'', port:587, username:'', password:'', from:'', to:''};
+        this.email = {host:'', port:587, username:'', password:'', from:'', to:'', tls_mode:'starttls', cc:'', bcc:''};
         this.ntfy = {server_url:'', topic:'', priority:3, tags:'', click_url:''};
         this.teams = {webhook_url:''};
         this.pagerduty = {routing_key:''};
@@ -82,7 +82,7 @@ func notifXData() string {
             case 'telegram': this.telegram = {bot_token: s.bot_token||'', chat_id: s.chat_id||''}; break;
             case 'discord': this.discord = {webhook_url: s.webhook_url||''}; break;
             case 'slack': this.slack = {webhook_url: s.webhook_url||'', channel: s.channel||''}; break;
-            case 'email': this.email = {host: s.host||'', port: s.port||587, username: s.username||'', password: s.password||'', from: s.from||'', to: (s.to||[]).join(', ')}; break;
+            case 'email': this.email = {host: s.host||'', port: s.port||587, username: s.username||'', password: s.password||'', from: s.from||'', to: (s.to||[]).join(', '), tls_mode: s.tls_mode||'starttls', cc: (s.cc||[]).join(', '), bcc: (s.bcc||[]).join(', ')}; break;
             case 'ntfy': this.ntfy = {server_url: s.server_url||'', topic: s.topic||'', priority: String(s.priority||3), tags: s.tags||'', click_url: s.click_url||''}; break;
             case 'teams': this.teams = {webhook_url: s.webhook_url||''}; break;
             case 'pagerduty': this.pagerduty = {routing_key: s.routing_key||''}; break;
@@ -518,7 +518,7 @@ func notifEmailFields() templ.Component {
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div x-show=\"!advancedNotifSettings && formData.type === 'email'\" x-cloak class=\"space-y-3\"><div class=\"grid grid-cols-3 gap-3\"><div class=\"col-span-2\"><label class=\"form-label-sm\">SMTP Host</label> <input type=\"text\" name=\"notif_email_host\" x-model=\"email.host\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"smtp.example.com\" class=\"form-input\"></div><div><label class=\"form-label-sm\">Port</label> <input type=\"number\" name=\"notif_email_port\" x-model=\"email.port\" placeholder=\"587\" class=\"form-input tabular-nums\"></div></div><div class=\"grid grid-cols-2 gap-3\"><div><label class=\"form-label-sm\">Username</label> <input type=\"text\" name=\"notif_email_username\" x-model=\"email.username\" placeholder=\"SMTP user\" class=\"form-input\"></div><div><label class=\"form-label-sm\">Password</label> <input type=\"password\" name=\"notif_email_password\" x-model=\"email.password\" placeholder=\"SMTP password\" class=\"form-input\"></div></div><div><label class=\"form-label-sm\">From</label> <input type=\"email\" name=\"notif_email_from\" x-model=\"email.from\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"alerts@example.com\" class=\"form-input\"></div><div><label class=\"form-label-sm\">To</label> <input type=\"text\" name=\"notif_email_to\" x-model=\"email.to\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"admin@example.com, ops@example.com\" class=\"form-input\"><p class=\"text-[10px] text-muted mt-1\">Comma-separated</p></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div x-show=\"!advancedNotifSettings && formData.type === 'email'\" x-cloak class=\"space-y-3\"><div class=\"grid grid-cols-3 gap-3\"><div class=\"col-span-2\"><label class=\"form-label-sm\">SMTP Host</label> <input type=\"text\" name=\"notif_email_host\" x-model=\"email.host\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"smtp.example.com\" class=\"form-input\"></div><div><label class=\"form-label-sm\">Port</label> <input type=\"number\" name=\"notif_email_port\" x-model=\"email.port\" placeholder=\"587\" class=\"form-input tabular-nums\"></div></div><div class=\"grid grid-cols-2 gap-3\"><div><label class=\"form-label-sm\">Username</label> <input type=\"text\" name=\"notif_email_username\" x-model=\"email.username\" placeholder=\"SMTP user\" class=\"form-input\"></div><div><label class=\"form-label-sm\">Password</label> <input type=\"password\" name=\"notif_email_password\" x-model=\"email.password\" placeholder=\"SMTP password\" class=\"form-input\"></div></div><div><label class=\"form-label-sm\">From</label> <input type=\"email\" name=\"notif_email_from\" x-model=\"email.from\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"alerts@example.com\" class=\"form-input\"></div><div><label class=\"form-label-sm\">To</label> <input type=\"text\" name=\"notif_email_to\" x-model=\"email.to\" :required=\"!advancedNotifSettings && formData.type === 'email'\" placeholder=\"admin@example.com, ops@example.com\" class=\"form-input\"><p class=\"text-[10px] text-muted mt-1\">Comma-separated</p></div><div><label class=\"form-label-sm\">TLS Mode</label> <select name=\"notif_email_tls_mode\" x-model=\"email.tls_mode\" class=\"form-select\"><option value=\"starttls\">STARTTLS (default, port 587)</option> <option value=\"smtps\">SMTPS (port 465)</option> <option value=\"none\">None (plain, port 25)</option></select></div><div><label class=\"form-label-sm\">CC</label> <input type=\"text\" name=\"notif_email_cc\" x-model=\"email.cc\" placeholder=\"cc@example.com\" class=\"form-input\"><p class=\"text-[10px] text-muted mt-1\">Comma-separated (optional)</p></div><div><label class=\"form-label-sm\">BCC</label> <input type=\"text\" name=\"notif_email_bcc\" x-model=\"email.bcc\" placeholder=\"bcc@example.com\" class=\"form-input\"><p class=\"text-[10px] text-muted mt-1\">Comma-separated (optional)</p></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
