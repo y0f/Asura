@@ -27,7 +27,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	if s.cfg.IsWebUIEnabled() && s.web != nil {
 		staticFS, _ := fs.Sub(webfs.FS, "static")
 		staticPrefix := s.p("/static/")
-		mux.Handle("GET "+staticPrefix, http.StripPrefix(staticPrefix, http.FileServer(http.FS(staticFS))))
+		staticHandler := http.StripPrefix(staticPrefix, http.FileServer(http.FS(staticFS)))
+		mux.Handle("GET "+staticPrefix, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Cache-Control", "public, max-age=604800")
+			staticHandler.ServeHTTP(w, r)
+		}))
 
 		mux.HandleFunc("GET "+s.p("/login"), s.web.Login)
 		mux.HandleFunc("POST "+s.p("/login"), s.web.LoginPost)
