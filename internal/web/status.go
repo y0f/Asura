@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -25,7 +26,8 @@ func (h *Handler) checkStatusPageAuth(r *http.Request, pageID int64, passwordHas
 	if err != nil {
 		return false
 	}
-	return c.Value == spAuthCookieValue(passwordHash)
+	expected := spAuthCookieValue(passwordHash)
+	return subtle.ConstantTimeCompare([]byte(c.Value), []byte(expected)) == 1
 }
 
 func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID int64) {
@@ -134,11 +136,17 @@ func (h *Handler) StatusPageAuthPost(w http.ResponseWriter, r *http.Request, pag
 		return
 	}
 
+	ip := httputil.ExtractIP(r, h.cfg.TrustedNets())
+	if !h.loginRL.Allow(ip) {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug+"/auth?error=1", http.StatusSeeOther)
+		return
+	}
+
 	sh := sha256.New()
 	sh.Write([]byte(r.FormValue("password")))
 	inputHash := hex.EncodeToString(sh.Sum(nil))
 
-	if inputHash != sp.PasswordHash {
+	if subtle.ConstantTimeCompare([]byte(inputHash), []byte(sp.PasswordHash)) != 1 {
 		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug+"/auth?error=1", http.StatusSeeOther)
 		return
 	}
@@ -150,6 +158,7 @@ func (h *Handler) StatusPageAuthPost(w http.ResponseWriter, r *http.Request, pag
 		MaxAge:   86400 * 7,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
+		Secure:   h.cfg.Auth.Session.CookieSecure,
 	})
 	http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug, http.StatusSeeOther)
 }

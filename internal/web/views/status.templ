@@ -104,7 +104,7 @@ templ StatusPageFormPage(p StatusPageFormParams) {
 						New Status Page
 					}
 				</h1>
-				<a href={ templ.SafeURL(p.BasePath + "/status-pages") } class="text-muted text-[12px] hover:text-muted-light transition-colors">&larr; Back to Status Pages</a>
+				<a href={ templ.SafeURL(p.BasePath + "/status-pages") } class="text-muted text-[12px] hover:text-muted-light transition-colors">&lt; Status Pages</a>
 			</div>
 			<form method="POST"
 				if p.StatusPage != nil {
@@ -187,30 +187,36 @@ templ StatusPageFormPage(p StatusPageFormParams) {
 						}
 						class="form-input w-24"/>
 				</div>
-				<div x-data="{search: ''}" class="border border-line rounded-lg p-4">
-					<div class="flex items-center justify-between mb-3">
-						<label class="text-[11px] text-muted uppercase tracking-widest">Monitors</label>
-						<input type="text" x-model="search" placeholder="Filter monitors..." class="px-2.5 py-1.5 bg-surface border border-line rounded text-white text-[12px] focus:outline-hidden focus:border-brand/30 transition-colors w-48"/>
+				<div x-data="{search: ''}" class="border border-line rounded-lg overflow-hidden">
+					<div class="px-4 py-2.5 border-b border-line flex items-center justify-between bg-surface-50/20">
+						<label class="text-[11px] text-muted uppercase tracking-widest font-medium">Monitors</label>
+						<input type="text" x-model="search" placeholder="Search..." class="px-2.5 py-1 bg-surface border border-line rounded text-white text-[12px] focus:outline-hidden focus:border-brand/30 transition-colors w-40"/>
 					</div>
-					<div class="space-y-1 max-h-80 overflow-y-auto">
+					<div class="divide-y divide-line max-h-64 overflow-y-auto">
 						for _, m := range p.Monitors {
-							<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-surface-50/50 transition-colors" data-name={ m.Name }
-								x-show={ "!search || $el.dataset.name.toLowerCase().includes(search.toLowerCase())" }>
-								<input type="checkbox" name={ fmt.Sprintf("monitor_%d_enabled", m.ID) } class="rounded border-line bg-surface text-brand focus:ring-brand/30"
-									if p.Assigned[m.ID] {
-										checked
-									}/>
-								<div class="flex-1 min-w-0">
-									<span class="text-[13px] text-white truncate block">{ m.Name }</span>
-									<span class="text-[10px] text-muted">{ TypeLabel(m.Type) }</span>
+							<div x-data={ fmt.Sprintf("{checked:%v}", p.Assigned[m.ID]) }
+								data-name={ m.Name }
+								x-show="!search || $el.dataset.name.toLowerCase().includes(search.toLowerCase())"
+								:class="checked ? 'bg-brand/[0.04]' : 'hover:bg-surface-50/50'"
+								class="px-4 py-2.5 transition-colors">
+								<div class="flex items-center gap-3">
+									<input type="checkbox" name={ fmt.Sprintf("monitor_%d_enabled", m.ID) } class="rounded border-line bg-surface text-brand focus:ring-brand/30 shrink-0" x-model="checked"/>
+									<div class="flex-1 min-w-0">
+										<span class="text-[13px] text-white">{ m.Name }</span>
+										<span class="ml-1.5 text-[10px] text-muted">{ TypeLabel(m.Type) }</span>
+									</div>
+									<div x-show="checked" x-cloak class="flex items-center gap-2 shrink-0">
+										<input type="number" name={ fmt.Sprintf("monitor_%d_sort", m.ID) } placeholder="0" value={ statusPageMonitorSort(p.AssignedData, m.ID) } class="w-14 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30 text-center" title="Sort order"/>
+										<input type="text" name={ fmt.Sprintf("monitor_%d_group", m.ID) } placeholder="Group" value={ statusPageMonitorGroup(p.AssignedData, m.ID) } class="w-24 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30" title="Group name"/>
+									</div>
 								</div>
-								<input type="number" name={ fmt.Sprintf("monitor_%d_sort", m.ID) } placeholder="0" value={ statusPageMonitorSort(p.AssignedData, m.ID) } class="w-16 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30 text-center" title="Sort order"/>
-								<input type="text" name={ fmt.Sprintf("monitor_%d_group", m.ID) } placeholder="Group" value={ statusPageMonitorGroup(p.AssignedData, m.ID) } class="w-28 px-2 py-1 bg-surface border border-line rounded text-white text-[11px] focus:outline-hidden focus:border-brand/30" title="Group name"/>
 							</div>
 						}
 					</div>
 					if len(p.Monitors) == 0 {
-						<p class="text-muted text-[12px] text-center py-4">No monitors available</p>
+						<div class="px-4 py-8 text-center">
+							<p class="text-muted text-[12px]">No monitors available</p>
+						</div>
 					}
 				</div>
 				<div x-data="{showAdvanced: false}">
