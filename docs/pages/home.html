@@ -14,6 +14,26 @@
   <p class="!mb-0 text-center">Asura monitors your infrastructure from a single Go binary backed by SQLite.<br>No Postgres. No Redis. No Node.js. Just <code>scp</code> a binary and go.</p>
 </div>
 
+<h2>Quick Start</h2>
+
+<pre><code>git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh</code></pre>
+
+<p>Handles everything — Go install, build, systemd service, admin key. Takes a couple minutes on a fresh Ubuntu box.</p>
+
+<div class="flex flex-wrap gap-3 mb-10">
+  <a href="#getting-started" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand/85 text-sm font-medium rounded-lg transition-colors" style="color: #fff;">
+    Get started
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+  </a>
+  <a href="#monitors" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
+    Monitors
+  </a>
+  <a href="https://github.com/y0f/Asura" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
+    GitHub
+    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
+  </a>
+</div>
+
 <h2>Why Asura?</h2>
 
 <table>
@@ -38,44 +58,23 @@
     <tr><th>Feature</th><th></th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>11 protocols</strong></td><td>HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Domain (WHOIS), gRPC, MQTT</td></tr>
-    <tr><td><strong>Assertion engine</strong></td><td>8 assertion types with AND/OR condition groups — status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records</td></tr>
+    <tr><td><strong>12 monitor types</strong></td><td>HTTP, TCP, DNS, ICMP, TLS, WebSocket, Command, Docker, Domain (WHOIS), gRPC, MQTT, plus passive heartbeat</td></tr>
+    <tr><td><strong>Assertion engine</strong></td><td>8 condition types with AND/OR group logic — status code, body text, body regex, JSON path, headers, response time, cert expiry, DNS records</td></tr>
     <tr><td><strong>Change detection</strong></td><td>Line-level diffs on response bodies</td></tr>
-    <tr><td><strong>Incidents</strong></td><td>Automatic creation, thresholds, ack, recovery</td></tr>
-    <tr><td><strong>Notifications</strong></td><td>Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy, Microsoft Teams, PagerDuty, Opsgenie, Pushover, Google Chat, Matrix, Gotify</td></tr>
+    <tr><td><strong>Incidents</strong></td><td>Automatic creation, configurable thresholds, acknowledge, recovery</td></tr>
+    <tr><td><strong>13 notification channels</strong></td><td>Webhook (HMAC-SHA256), Email, Telegram, Discord, Slack, ntfy, Microsoft Teams, PagerDuty, Opsgenie, Pushover, Google Chat, Matrix, Gotify</td></tr>
     <tr><td><strong>Monitor groups</strong></td><td>Organize monitors into named groups with custom sort order</td></tr>
     <tr><td><strong>Proxy support</strong></td><td>HTTP and SOCKS5 proxies with per-monitor assignment</td></tr>
-    <tr><td><strong>Maintenance</strong></td><td>Recurring windows to suppress alerts</td></tr>
-    <tr><td><strong>Heartbeat monitoring</strong></td><td>Cron jobs, workers, and pipelines report in — silence triggers incidents</td></tr>
-    <tr><td><strong>Web dashboard</strong></td><td>Form-based config, assertion builder, dark/light mode</td></tr>
+    <tr><td><strong>Maintenance windows</strong></td><td>Recurring schedules to suppress alerts during planned downtime</td></tr>
+    <tr><td><strong>Heartbeat monitoring</strong></td><td>Cron jobs, workers, and pipelines report in — silence triggers an incident</td></tr>
     <tr><td><strong>Status pages</strong></td><td>Multiple public status pages with custom slugs and grouping</td></tr>
-    <tr><td><strong>Analytics</strong></td><td>Uptime %, response time percentiles, Prometheus <code>/metrics</code></td></tr>
+    <tr><td><strong>Analytics</strong></td><td>Uptime %, response time percentiles, Prometheus <code>/metrics</code> endpoint</td></tr>
     <tr><td><strong>~15 MB binary</strong></td><td>Cross-compiles to <code>linux/amd64</code> and <code>linux/arm64</code></td></tr>
   </tbody>
 </table>
 
 <h2>Web UI</h2>
 
-<p>HTMX + Tailwind + Alpine.js. Configure monitors, build assertions, manage notifications, browse incidents, and set up status pages — all from the browser.</p>
+<p>Server-rendered Go templates (<a href="https://templ.guide" target="_blank">templ</a>), progressively enhanced with HTMX and Alpine.js, styled with Tailwind CSS. Configure monitors, build assertion groups, manage notifications, browse incidents, and set up status pages — all from the browser. You can also skip the UI entirely and use the <a href="#api">REST API</a>.</p>
 
-<img src="https://raw.githubusercontent.com/y0f/Asura/main/assets/webpanel.png" alt="Web UI" class="rounded-lg border border-line mb-6 w-full">
-
-<h2>Quick Start</h2>
-
-<pre><code>git clone https://github.com/y0f/Asura.git && cd Asura && sudo bash install.sh</code></pre>
-
-<p>Handles everything — Go install, build, systemd service, admin key. Takes a couple minutes on a fresh Ubuntu box.</p>
-
-<div class="flex flex-wrap gap-3 mt-8">
-  <a href="#getting-started" class="inline-flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand/85 text-sm font-medium rounded-lg transition-colors" style="color: #fff;">
-    Get started
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-  </a>
-  <a href="#monitors" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
-    Monitors
-  </a>
-  <a href="https://github.com/y0f/Asura" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 border border-line text-sm rounded-lg hover:bg-surface-200/50 transition-colors text-muted-light hover:text-white">
-    GitHub
-    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/></svg>
-  </a>
-</div>
+<img src="https://raw.githubusercontent.com/y0f/Asura/main/assets/webpanel.png" alt="Web UI" class="rounded-lg border border-line w-full">
