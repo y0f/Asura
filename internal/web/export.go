@@ -13,9 +13,21 @@ import (
 
 func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 	lp := h.newLayoutParams(r, "Settings", "settings")
+	dbSize, _ := h.store.DBSize()
 	h.renderComponent(w, r, views.SettingsPage(views.SettingsParams{
 		LayoutParams: lp,
+		DBSizeBytes:  dbSize,
 	}))
+}
+
+func (h *Handler) DBVacuum(w http.ResponseWriter, r *http.Request) {
+	if err := h.store.Vacuum(r.Context()); err != nil {
+		h.logger.Error("web: vacuum", "error", err)
+		h.setFlash(w, "Vacuum failed: "+err.Error())
+	} else {
+		h.setFlash(w, "Database vacuumed successfully")
+	}
+	h.redirect(w, r, "/settings")
 }
 
 func (h *Handler) ExportConfig(w http.ResponseWriter, r *http.Request) {

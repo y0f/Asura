@@ -146,6 +146,10 @@ type Store interface {
 	// Data retention
 	PurgeOldData(ctx context.Context, before time.Time) (int64, error)
 
+	// Database maintenance
+	Vacuum(ctx context.Context) error
+	DBSize() (int64, error)
+
 	// Lifecycle
 	Close() error
 }

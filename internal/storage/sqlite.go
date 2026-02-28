@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -15,6 +17,7 @@ import (
 type SQLiteStore struct {
 	readDB  *sql.DB
 	writeDB *sql.DB
+	dbPath  string
 }
 
 // NewSQLiteStore opens the database with separate read and write pools.
@@ -47,7 +50,7 @@ func NewSQLiteStore(path string, maxReadConns int) (*SQLiteStore, error) {
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 
-	return &SQLiteStore{readDB: readDB, writeDB: writeDB}, nil
+	return &SQLiteStore{readDB: readDB, writeDB: writeDB, dbPath: path}, nil
 }
 
 func runMigrations(db *sql.DB) error {
@@ -105,6 +108,19 @@ func runMigrations(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+func (s *SQLiteStore) Vacuum(ctx context.Context) error {
+	_, err := s.writeDB.ExecContext(ctx, "VACUUM")
+	return err
+}
+
+func (s *SQLiteStore) DBSize() (int64, error) {
+	info, err := os.Stat(s.dbPath)
+	if err != nil {
+		return 0, err
+	}
+	return info.Size(), nil
 }
 
 func (s *SQLiteStore) Close() error {

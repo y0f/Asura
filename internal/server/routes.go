@@ -97,6 +97,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		mux.Handle("GET "+s.p("/settings"), webAuth(http.HandlerFunc(s.web.Settings)))
 		mux.Handle("GET "+s.p("/settings/export"), webAuth(http.HandlerFunc(s.web.ExportConfig)))
 		mux.Handle("POST "+s.p("/settings/import"), webAuth(http.HandlerFunc(s.web.ImportConfig)))
+		mux.Handle("POST "+s.p("/settings/vacuum"), webPerm("monitors.write", s.web.DBVacuum))
 	}
 
 	mux.HandleFunc("GET "+s.p("/api/v1/health"), s.api.Health)
@@ -167,6 +168,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("GET "+s.p("/api/v1/request-logs/stats"), metricsRead(http.HandlerFunc(s.api.RequestLogStats)))
 
 	mux.Handle("GET "+s.p("/api/v1/audit"), metricsRead(http.HandlerFunc(s.api.ListAuditLog)))
+
+	mux.Handle("GET "+s.p("/api/v1/admin/db-size"), metricsRead(http.HandlerFunc(s.api.DBSize)))
+	mux.Handle("POST "+s.p("/api/v1/admin/vacuum"), metricsRead(http.HandlerFunc(s.api.DBVacuum)))
 
 	mux.Handle("GET "+s.p("/api/v1/export"), monRead(http.HandlerFunc(s.api.Export)))
 	mux.Handle("POST "+s.p("/api/v1/import"), monWrite(http.HandlerFunc(s.api.Import)))

@@ -1,7 +1,23 @@
 package views
 
+import "fmt"
+
 type SettingsParams struct {
 	LayoutParams
+	DBSizeBytes int64
+}
+
+func formatBytes(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
 templ SettingsPage(p SettingsParams) {
@@ -44,6 +60,21 @@ templ SettingsPage(p SettingsParams) {
 								class="block w-full text-[12px] text-muted-light file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[12px] file:font-medium file:bg-surface-200 file:text-white hover:file:bg-surface-200/80 file:cursor-pointer file:transition-colors"/>
 						</div>
 						<button type="submit" class="btn-primary">Import</button>
+					</form>
+				</div>
+				<div class="border border-line rounded-lg p-5">
+					<h2 class="text-[13px] font-medium text-white mb-1">Database Maintenance</h2>
+					<p class="text-[12px] text-muted-light mb-4">
+						Current database size: <span class="text-muted-light font-medium">{ formatBytes(p.DBSizeBytes) }</span>.
+						VACUUM reclaims unused space from deleted rows and rebuilds the database file.
+					</p>
+					<form action={ templ.SafeURL(p.BasePath + "/settings/vacuum") } method="POST"
+						x-data="{}" @submit="return confirm('Run VACUUM? This may take a moment for large databases.')">
+						<button type="submit"
+							class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-200 hover:bg-surface-200/80 text-white text-[12px] font-medium rounded transition-colors">
+							<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+							Run VACUUM
+						</button>
 					</form>
 				</div>
 			</div>
