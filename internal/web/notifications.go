@@ -114,6 +114,37 @@ func (h *Handler) NotificationTest(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/notifications")
 }
 
+func (h *Handler) NotificationHistory(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	var f storage.NotifHistoryFilter
+	if v := q.Get("channel_id"); v != "" {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+			f.ChannelID = id
+		}
+	}
+	f.Status = q.Get("status")
+	f.EventType = q.Get("event_type")
+
+	p := httputil.ParsePagination(r)
+	result, err := h.store.ListNotificationHistory(r.Context(), f, p)
+	if err != nil {
+		h.logger.Error("web: list notification history", "error", err)
+	}
+
+	channels, err := h.store.ListNotificationChannels(r.Context())
+	if err != nil {
+		h.logger.Error("web: list channels for history", "error", err)
+	}
+
+	lp := h.newLayoutParams(r, "Notification History", "notifications")
+	h.renderComponent(w, r, views.NotificationHistoryPage(views.NotificationHistoryParams{
+		LayoutParams: lp,
+		Result:       result,
+		Channels:     channels,
+		Filter:       f,
+	}))
+}
+
 func (h *Handler) parseNotificationForm(r *http.Request) *storage.NotificationChannel {
 	r.ParseForm()
 

@@ -319,6 +319,28 @@ type AuditLogFilter struct {
 	To         time.Time
 }
 
+// NotificationHistory records a single notification delivery attempt.
+type NotificationHistory struct {
+	ID          int64     `json:"id"`
+	ChannelID   int64     `json:"channel_id"`
+	ChannelName string    `json:"channel_name"`
+	ChannelType string    `json:"channel_type"`
+	MonitorID   *int64    `json:"monitor_id,omitempty"`
+	MonitorName string    `json:"monitor_name,omitempty"`
+	IncidentID  *int64    `json:"incident_id,omitempty"`
+	EventType   string    `json:"event_type"`
+	Status      string    `json:"status"` // "sent" or "failed"
+	Error       string    `json:"error,omitempty"`
+	SentAt      time.Time `json:"sent_at"`
+}
+
+// NotifHistoryFilter holds filter parameters for notification history queries.
+type NotifHistoryFilter struct {
+	ChannelID int64
+	Status    string // "sent", "failed", or ""
+	EventType string
+}
+
 // RequestLogFilter holds filter parameters for listing request logs.
 type RequestLogFilter struct {
 	Method     string

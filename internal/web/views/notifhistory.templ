@@ -1,0 +1,138 @@
+package views
+
+import (
+	"fmt"
+
+	"github.com/y0f/asura/internal/storage"
+)
+
+type NotificationHistoryParams struct {
+	LayoutParams
+	Result   *storage.PaginatedResult
+	Channels []*storage.NotificationChannel
+	Filter   storage.NotifHistoryFilter
+}
+
+func (p NotificationHistoryParams) entries() []*storage.NotificationHistory {
+	if p.Result == nil || p.Result.Data == nil {
+		return nil
+	}
+	entries, _ := p.Result.Data.([]*storage.NotificationHistory)
+	return entries
+}
+
+func (p NotificationHistoryParams) pageHref(page int) string {
+	href := fmt.Sprintf("%s/notifications/history?page=%d", p.BasePath, page)
+	if p.Filter.ChannelID > 0 {
+		href += fmt.Sprintf("&channel_id=%d", p.Filter.ChannelID)
+	}
+	if p.Filter.Status != "" {
+		href += "&status=" + p.Filter.Status
+	}
+	if p.Filter.EventType != "" {
+		href += "&event_type=" + p.Filter.EventType
+	}
+	return href
+}
+
+templ NotificationHistoryPage(p NotificationHistoryParams) {
+	@Layout(p.LayoutParams) {
+		<div>
+			<div class="flex items-center justify-between mb-5">
+				<h1 class="text-[15px] font-medium text-white">Notification History</h1>
+				<a href={ templ.SafeURL(p.BasePath + "/notifications") } class="text-[12px] text-muted hover:text-white transition-colors">← Channels</a>
+			</div>
+			<form method="GET" action={ templ.SafeURL(p.BasePath + "/notifications/history") } class="flex flex-wrap items-center gap-2 mb-4">
+				<select name="channel_id" class="form-select-sm" onchange="this.form.submit()">
+					<option value="">All channels</option>
+					for _, ch := range p.Channels {
+						<option value={ fmt.Sprint(ch.ID) } selected?={ ch.ID == p.Filter.ChannelID }>{ ch.Name }</option>
+					}
+				</select>
+				<select name="status" class="form-select-sm" onchange="this.form.submit()">
+					<option value="">All statuses</option>
+					<option value="sent" selected?={ p.Filter.Status == "sent" }>Sent</option>
+					<option value="failed" selected?={ p.Filter.Status == "failed" }>Failed</option>
+				</select>
+				<select name="event_type" class="form-select-sm" onchange="this.form.submit()">
+					<option value="">All events</option>
+					for _, et := range []string{"incident.created", "incident.resolved", "incident.reminder", "incident.acknowledged", "content.changed", "cert.changed", "test"} {
+						<option value={ et } selected?={ p.Filter.EventType == et }>{ et }</option>
+					}
+				</select>
+				if p.Filter.ChannelID != 0 || p.Filter.Status != "" || p.Filter.EventType != "" {
+					<a href={ templ.SafeURL(p.BasePath + "/notifications/history") } class="text-[11px] text-muted hover:text-white transition-colors">Clear</a>
+				}
+			</form>
+			<div class="border border-line rounded-lg overflow-hidden">
+				if entries := p.entries(); len(entries) > 0 {
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[700px]">
+							<thead>
+								<tr class="border-b border-line text-left">
+									<th class="th">Time</th>
+									<th class="th">Channel</th>
+									<th class="th">Event</th>
+									<th class="th">Monitor</th>
+									<th class="th">Status</th>
+									<th class="th">Error</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-line">
+								for _, e := range entries {
+									<tr class="hover:bg-surface-200/20 transition-colors">
+										<td class="px-4 py-2.5 text-[12px] text-muted tabular-nums font-mono whitespace-nowrap">{ TimeAgo(e.SentAt) }</td>
+										<td class="px-4 py-2.5">
+											<div class="text-[12px] text-muted-light">{ e.ChannelName }</div>
+											<div class="text-[10px] text-muted">{ e.ChannelType }</div>
+										</td>
+										<td class="px-4 py-2.5 text-[11px] font-mono text-muted-light">{ e.EventType }</td>
+										<td class="px-4 py-2.5 text-[12px] text-muted">
+											if e.MonitorName != "" {
+												{ e.MonitorName }
+											} else {
+												—
+											}
+										</td>
+										<td class="px-4 py-2.5">
+											if e.Status == "sent" {
+												<span class="text-[10px] font-medium px-1.5 py-px rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">sent</span>
+											} else {
+												<span class="text-[10px] font-medium px-1.5 py-px rounded border bg-red-500/10 text-red-400 border-red-500/20">failed</span>
+											}
+										</td>
+										<td class="px-4 py-2.5 text-[11px] text-red-400 font-mono max-w-[240px] truncate" title={ e.Error }>
+											if e.Error != "" {
+												{ e.Error }
+											}
+										</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					if p.Result != nil && p.Result.TotalPages > 1 {
+						<div class="px-4 py-2.5 border-t border-line flex items-center justify-between">
+							<span class="text-[11px] text-muted tabular-nums">
+								{ fmt.Sprintf("Page %d / %d · %d entries", p.Result.Page, p.Result.TotalPages, p.Result.Total) }
+							</span>
+							<div class="flex gap-1">
+								if p.Result.Page > 1 {
+									@PrevPageBtn(p.pageHref(p.Result.Page - 1))
+								}
+								if p.Result.Page < p.Result.TotalPages {
+									@NextPageBtn(p.pageHref(p.Result.Page + 1))
+								}
+							</div>
+						</div>
+					}
+				} else {
+					<div class="px-4 py-16 text-center">
+						<svg class="w-6 h-6 mx-auto text-muted/20 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"></path></svg>
+						<p class="text-muted text-[12px]">No notification history yet</p>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}

@@ -93,7 +93,10 @@ templ NotificationListPage(p NotificationListParams) {
 	@Layout(p.LayoutParams) {
 		<div x-data={ notifXData() }>
 			<div class="flex items-center justify-between mb-5">
-				<h1 class="text-[15px] font-medium text-white">Notification Channels</h1>
+				<div class="flex items-center gap-4">
+					<h1 class="text-[15px] font-medium text-white">Notification Channels</h1>
+					<a href={ templ.SafeURL(p.BasePath + "/notifications/history") } class="text-[12px] text-muted hover:text-white transition-colors">History</a>
+				</div>
 				if p.Perms["notifications.write"] {
 					<button @click="resetForm(); showForm = true"
 						class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand/85 text-white text-[12px] font-medium rounded transition-colors">

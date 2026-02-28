@@ -252,6 +252,13 @@ func (s *SQLiteStore) PurgeOldData(ctx context.Context, before time.Time) (int64
 	n, _ = res.RowsAffected()
 	totalDeleted += n
 
+	res, err = s.writeDB.ExecContext(ctx, "DELETE FROM notification_history WHERE sent_at < ?", ts)
+	if err != nil {
+		return totalDeleted, err
+	}
+	n, _ = res.RowsAffected()
+	totalDeleted += n
+
 	expired, err := s.DeleteExpiredSessions(ctx)
 	if err != nil {
 		return totalDeleted, err

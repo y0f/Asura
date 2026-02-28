@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 19
+const schemaVersion = 20
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -258,6 +258,19 @@ CREATE TABLE IF NOT EXISTS monitor_tags (
 );
 
 CREATE INDEX IF NOT EXISTS idx_monitor_tags_tag ON monitor_tags(tag_id);
+
+CREATE TABLE IF NOT EXISTS notification_history (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	channel_id  INTEGER NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+	monitor_id  INTEGER,
+	incident_id INTEGER,
+	event_type  TEXT    NOT NULL DEFAULT '',
+	status      TEXT    NOT NULL DEFAULT 'sent',
+	error       TEXT    NOT NULL DEFAULT '',
+	sent_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_notif_history_channel ON notification_history(channel_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notif_history_sent_at ON notification_history(sent_at DESC);
 `
 
 // migrations holds incremental schema changes after the baseline.
@@ -316,5 +329,20 @@ UPDATE monitors SET tags = '[]';`,
 		version: 19,
 		sql: `ALTER TABLE check_results ADD COLUMN cert_fingerprint TEXT NOT NULL DEFAULT '';
 ALTER TABLE monitor_status ADD COLUMN last_cert_fingerprint TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		version: 20,
+		sql: `CREATE TABLE IF NOT EXISTS notification_history (
+	id         INTEGER PRIMARY KEY AUTOINCREMENT,
+	channel_id INTEGER NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+	monitor_id INTEGER,
+	incident_id INTEGER,
+	event_type TEXT    NOT NULL DEFAULT '',
+	status     TEXT    NOT NULL DEFAULT 'sent',
+	error      TEXT    NOT NULL DEFAULT '',
+	sent_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_notif_history_channel ON notification_history(channel_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notif_history_sent_at ON notification_history(sent_at DESC);`,
 	},
 }

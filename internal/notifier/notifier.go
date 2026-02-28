@@ -173,6 +173,7 @@ func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChanne
 			"channel_type", ch.Type,
 			"event", payload.EventType,
 		)
+		d.recordHistory(ch, payload, "sent", "")
 		return
 	}
 	d.logger.Error("notification send failed after retries",
@@ -181,6 +182,31 @@ func (d *Dispatcher) sendWithRetry(sender Sender, ch *storage.NotificationChanne
 		"attempts", maxRetries,
 		"error", lastErr,
 	)
+	errMsg := ""
+	if lastErr != nil {
+		errMsg = lastErr.Error()
+	}
+	d.recordHistory(ch, payload, "failed", errMsg)
+}
+
+func (d *Dispatcher) recordHistory(ch *storage.NotificationChannel, payload *Payload, status, errMsg string) {
+	h := &storage.NotificationHistory{
+		ChannelID: ch.ID,
+		EventType: payload.EventType,
+		Status:    status,
+		Error:     errMsg,
+	}
+	if payload.Incident != nil {
+		h.IncidentID = &payload.Incident.ID
+		if payload.Incident.MonitorID != 0 {
+			h.MonitorID = &payload.Incident.MonitorID
+		}
+	} else if payload.Monitor != nil {
+		h.MonitorID = &payload.Monitor.ID
+	}
+	if err := d.store.InsertNotificationHistory(context.Background(), h); err != nil {
+		d.logger.Warn("record notification history", "error", err)
+	}
 }
 
 func matchesEvent(events []string, eventType string) bool {

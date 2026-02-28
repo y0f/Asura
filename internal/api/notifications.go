@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/y0f/asura/internal/httputil"
 	"github.com/y0f/asura/internal/incident"
@@ -150,4 +151,25 @@ func (h *Handler) TestNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "sent"})
+}
+
+func (h *Handler) ListNotificationHistory(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	var f storage.NotifHistoryFilter
+	if v := q.Get("channel_id"); v != "" {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil {
+			f.ChannelID = id
+		}
+	}
+	f.Status = q.Get("status")
+	f.EventType = q.Get("event_type")
+
+	p := httputil.ParsePagination(r)
+	result, err := h.store.ListNotificationHistory(r.Context(), f, p)
+	if err != nil {
+		h.logger.Error("list notification history", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to list notification history")
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }

@@ -48,6 +48,10 @@ type Store interface {
 	UpdateNotificationChannel(ctx context.Context, ch *NotificationChannel) error
 	DeleteNotificationChannel(ctx context.Context, id int64) error
 
+	// Notification history
+	InsertNotificationHistory(ctx context.Context, h *NotificationHistory) error
+	ListNotificationHistory(ctx context.Context, f NotifHistoryFilter, p Pagination) (*PaginatedResult, error)
+
 	// Maintenance windows
 	CreateMaintenanceWindow(ctx context.Context, mw *MaintenanceWindow) error
 	GetMaintenanceWindow(ctx context.Context, id int64) (*MaintenanceWindow, error)
