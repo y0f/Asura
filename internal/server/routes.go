@@ -107,6 +107,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+s.p("/api/v1/badge/{id}/status"), s.api.BadgeStatus)
 	mux.HandleFunc("GET "+s.p("/api/v1/badge/{id}/uptime"), s.api.BadgeUptime)
 	mux.HandleFunc("GET "+s.p("/api/v1/badge/{id}/response"), s.api.BadgeResponseTime)
+	mux.HandleFunc("GET "+s.p("/api/v1/badge/{id}/cert"), s.api.BadgeCert)
 
 	mux.Handle("GET "+s.p("/api/v1/monitors"), monRead(http.HandlerFunc(s.api.ListMonitors)))
 	mux.Handle("GET "+s.p("/api/v1/monitors/{id}"), monRead(http.HandlerFunc(s.api.GetMonitor)))

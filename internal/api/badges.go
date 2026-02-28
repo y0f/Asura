@@ -37,9 +37,13 @@ func (h *Handler) BadgeStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	label := r.URL.Query().Get("label")
+	if label == "" {
+		label = m.Name
+	}
 	status := m.Status
 	color := statusColor(status)
-	writeBadgeSVG(w, m.Name, status, color)
+	writeBadgeSVG(w, label, status, color)
 }
 
 func (h *Handler) BadgeUptime(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +74,10 @@ func (h *Handler) BadgeUptime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	label := r.URL.Query().Get("label")
+	if label == "" {
+		label = "uptime"
+	}
 	value := fmt.Sprintf("%.2f%%", pct)
 	color := colorGreen
 	if pct < 99 {
@@ -78,7 +86,7 @@ func (h *Handler) BadgeUptime(w http.ResponseWriter, r *http.Request) {
 	if pct < 95 {
 		color = colorRed
 	}
-	writeBadgeSVG(w, "uptime", value, color)
+	writeBadgeSVG(w, label, value, color)
 }
 
 func (h *Handler) BadgeResponseTime(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +117,10 @@ func (h *Handler) BadgeResponseTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	label := r.URL.Query().Get("label")
+	if label == "" {
+		label = "response time"
+	}
 	value := fmt.Sprintf("%.0fms", p50)
 	color := colorGreen
 	if p50 > 500 {
@@ -117,7 +129,49 @@ func (h *Handler) BadgeResponseTime(w http.ResponseWriter, r *http.Request) {
 	if p50 > 2000 {
 		color = colorRed
 	}
-	writeBadgeSVG(w, "response time", value, color)
+	writeBadgeSVG(w, label, value, color)
+}
+
+func (h *Handler) BadgeCert(w http.ResponseWriter, r *http.Request) {
+	id, err := httputil.ParseID(r)
+	if err != nil {
+		writeBadgeSVG(w, "cert", "error", colorGrey)
+		return
+	}
+
+	ctx := r.Context()
+	m, err := h.store.GetMonitor(ctx, id)
+	if err != nil {
+		writeBadgeSVG(w, "cert", "not found", colorGrey)
+		return
+	}
+
+	visible, err := h.store.IsMonitorOnStatusPage(ctx, m.ID)
+	if err != nil || !visible {
+		writeBadgeSVG(w, "cert", "not found", colorGrey)
+		return
+	}
+
+	cr, err := h.store.GetLatestCheckResult(ctx, id)
+	if err != nil || cr == nil || cr.CertExpiry == nil {
+		writeBadgeSVG(w, "cert", "n/a", colorGrey)
+		return
+	}
+
+	label := r.URL.Query().Get("label")
+	if label == "" {
+		label = "cert expiry"
+	}
+	days := int(time.Until(*cr.CertExpiry).Hours() / 24)
+	value := fmt.Sprintf("%dd", days)
+	color := colorGreen
+	if days < 30 {
+		color = colorYellow
+	}
+	if days < 7 {
+		color = colorRed
+	}
+	writeBadgeSVG(w, label, value, color)
 }
 
 func statusColor(status string) string {
