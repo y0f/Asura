@@ -221,6 +221,10 @@ func FormatMessage(p *Payload) string {
 		if p.Change != nil {
 			return fmt.Sprintf("[CHANGE] Content changed for monitor #%d", p.Change.MonitorID)
 		}
+	case "cert.changed":
+		if p.Monitor != nil {
+			return fmt.Sprintf("[CERT] Certificate fingerprint changed for %s", p.Monitor.Name)
+		}
 	case "test":
 		return "[TEST] This is a test notification from Asura"
 	}

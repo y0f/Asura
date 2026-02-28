@@ -124,18 +124,19 @@ type SparklinePoint struct {
 
 // CheckResult stores the outcome of a single check execution.
 type CheckResult struct {
-	ID           int64      `json:"id"`
-	MonitorID    int64      `json:"monitor_id"`
-	Status       string     `json:"status"`        // up, down, degraded
-	ResponseTime int64      `json:"response_time"` // milliseconds
-	StatusCode   int        `json:"status_code,omitempty"`
-	Message      string     `json:"message,omitempty"`
-	Headers      string     `json:"headers,omitempty"` // JSON encoded
-	Body         string     `json:"body,omitempty"`
-	BodyHash     string     `json:"body_hash,omitempty"`
-	CertExpiry   *time.Time `json:"cert_expiry,omitempty"`
-	DNSRecords   string     `json:"dns_records,omitempty"` // JSON encoded
-	CreatedAt    time.Time  `json:"created_at"`
+	ID              int64      `json:"id"`
+	MonitorID       int64      `json:"monitor_id"`
+	Status          string     `json:"status"`        // up, down, degraded
+	ResponseTime    int64      `json:"response_time"` // milliseconds
+	StatusCode      int        `json:"status_code,omitempty"`
+	Message         string     `json:"message,omitempty"`
+	Headers         string     `json:"headers,omitempty"` // JSON encoded
+	Body            string     `json:"body,omitempty"`
+	BodyHash        string     `json:"body_hash,omitempty"`
+	CertExpiry      *time.Time `json:"cert_expiry,omitempty"`
+	CertFingerprint string     `json:"cert_fingerprint,omitempty"`
+	DNSRecords      string     `json:"dns_records,omitempty"` // JSON encoded
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 // Incident tracks a period of downtime or degradation.
@@ -199,12 +200,13 @@ type ContentChange struct {
 
 // MonitorStatus holds the runtime state of a monitor.
 type MonitorStatus struct {
-	MonitorID       int64      `json:"monitor_id"`
-	Status          string     `json:"status"` // up, down, degraded, pending
-	LastCheckAt     *time.Time `json:"last_check_at,omitempty"`
-	ConsecFails     int        `json:"consec_fails"`
-	ConsecSuccesses int        `json:"consec_successes"`
-	LastBodyHash    string     `json:"-"`
+	MonitorID           int64      `json:"monitor_id"`
+	Status              string     `json:"status"` // up, down, degraded, pending
+	LastCheckAt         *time.Time `json:"last_check_at,omitempty"`
+	ConsecFails         int        `json:"consec_fails"`
+	ConsecSuccesses     int        `json:"consec_successes"`
+	LastBodyHash        string     `json:"-"`
+	LastCertFingerprint string     `json:"-"`
 }
 
 // Pagination contains parameters for list queries.

@@ -10,15 +10,16 @@ import (
 
 // Result holds the outcome of a protocol check.
 type Result struct {
-	Status       string // "up", "down", "degraded"
-	ResponseTime int64  // milliseconds
-	StatusCode   int
-	Message      string
-	Headers      map[string]string
-	Body         string
-	BodyHash     string
-	CertExpiry   *int64 // unix timestamp
-	DNSRecords   []string
+	Status          string // "up", "down", "degraded"
+	ResponseTime    int64  // milliseconds
+	StatusCode      int
+	Message         string
+	Headers         map[string]string
+	Body            string
+	BodyHash        string
+	CertExpiry      *int64 // unix timestamp
+	CertFingerprint string // SHA-256 hex fingerprint of leaf cert
+	DNSRecords      []string
 }
 
 // Checker performs a protocol-specific check against a target.

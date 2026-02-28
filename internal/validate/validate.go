@@ -34,6 +34,7 @@ var _validNotificationEvents = map[string]bool{
 	"incident.resolved":     true,
 	"incident.reminder":     true,
 	"content.changed":       true,
+	"cert.changed":          true,
 }
 
 func ValidateMonitor(m *storage.Monitor) error {

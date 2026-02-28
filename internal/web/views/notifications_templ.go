@@ -25,7 +25,7 @@ func notifXData() string {
     editId: 0,
     advancedNotifSettings: false,
     formData: {name:'', type:'webhook', enabled:true, settings_json:'{}'},
-    events: {created:true, resolved:true, acknowledged:false, reminder:true, changed:false},
+    events: {created:true, resolved:true, acknowledged:false, reminder:true, changed:false, certChanged:false},
     webhook: {url:'', secret:''},
     telegram: {bot_token:'', chat_id:''},
     discord: {webhook_url:''},
@@ -43,7 +43,7 @@ func notifXData() string {
         this.editId = 0;
         this.advancedNotifSettings = false;
         this.formData = {name:'', type:'webhook', enabled:true, settings_json:'{}'};
-        this.events = {created:true, resolved:true, acknowledged:false, reminder:true, changed:false};
+        this.events = {created:true, resolved:true, acknowledged:false, reminder:true, changed:false, certChanged:false};
         this.webhook = {url:'', secret:''};
         this.telegram = {bot_token:'', chat_id:''};
         this.discord = {webhook_url:''};
@@ -73,6 +73,7 @@ func notifXData() string {
                 if (e === 'incident.acknowledged') this.events.acknowledged = true;
                 if (e === 'incident.reminder') this.events.reminder = true;
                 if (e === 'content.changed') this.events.changed = true;
+                if (e === 'cert.changed') this.events.certChanged = true;
             });
         }
         let s = ch.settings || {};
@@ -136,7 +137,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(notifXData())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 93, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 94, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -169,7 +170,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 110, Col: 67}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 111, Col: 67}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -182,7 +183,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Type)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 111, Col: 80}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 112, Col: 80}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -222,7 +223,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ev)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 117, Col: 90}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 118, Col: 90}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -245,7 +246,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 						var templ_7745c5c3_Var9 string
 						templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("editChannel(%s)", ToJSON(ch)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 122, Col: 82}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 123, Col: 82}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 						if templ_7745c5c3_Err != nil {
@@ -258,7 +259,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 						var templ_7745c5c3_Var10 templ.SafeURL
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/notifications/%d/test", p.BasePath, ch.ID)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 124, Col: 111}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 125, Col: 111}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -271,7 +272,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 						var templ_7745c5c3_Var11 templ.SafeURL
 						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/notifications/%d/delete", p.BasePath, ch.ID)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 127, Col: 113}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 128, Col: 113}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {
@@ -304,7 +305,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.BasePath + "/notifications")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 145, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/notifications.templ`, Line: 146, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -366,7 +367,7 @@ func NotificationListPage(p NotificationListParams) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Events --><div><label class=\"form-label mb-2\">Events</label><div class=\"grid grid-cols-2 gap-2\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_created\" :checked=\"events.created\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Created</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_resolved\" :checked=\"events.resolved\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Resolved</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_acknowledged\" :checked=\"events.acknowledged\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Acknowledged</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_reminder\" :checked=\"events.reminder\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Reminder</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_content_changed\" :checked=\"events.changed\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Content Changed</span></label></div></div><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"enabled\" :checked=\"formData.enabled\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Enabled</span></label><div class=\"flex items-center gap-3 pt-1\"><button type=\"submit\" class=\"btn-primary\" x-text=\"editId ? 'Update' : 'Create'\"></button> <button type=\"button\" @click=\"showForm = false\" class=\"text-[13px] text-muted hover:text-muted-light transition-colors\">Cancel</button></div></form></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Events --><div><label class=\"form-label mb-2\">Events</label><div class=\"grid grid-cols-2 gap-2\"><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_created\" :checked=\"events.created\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Created</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_resolved\" :checked=\"events.resolved\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Resolved</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_acknowledged\" :checked=\"events.acknowledged\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Acknowledged</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_incident_reminder\" :checked=\"events.reminder\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Incident Reminder</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_content_changed\" :checked=\"events.changed\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Content Changed</span></label> <label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"event_cert_changed\" :checked=\"events.certChanged\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Certificate Changed</span></label></div></div><label class=\"flex items-center gap-2 cursor-pointer\"><input type=\"checkbox\" name=\"enabled\" :checked=\"formData.enabled\" class=\"form-checkbox\"> <span class=\"text-[12px] text-muted-light\">Enabled</span></label><div class=\"flex items-center gap-3 pt-1\"><button type=\"submit\" class=\"btn-primary\" x-text=\"editId ? 'Update' : 'Create'\"></button> <button type=\"button\" @click=\"showForm = false\" class=\"text-[13px] text-muted hover:text-muted-light transition-colors\">Cancel</button></div></form></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

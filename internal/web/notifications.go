@@ -144,6 +144,7 @@ func parseNotificationEvents(r *http.Request) []string {
 		"event_incident_acknowledged",
 		"event_incident_reminder",
 		"event_content_changed",
+		"event_cert_changed",
 	}
 	eventValues := []string{
 		"incident.created",
@@ -151,6 +152,7 @@ func parseNotificationEvents(r *http.Request) []string {
 		"incident.acknowledged",
 		"incident.reminder",
 		"content.changed",
+		"cert.changed",
 	}
 	for i, key := range eventKeys {
 		if r.FormValue(key) == "on" {

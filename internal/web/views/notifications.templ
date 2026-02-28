@@ -17,7 +17,7 @@ func notifXData() string {
     editId: 0,
     advancedNotifSettings: false,
     formData: {name:'', type:'webhook', enabled:true, settings_json:'{}'},
-    events: {created:true, resolved:true, acknowledged:false, reminder:true, changed:false},
+    events: {created:true, resolved:true, acknowledged:false, reminder:true, changed:false, certChanged:false},
     webhook: {url:'', secret:''},
     telegram: {bot_token:'', chat_id:''},
     discord: {webhook_url:''},
@@ -35,7 +35,7 @@ func notifXData() string {
         this.editId = 0;
         this.advancedNotifSettings = false;
         this.formData = {name:'', type:'webhook', enabled:true, settings_json:'{}'};
-        this.events = {created:true, resolved:true, acknowledged:false, reminder:true, changed:false};
+        this.events = {created:true, resolved:true, acknowledged:false, reminder:true, changed:false, certChanged:false};
         this.webhook = {url:'', secret:''};
         this.telegram = {bot_token:'', chat_id:''};
         this.discord = {webhook_url:''};
@@ -65,6 +65,7 @@ func notifXData() string {
                 if (e === 'incident.acknowledged') this.events.acknowledged = true;
                 if (e === 'incident.reminder') this.events.reminder = true;
                 if (e === 'content.changed') this.events.changed = true;
+                if (e === 'cert.changed') this.events.certChanged = true;
             });
         }
         let s = ch.settings || {};
@@ -216,6 +217,10 @@ templ NotificationListPage(p NotificationListParams) {
 								<label class="flex items-center gap-2 cursor-pointer">
 									<input type="checkbox" name="event_content_changed" :checked="events.changed" class="form-checkbox"/>
 									<span class="text-[12px] text-muted-light">Content Changed</span>
+								</label>
+								<label class="flex items-center gap-2 cursor-pointer">
+									<input type="checkbox" name="event_cert_changed" :checked="events.certChanged" class="form-checkbox"/>
+									<span class="text-[12px] text-muted-light">Certificate Changed</span>
 								</label>
 							</div>
 						</div>

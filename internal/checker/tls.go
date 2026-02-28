@@ -2,7 +2,9 @@ package checker
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -85,12 +87,15 @@ func (c *TLSChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Resu
 	expiry := cert.NotAfter
 	expiryUnix := expiry.Unix()
 	daysUntilExpiry := int(time.Until(expiry).Hours() / 24)
+	sum := sha256.Sum256(cert.Raw)
+	fingerprint := hex.EncodeToString(sum[:])
 
 	result := &Result{
-		Status:       "up",
-		ResponseTime: elapsed,
-		CertExpiry:   &expiryUnix,
-		Message:      fmt.Sprintf("cert expires in %d days (%s)", daysUntilExpiry, expiry.Format("2006-01-02")),
+		Status:          "up",
+		ResponseTime:    elapsed,
+		CertExpiry:      &expiryUnix,
+		CertFingerprint: fingerprint,
+		Message:         fmt.Sprintf("cert expires in %d days (%s)", daysUntilExpiry, expiry.Format("2006-01-02")),
 	}
 
 	if daysUntilExpiry <= 0 {

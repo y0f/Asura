@@ -292,9 +292,9 @@ func (s *SQLiteStore) GetMonitorStatus(ctx context.Context, monitorID int64) (*M
 	var ms MonitorStatus
 	var lastCheck sql.NullString
 	err := s.readDB.QueryRowContext(ctx,
-		`SELECT monitor_id, status, last_check_at, consec_fails, consec_successes, last_body_hash
+		`SELECT monitor_id, status, last_check_at, consec_fails, consec_successes, last_body_hash, last_cert_fingerprint
 		 FROM monitor_status WHERE monitor_id=?`, monitorID).
-		Scan(&ms.MonitorID, &ms.Status, &lastCheck, &ms.ConsecFails, &ms.ConsecSuccesses, &ms.LastBodyHash)
+		Scan(&ms.MonitorID, &ms.Status, &lastCheck, &ms.ConsecFails, &ms.ConsecSuccesses, &ms.LastBodyHash, &ms.LastCertFingerprint)
 	if err != nil {
 		return nil, err
 	}
@@ -308,13 +308,14 @@ func (s *SQLiteStore) UpsertMonitorStatus(ctx context.Context, st *MonitorStatus
 		lastCheck = formatTime(*st.LastCheckAt)
 	}
 	_, err := s.writeDB.ExecContext(ctx,
-		`INSERT INTO monitor_status (monitor_id, status, last_check_at, consec_fails, consec_successes, last_body_hash)
-		 VALUES (?, ?, ?, ?, ?, ?)
+		`INSERT INTO monitor_status (monitor_id, status, last_check_at, consec_fails, consec_successes, last_body_hash, last_cert_fingerprint)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)
 		 ON CONFLICT(monitor_id) DO UPDATE SET
 		   status=excluded.status, last_check_at=excluded.last_check_at,
 		   consec_fails=excluded.consec_fails, consec_successes=excluded.consec_successes,
-		   last_body_hash=excluded.last_body_hash`,
-		st.MonitorID, st.Status, nullStr(lastCheck), st.ConsecFails, st.ConsecSuccesses, st.LastBodyHash)
+		   last_body_hash=excluded.last_body_hash,
+		   last_cert_fingerprint=excluded.last_cert_fingerprint`,
+		st.MonitorID, st.Status, nullStr(lastCheck), st.ConsecFails, st.ConsecSuccesses, st.LastBodyHash, st.LastCertFingerprint)
 	return err
 }
 
@@ -327,10 +328,10 @@ func (s *SQLiteStore) InsertCheckResult(ctx context.Context, r *CheckResult) err
 	}
 	now := formatTime(time.Now())
 	res, err := s.writeDB.ExecContext(ctx,
-		`INSERT INTO check_results (monitor_id, status, response_time, status_code, message, headers, body, body_hash, cert_expiry, dns_records, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO check_results (monitor_id, status, response_time, status_code, message, headers, body, body_hash, cert_expiry, cert_fingerprint, dns_records, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		r.MonitorID, r.Status, r.ResponseTime, r.StatusCode, r.Message, r.Headers,
-		r.Body, r.BodyHash, nullStr(certExpiry), r.DNSRecords, now)
+		r.Body, r.BodyHash, nullStr(certExpiry), r.CertFingerprint, r.DNSRecords, now)
 	if err != nil {
 		return err
 	}

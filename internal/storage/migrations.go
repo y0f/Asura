@@ -310,4 +310,9 @@ INSERT OR IGNORE INTO tags (name) SELECT DISTINCT j.value FROM monitors, json_ea
 INSERT OR IGNORE INTO monitor_tags (monitor_id, tag_id) SELECT m.id, t.id FROM monitors m, json_each(m.tags) AS j JOIN tags t ON t.name = j.value WHERE m.tags != '[]' AND m.tags != '';
 UPDATE monitors SET tags = '[]';`,
 	},
+	{
+		version: 19,
+		sql: `ALTER TABLE check_results ADD COLUMN cert_fingerprint TEXT NOT NULL DEFAULT '';
+ALTER TABLE monitor_status ADD COLUMN last_cert_fingerprint TEXT NOT NULL DEFAULT '';`,
+	},
 }

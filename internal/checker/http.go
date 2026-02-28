@@ -149,8 +149,11 @@ func buildHTTPResult(resp *http.Response, elapsed int64, settings storage.HTTPSe
 	}
 
 	if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
-		expiry := resp.TLS.PeerCertificates[0].NotAfter.Unix()
+		cert := resp.TLS.PeerCertificates[0]
+		expiry := cert.NotAfter.Unix()
 		result.CertExpiry = &expiry
+		sum := sha256.Sum256(cert.Raw)
+		result.CertFingerprint = hex.EncodeToString(sum[:])
 	}
 	return result, nil
 }

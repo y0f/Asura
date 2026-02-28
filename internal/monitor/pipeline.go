@@ -166,6 +166,14 @@ func (p *Pipeline) handleResult(ctx context.Context, wr WorkerResult) {
 		status.LastBodyHash = result.BodyHash
 	}
 
+	if result.CertFingerprint != "" {
+		oldFP := status.LastCertFingerprint
+		if oldFP != "" && oldFP != result.CertFingerprint {
+			p.emitNotification("cert.changed", nil, mon, nil)
+		}
+		status.LastCertFingerprint = result.CertFingerprint
+	}
+
 	if err := p.store.UpsertMonitorStatus(ctx, status); err != nil {
 		p.logger.Error("upsert monitor status", "error", err)
 	}
@@ -213,16 +221,17 @@ func buildCheckResult(mon *storage.Monitor, result *checker.Result, finalStatus 
 	}
 
 	return &storage.CheckResult{
-		MonitorID:    mon.ID,
-		Status:       finalStatus,
-		ResponseTime: result.ResponseTime,
-		StatusCode:   result.StatusCode,
-		Message:      result.Message,
-		Headers:      string(headersJSON),
-		Body:         result.Body,
-		BodyHash:     result.BodyHash,
-		CertExpiry:   certExpiry,
-		DNSRecords:   string(dnsJSON),
+		MonitorID:       mon.ID,
+		Status:          finalStatus,
+		ResponseTime:    result.ResponseTime,
+		StatusCode:      result.StatusCode,
+		Message:         result.Message,
+		Headers:         string(headersJSON),
+		Body:            result.Body,
+		BodyHash:        result.BodyHash,
+		CertExpiry:      certExpiry,
+		CertFingerprint: result.CertFingerprint,
+		DNSRecords:      string(dnsJSON),
 	}
 }
 
