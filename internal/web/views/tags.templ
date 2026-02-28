@@ -11,12 +11,16 @@ type TagListParams struct {
 	Tags []*storage.Tag
 }
 
-func tagAlpineData() string {
+func tagAlpineData(basePath string) string {
 	return `{
     showForm: false,
     editId: 0,
     name: '',
     color: '#6366f1',
+    basePath: '` + JSEscapeString(basePath) + `',
+    get formAction() {
+        return this.editId ? this.basePath + '/tags/' + this.editId : this.basePath + '/tags';
+    },
     resetForm() {
         this.editId = 0;
         this.name = '';
@@ -33,7 +37,7 @@ func tagAlpineData() string {
 
 templ TagListPage(p TagListParams) {
 	@Layout(p.LayoutParams) {
-		<div x-data={ tagAlpineData() }>
+		<div x-data={ tagAlpineData(p.BasePath) }>
 			<div class="flex items-center justify-between mb-5">
 				<h1 class="text-[15px] font-medium text-white">Tags</h1>
 				if p.Perms["monitors.write"] {
@@ -100,9 +104,7 @@ templ TagListPage(p TagListParams) {
 			<div x-show="showForm" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" @click.self="showForm = false">
 				<div class="bg-surface-100 border border-line rounded-lg p-5 w-full max-w-sm" x-show="showForm" x-transition @click.stop>
 					<h3 class="text-[15px] font-medium text-white mb-4" x-text="editId ? 'Edit Tag' : 'New Tag'"></h3>
-					<form method="POST" data-base-action={ p.BasePath + "/tags" }
-						@submit="if(editId) $el.action = $el.dataset.baseAction + '/' + editId; else $el.action = $el.dataset.baseAction"
-						class="space-y-3">
+					<form method="POST" :action="formAction" class="space-y-3">
 						<div>
 							<label class="form-label">Name</label>
 							<input type="text" name="name" x-model="name" required maxlength="50" placeholder="production, staging, critical…" class="form-input"/>

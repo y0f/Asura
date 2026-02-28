@@ -19,12 +19,16 @@ type TagListParams struct {
 	Tags []*storage.Tag
 }
 
-func tagAlpineData() string {
+func tagAlpineData(basePath string) string {
 	return `{
     showForm: false,
     editId: 0,
     name: '',
     color: '#6366f1',
+    basePath: '` + JSEscapeString(basePath) + `',
+    get formAction() {
+        return this.editId ? this.basePath + '/tags/' + this.editId : this.basePath + '/tags';
+    },
     resetForm() {
         this.editId = 0;
         this.name = '';
@@ -77,9 +81,9 @@ func TagListPage(p TagListParams) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(tagAlpineData())
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(tagAlpineData(p.BasePath))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 36, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 40, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -122,7 +126,7 @@ func TagListPage(p TagListParams) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color:" + t.Color)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 64, Col: 92}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 68, Col: 92}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -135,7 +139,7 @@ func TagListPage(p TagListParams) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(t.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 65, Col: 74}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 69, Col: 74}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -148,7 +152,7 @@ func TagListPage(p TagListParams) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(t.Color)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 69, Col: 66}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 73, Col: 66}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -166,7 +170,7 @@ func TagListPage(p TagListParams) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("editTag(%s)", ToJSON(t)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 74, Col: 80}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 78, Col: 80}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -179,7 +183,7 @@ func TagListPage(p TagListParams) templ.Component {
 						var templ_7745c5c3_Var8 templ.SafeURL
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/tags/%d/delete", p.BasePath, t.ID)))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 78, Col: 106}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 82, Col: 106}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -215,20 +219,7 @@ func TagListPage(p TagListParams) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<!-- Modal --><div x-show=\"showForm\" x-cloak x-transition.opacity class=\"fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4\" @click.self=\"showForm = false\"><div class=\"bg-surface-100 border border-line rounded-lg p-5 w-full max-w-sm\" x-show=\"showForm\" x-transition @click.stop><h3 class=\"text-[15px] font-medium text-white mb-4\" x-text=\"editId ? 'Edit Tag' : 'New Tag'\"></h3><form method=\"POST\" data-base-action=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.BasePath + "/tags")
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/tags.templ`, Line: 103, Col: 64}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" @submit=\"if(editId) $el.action = $el.dataset.baseAction + '/' + editId; else $el.action = $el.dataset.baseAction\" class=\"space-y-3\"><div><label class=\"form-label\">Name</label> <input type=\"text\" name=\"name\" x-model=\"name\" required maxlength=\"50\" placeholder=\"production, staging, critical…\" class=\"form-input\"></div><div><label class=\"form-label\">Color</label><div class=\"flex items-center gap-3\"><input type=\"color\" name=\"color\" x-model=\"color\" class=\"w-10 h-10 rounded border border-line bg-transparent cursor-pointer p-0.5\"> <input type=\"text\" x-model=\"color\" @input=\"color = $event.target.value\" placeholder=\"#6366f1\" maxlength=\"7\" class=\"form-input font-mono flex-1\"></div></div><div class=\"flex items-center gap-3 pt-1\"><button type=\"submit\" class=\"btn-primary\" x-text=\"editId ? 'Update' : 'Create'\"></button> <button type=\"button\" @click=\"showForm = false\" class=\"text-[13px] text-muted hover:text-muted-light transition-colors\">Cancel</button></div></form></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<!-- Modal --><div x-show=\"showForm\" x-cloak x-transition.opacity class=\"fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4\" @click.self=\"showForm = false\"><div class=\"bg-surface-100 border border-line rounded-lg p-5 w-full max-w-sm\" x-show=\"showForm\" x-transition @click.stop><h3 class=\"text-[15px] font-medium text-white mb-4\" x-text=\"editId ? 'Edit Tag' : 'New Tag'\"></h3><form method=\"POST\" :action=\"formAction\" class=\"space-y-3\"><div><label class=\"form-label\">Name</label> <input type=\"text\" name=\"name\" x-model=\"name\" required maxlength=\"50\" placeholder=\"production, staging, critical…\" class=\"form-input\"></div><div><label class=\"form-label\">Color</label><div class=\"flex items-center gap-3\"><input type=\"color\" name=\"color\" x-model=\"color\" class=\"w-10 h-10 rounded border border-line bg-transparent cursor-pointer p-0.5\"> <input type=\"text\" x-model=\"color\" @input=\"color = $event.target.value\" placeholder=\"#6366f1\" maxlength=\"7\" class=\"form-input font-mono flex-1\"></div></div><div class=\"flex items-center gap-3 pt-1\"><button type=\"submit\" class=\"btn-primary\" x-text=\"editId ? 'Update' : 'Create'\"></button> <button type=\"button\" @click=\"showForm = false\" class=\"text-[13px] text-muted hover:text-muted-light transition-colors\">Cancel</button></div></form></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

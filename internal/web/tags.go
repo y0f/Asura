@@ -28,9 +28,6 @@ func (h *Handler) TagCreate(w http.ResponseWriter, r *http.Request) {
 		Name:  r.FormValue("name"),
 		Color: r.FormValue("color"),
 	}
-	if t.Color == "" {
-		t.Color = "#6366f1"
-	}
 
 	if err := validate.ValidateTag(t); err != nil {
 		h.setFlash(w, err.Error())
@@ -45,6 +42,7 @@ func (h *Handler) TagCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.audit(r, "create", "tag", t.ID, "")
 	h.setFlash(w, "Tag created")
 	h.redirect(w, r, "/tags")
 }
