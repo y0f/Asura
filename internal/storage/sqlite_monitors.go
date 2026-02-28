@@ -117,7 +117,7 @@ func (s *SQLiteStore) ListMonitors(ctx context.Context, f MonitorListFilter, p P
 	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.readDB.QueryRowContext(ctx,
-		"SELECT COUNT(*) FROM monitors m WHERE "+where, countArgs...).Scan(&total)
+		"SELECT COUNT(*) FROM monitors m LEFT JOIN monitor_status ms ON ms.monitor_id = m.id WHERE "+where, countArgs...).Scan(&total)
 	if err != nil {
 		return nil, err
 	}

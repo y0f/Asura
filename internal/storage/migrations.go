@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 18
+const schemaVersion = 19
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -49,27 +49,29 @@ CREATE TABLE IF NOT EXISTS monitor_notifications (
 CREATE INDEX IF NOT EXISTS idx_monitor_notif_channel ON monitor_notifications(channel_id);
 
 CREATE TABLE IF NOT EXISTS monitor_status (
-	monitor_id       INTEGER PRIMARY KEY REFERENCES monitors(id) ON DELETE CASCADE,
-	status           TEXT    NOT NULL DEFAULT 'pending',
-	last_check_at    TEXT,
-	consec_fails     INTEGER NOT NULL DEFAULT 0,
-	consec_successes INTEGER NOT NULL DEFAULT 0,
-	last_body_hash   TEXT    NOT NULL DEFAULT ''
+	monitor_id             INTEGER PRIMARY KEY REFERENCES monitors(id) ON DELETE CASCADE,
+	status                 TEXT    NOT NULL DEFAULT 'pending',
+	last_check_at          TEXT,
+	consec_fails           INTEGER NOT NULL DEFAULT 0,
+	consec_successes       INTEGER NOT NULL DEFAULT 0,
+	last_body_hash         TEXT    NOT NULL DEFAULT '',
+	last_cert_fingerprint  TEXT    NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS check_results (
-	id            INTEGER PRIMARY KEY AUTOINCREMENT,
-	monitor_id    INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
-	status        TEXT    NOT NULL,
-	response_time INTEGER NOT NULL DEFAULT 0,
-	status_code   INTEGER NOT NULL DEFAULT 0,
-	message       TEXT    NOT NULL DEFAULT '',
-	headers       TEXT    NOT NULL DEFAULT '',
-	body          TEXT    NOT NULL DEFAULT '',
-	body_hash     TEXT    NOT NULL DEFAULT '',
-	cert_expiry   TEXT,
-	dns_records   TEXT    NOT NULL DEFAULT '',
-	created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+	id               INTEGER PRIMARY KEY AUTOINCREMENT,
+	monitor_id       INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+	status           TEXT    NOT NULL,
+	response_time    INTEGER NOT NULL DEFAULT 0,
+	status_code      INTEGER NOT NULL DEFAULT 0,
+	message          TEXT    NOT NULL DEFAULT '',
+	headers          TEXT    NOT NULL DEFAULT '',
+	body             TEXT    NOT NULL DEFAULT '',
+	body_hash        TEXT    NOT NULL DEFAULT '',
+	cert_expiry      TEXT,
+	cert_fingerprint TEXT    NOT NULL DEFAULT '',
+	dns_records      TEXT    NOT NULL DEFAULT '',
+	created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_check_results_monitor_id ON check_results(monitor_id, created_at DESC);

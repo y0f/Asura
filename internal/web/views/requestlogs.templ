@@ -82,7 +82,7 @@ templ RequestLogListPage(p RequestLogParams) {
 					</div>
 				</div>
 			}
-			<div class="flex flex-wrap items-center gap-3 mb-3">
+			<div class="flex items-center gap-3 mb-3 overflow-x-auto">
 				<div class="flex gap-1.5">
 					for _, tr := range []string{"1h", "12h", "24h", "7d"} {
 						<a href={ templ.SafeURL(p.timeFilterHref(tr)) }
