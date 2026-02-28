@@ -13,23 +13,29 @@ func TestExtractIP(t *testing.T) {
 	tests := []struct {
 		name        string
 		remoteAddr  string
+		cfIP        string
 		xRealIP     string
 		xff         string
 		trustedNets []net.IPNet
 		want        string
 	}{
-		{"direct untrusted", "1.2.3.4:1234", "", "", nil, "1.2.3.4"},
-		{"trusted with X-Real-IP", "127.0.0.1:1234", "10.0.0.1", "", []net.IPNet{*trusted}, "10.0.0.1"},
-		{"trusted with XFF", "127.0.0.1:1234", "", "10.0.0.1, 127.0.0.1", []net.IPNet{*trusted}, "10.0.0.1"},
-		{"untrusted ignores X-Real-IP", "1.2.3.4:1234", "10.0.0.1", "", []net.IPNet{*trusted}, "1.2.3.4"},
-		{"X-Real-IP takes priority over XFF", "127.0.0.1:1234", "10.0.0.1", "192.168.1.1", []net.IPNet{*trusted}, "10.0.0.1"},
-		{"no port in remote addr", "1.2.3.4", "", "", nil, "1.2.3.4"},
+		{"direct untrusted", "1.2.3.4:1234", "", "", "", nil, "1.2.3.4"},
+		{"trusted with X-Real-IP", "127.0.0.1:1234", "", "10.0.0.1", "", []net.IPNet{*trusted}, "10.0.0.1"},
+		{"trusted with XFF", "127.0.0.1:1234", "", "", "10.0.0.1, 127.0.0.1", []net.IPNet{*trusted}, "10.0.0.1"},
+		{"untrusted ignores X-Real-IP", "1.2.3.4:1234", "", "10.0.0.1", "", []net.IPNet{*trusted}, "1.2.3.4"},
+		{"X-Real-IP takes priority over XFF", "127.0.0.1:1234", "", "10.0.0.1", "192.168.1.1", []net.IPNet{*trusted}, "10.0.0.1"},
+		{"no port in remote addr", "1.2.3.4", "", "", "", nil, "1.2.3.4"},
+		{"CF-Connecting-IP takes priority", "127.0.0.1:1234", "5.6.7.8", "10.0.0.1", "192.168.1.1", []net.IPNet{*trusted}, "5.6.7.8"},
+		{"untrusted ignores CF-Connecting-IP", "1.2.3.4:1234", "5.6.7.8", "", "", []net.IPNet{*trusted}, "1.2.3.4"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r, _ := http.NewRequest("GET", "/", nil)
 			r.RemoteAddr = tt.remoteAddr
+			if tt.cfIP != "" {
+				r.Header.Set("CF-Connecting-IP", tt.cfIP)
+			}
 			if tt.xRealIP != "" {
 				r.Header.Set("X-Real-IP", tt.xRealIP)
 			}

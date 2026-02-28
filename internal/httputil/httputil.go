@@ -97,6 +97,12 @@ func ExtractIP(r *http.Request, trustedNets []net.IPNet) string {
 		return host
 	}
 
+	if cfIP := strings.TrimSpace(r.Header.Get("CF-Connecting-IP")); cfIP != "" {
+		if net.ParseIP(cfIP) != nil {
+			return cfIP
+		}
+	}
+
 	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
 		if net.ParseIP(realIP) != nil {
 			return realIP
