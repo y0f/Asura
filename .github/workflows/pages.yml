@@ -1,10 +1,9 @@
 name: Pages
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
     branches: [main]
+    paths: ['docs/**']
 
 permissions:
   contents: read
@@ -17,15 +16,12 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: main
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
