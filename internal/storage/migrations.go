@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 21
+const schemaVersion = 22
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -196,17 +196,22 @@ CREATE TABLE IF NOT EXISTS request_log_rollups (
 );
 
 CREATE TABLE IF NOT EXISTS status_pages (
-	id           INTEGER PRIMARY KEY AUTOINCREMENT,
-	slug         TEXT    NOT NULL UNIQUE,
-	title        TEXT    NOT NULL DEFAULT 'Service Status',
-	description  TEXT    NOT NULL DEFAULT '',
-	custom_css   TEXT    NOT NULL DEFAULT '',
-	show_incidents INTEGER NOT NULL DEFAULT 1,
-	enabled      INTEGER NOT NULL DEFAULT 0,
-	api_enabled  INTEGER NOT NULL DEFAULT 0,
-	sort_order   INTEGER NOT NULL DEFAULT 0,
-	created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-	updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+	id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+	slug               TEXT    NOT NULL UNIQUE,
+	title              TEXT    NOT NULL DEFAULT 'Service Status',
+	description        TEXT    NOT NULL DEFAULT '',
+	custom_css         TEXT    NOT NULL DEFAULT '',
+	show_incidents     INTEGER NOT NULL DEFAULT 1,
+	enabled            INTEGER NOT NULL DEFAULT 0,
+	api_enabled        INTEGER NOT NULL DEFAULT 0,
+	sort_order         INTEGER NOT NULL DEFAULT 0,
+	logo_url           TEXT    NOT NULL DEFAULT '',
+	favicon_url        TEXT    NOT NULL DEFAULT '',
+	custom_header_html TEXT    NOT NULL DEFAULT '',
+	password_hash      TEXT    NOT NULL DEFAULT '',
+	analytics_script   TEXT    NOT NULL DEFAULT '',
+	created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+	updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
 
 CREATE TABLE IF NOT EXISTS status_page_monitors (
@@ -358,5 +363,13 @@ WHERE assertions IS NOT NULL
   AND assertions != ''
   AND assertions != '[]'
   AND json_type(assertions) = 'array';`,
+	},
+	{
+		version: 22,
+		sql: `ALTER TABLE status_pages ADD COLUMN logo_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE status_pages ADD COLUMN favicon_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE status_pages ADD COLUMN custom_header_html TEXT NOT NULL DEFAULT '';
+ALTER TABLE status_pages ADD COLUMN password_hash TEXT NOT NULL DEFAULT '';
+ALTER TABLE status_pages ADD COLUMN analytics_script TEXT NOT NULL DEFAULT '';`,
 	},
 }

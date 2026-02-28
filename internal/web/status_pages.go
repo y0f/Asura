@@ -1,7 +1,9 @@
 package web
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"strconv"
@@ -88,20 +90,33 @@ func (h *Handler) StatusPageForm(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+func hashPassword(password string) string {
+	h := sha256.New()
+	h.Write([]byte(password))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 func (h *Handler) StatusPageCreate(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	sp := &storage.StatusPage{
-		Title:         strings.TrimSpace(r.FormValue("title")),
-		Slug:          r.FormValue("slug"),
-		Description:   strings.TrimSpace(r.FormValue("description")),
-		Enabled:       r.FormValue("enabled") == "on",
-		APIEnabled:    r.FormValue("api_enabled") == "on",
-		ShowIncidents: r.FormValue("show_incidents") == "on",
-		CustomCSS:     r.FormValue("custom_css"),
+		Title:            strings.TrimSpace(r.FormValue("title")),
+		Slug:             r.FormValue("slug"),
+		Description:      strings.TrimSpace(r.FormValue("description")),
+		Enabled:          r.FormValue("enabled") == "on",
+		APIEnabled:       r.FormValue("api_enabled") == "on",
+		ShowIncidents:    r.FormValue("show_incidents") == "on",
+		CustomCSS:        r.FormValue("custom_css"),
+		LogoURL:          strings.TrimSpace(r.FormValue("logo_url")),
+		FaviconURL:       strings.TrimSpace(r.FormValue("favicon_url")),
+		CustomHeaderHTML: r.FormValue("custom_header_html"),
+		AnalyticsScript:  r.FormValue("analytics_script"),
 	}
 	if v := r.FormValue("sort_order"); v != "" {
 		sp.SortOrder, _ = strconv.Atoi(v)
+	}
+	if pw := r.FormValue("password"); pw != "" {
+		sp.PasswordHash = hashPassword(pw)
 	}
 
 	if err := validate.ValidateStatusPage(sp); err != nil {
@@ -150,18 +165,36 @@ func (h *Handler) StatusPageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	existing, err := h.store.GetStatusPage(r.Context(), id)
+	if err != nil {
+		h.logger.Error("web: get status page for update", "error", err)
+		h.setFlash(w, "Failed to load status page")
+		h.redirect(w, r, "/status-pages")
+		return
+	}
+
 	sp := &storage.StatusPage{
-		ID:            id,
-		Title:         strings.TrimSpace(r.FormValue("title")),
-		Slug:          r.FormValue("slug"),
-		Description:   strings.TrimSpace(r.FormValue("description")),
-		Enabled:       r.FormValue("enabled") == "on",
-		APIEnabled:    r.FormValue("api_enabled") == "on",
-		ShowIncidents: r.FormValue("show_incidents") == "on",
-		CustomCSS:     r.FormValue("custom_css"),
+		ID:               id,
+		Title:            strings.TrimSpace(r.FormValue("title")),
+		Slug:             r.FormValue("slug"),
+		Description:      strings.TrimSpace(r.FormValue("description")),
+		Enabled:          r.FormValue("enabled") == "on",
+		APIEnabled:       r.FormValue("api_enabled") == "on",
+		ShowIncidents:    r.FormValue("show_incidents") == "on",
+		CustomCSS:        r.FormValue("custom_css"),
+		LogoURL:          strings.TrimSpace(r.FormValue("logo_url")),
+		FaviconURL:       strings.TrimSpace(r.FormValue("favicon_url")),
+		CustomHeaderHTML: r.FormValue("custom_header_html"),
+		AnalyticsScript:  r.FormValue("analytics_script"),
+		PasswordHash:     existing.PasswordHash,
 	}
 	if v := r.FormValue("sort_order"); v != "" {
 		sp.SortOrder, _ = strconv.Atoi(v)
+	}
+	if pw := r.FormValue("password"); pw != "" {
+		sp.PasswordHash = hashPassword(pw)
+	} else if r.FormValue("clear_password") == "on" {
+		sp.PasswordHash = ""
 	}
 
 	if err := validate.ValidateStatusPage(sp); err != nil {
@@ -172,8 +205,8 @@ func (h *Handler) StatusPageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	existing, err := h.store.GetStatusPageBySlug(ctx, sp.Slug)
-	if err == nil && existing != nil && existing.ID != id {
+	slugOwner, err := h.store.GetStatusPageBySlug(ctx, sp.Slug)
+	if err == nil && slugOwner != nil && slugOwner.ID != id {
 		h.setFlash(w, "Slug already in use")
 		h.redirect(w, r, "/status-pages/"+strconv.FormatInt(id, 10)+"/edit")
 		return

@@ -362,17 +362,23 @@ type TimeSeriesPoint struct {
 
 // StatusPage represents a public status page with its own slug and monitor set.
 type StatusPage struct {
-	ID            int64     `json:"id"`
-	Slug          string    `json:"slug"`
-	Title         string    `json:"title"`
-	Description   string    `json:"description"`
-	CustomCSS     string    `json:"custom_css"`
-	ShowIncidents bool      `json:"show_incidents"`
-	Enabled       bool      `json:"enabled"`
-	APIEnabled    bool      `json:"api_enabled"`
-	SortOrder     int       `json:"sort_order"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID              int64     `json:"id"`
+	Slug            string    `json:"slug"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	CustomCSS       string    `json:"custom_css"`
+	ShowIncidents   bool      `json:"show_incidents"`
+	Enabled         bool      `json:"enabled"`
+	APIEnabled      bool      `json:"api_enabled"`
+	SortOrder       int       `json:"sort_order"`
+	LogoURL         string    `json:"logo_url"`
+	FaviconURL      string    `json:"favicon_url"`
+	CustomHeaderHTML string   `json:"custom_header_html"`
+	PasswordHash    string    `json:"-"`
+	PasswordEnabled bool      `json:"password_enabled"`
+	AnalyticsScript string    `json:"analytics_script"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 
 	// Transient fields
 	MonitorCount int `json:"monitor_count,omitempty"`

@@ -106,7 +106,7 @@ func (h *Handler) UpdateStatusPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	_, err = h.store.GetStatusPage(ctx, id)
+	existing, err := h.store.GetStatusPage(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "status page not found")
@@ -127,13 +127,14 @@ func (h *Handler) UpdateStatusPage(w http.ResponseWriter, r *http.Request) {
 
 	sp := &input.StatusPage
 	sp.ID = id
+	sp.PasswordHash = existing.PasswordHash
 	if err := validate.ValidateStatusPage(sp); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	existing, err := h.store.GetStatusPageBySlug(ctx, sp.Slug)
-	if err == nil && existing != nil && existing.ID != id {
+	slugOwner, err := h.store.GetStatusPageBySlug(ctx, sp.Slug)
+	if err == nil && slugOwner != nil && slugOwner.ID != id {
 		writeError(w, http.StatusConflict, "slug already in use")
 		return
 	}

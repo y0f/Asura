@@ -2,6 +2,9 @@ package web
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,12 +13,32 @@ import (
 	"github.com/y0f/asura/internal/web/views"
 )
 
+
+func spAuthCookieValue(passwordHash string) string {
+	h := sha256.New()
+	h.Write([]byte(passwordHash + ":sp-auth"))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (h *Handler) checkStatusPageAuth(r *http.Request, pageID int64, passwordHash string) bool {
+	c, err := r.Cookie(fmt.Sprintf("sp_auth_%d", pageID))
+	if err != nil {
+		return false
+	}
+	return c.Value == spAuthCookieValue(passwordHash)
+}
+
 func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID int64) {
 	ctx := r.Context()
 
 	sp, err := h.store.GetStatusPage(ctx, pageID)
 	if err != nil || sp == nil || !sp.Enabled {
 		http.NotFound(w, r)
+		return
+	}
+
+	if sp.PasswordHash != "" && !h.checkStatusPageAuth(r, pageID, sp.PasswordHash) {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+sp.Slug+"/auth", http.StatusFound)
 		return
 	}
 
@@ -65,7 +88,6 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 	}
 
 	overall := httputil.OverallStatus(monitors)
-
 	incidents := httputil.PublicIncidentsForPage(ctx, h.store, sp, monitors, now)
 
 	h.renderComponent(w, r, views.PublicStatusPage(views.PublicStatusPageParams{
@@ -79,6 +101,57 @@ func (h *Handler) StatusPageByID(w http.ResponseWriter, r *http.Request, pageID 
 		Incidents:    incidents,
 		HasIncidents: len(incidents) > 0,
 	}))
+}
+
+func (h *Handler) StatusPageAuthGet(w http.ResponseWriter, r *http.Request, pageID int64) {
+	ctx := r.Context()
+	sp, err := h.store.GetStatusPage(ctx, pageID)
+	if err != nil || !sp.Enabled {
+		http.NotFound(w, r)
+		return
+	}
+	if sp.PasswordHash == "" {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+sp.Slug, http.StatusFound)
+		return
+	}
+	if h.checkStatusPageAuth(r, pageID, sp.PasswordHash) {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+sp.Slug, http.StatusFound)
+		return
+	}
+	h.renderComponent(w, r, views.StatusPageAuthPage(views.StatusPageAuthParams{
+		Title:    sp.Title,
+		BasePath: h.cfg.Server.BasePath,
+		Slug:     sp.Slug,
+		Error:    r.URL.Query().Get("error"),
+	}))
+}
+
+func (h *Handler) StatusPageAuthPost(w http.ResponseWriter, r *http.Request, pageID int64, slug string) {
+	ctx := r.Context()
+	sp, err := h.store.GetStatusPage(ctx, pageID)
+	if err != nil || !sp.Enabled || sp.PasswordHash == "" {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug, http.StatusFound)
+		return
+	}
+
+	sh := sha256.New()
+	sh.Write([]byte(r.FormValue("password")))
+	inputHash := hex.EncodeToString(sh.Sum(nil))
+
+	if inputHash != sp.PasswordHash {
+		http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug+"/auth?error=1", http.StatusSeeOther)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     fmt.Sprintf("sp_auth_%d", pageID),
+		Value:    spAuthCookieValue(sp.PasswordHash),
+		Path:     h.cfg.Server.BasePath + "/",
+		MaxAge:   86400 * 7,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	http.Redirect(w, r, h.cfg.Server.BasePath+"/"+slug, http.StatusSeeOther)
 }
 
 func (h *Handler) buildDailyBars(ctx context.Context, monitorID int64, from, now time.Time) []views.DailyBar {

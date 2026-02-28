@@ -32,16 +32,33 @@ func (s *Server) getStatusPageIDBySlug(slug string) (int64, bool) {
 
 func (s *Server) statusPageRouter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && s.web != nil {
+		if s.web != nil {
 			path := r.URL.Path
 			prefix := s.cfg.Server.BasePath + "/"
 			if strings.HasPrefix(path, prefix) {
-				slug := strings.TrimPrefix(path, prefix)
-				slug = strings.TrimSuffix(slug, "/")
+				rest := strings.TrimPrefix(path, prefix)
+				rest = strings.TrimSuffix(rest, "/")
+
+				slug := rest
+				suffix := ""
+				if idx := strings.Index(rest, "/"); idx != -1 {
+					slug = rest[:idx]
+					suffix = rest[idx+1:]
+				}
+
 				if slug != "" && !strings.Contains(slug, "/") {
 					if pageID, ok := s.getStatusPageIDBySlug(slug); ok {
-						s.web.StatusPageByID(w, r, pageID)
-						return
+						switch {
+						case r.Method == http.MethodGet && suffix == "":
+							s.web.StatusPageByID(w, r, pageID)
+							return
+						case r.Method == http.MethodGet && suffix == "auth":
+							s.web.StatusPageAuthGet(w, r, pageID)
+							return
+						case r.Method == http.MethodPost && suffix == "auth":
+							s.web.StatusPageAuthPost(w, r, pageID, slug)
+							return
+						}
 					}
 				}
 			}

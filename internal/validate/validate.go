@@ -210,6 +210,18 @@ func ValidateStatusPage(sp *storage.StatusPage) error {
 		return fmt.Errorf("description must be at most 1000 characters")
 	}
 	sp.CustomCSS = sanitizeCSS(sp.CustomCSS)
+	if len(sp.LogoURL) > 2048 {
+		return fmt.Errorf("logo_url must be at most 2048 characters")
+	}
+	if len(sp.FaviconURL) > 2048 {
+		return fmt.Errorf("favicon_url must be at most 2048 characters")
+	}
+	if len(sp.CustomHeaderHTML) > 5000 {
+		return fmt.Errorf("custom_header_html must be at most 5000 characters")
+	}
+	if len(sp.AnalyticsScript) > 5000 {
+		return fmt.Errorf("analytics_script must be at most 5000 characters")
+	}
 	return nil
 }
 

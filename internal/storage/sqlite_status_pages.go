@@ -58,10 +58,13 @@ func (s *SQLiteStore) GetDailyUptime(ctx context.Context, monitorID int64, from,
 func (s *SQLiteStore) CreateStatusPage(ctx context.Context, sp *StatusPage) error {
 	now := formatTime(time.Now())
 	res, err := s.writeDB.ExecContext(ctx,
-		`INSERT INTO status_pages (slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO status_pages
+		 (slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order,
+		  logo_url, favicon_url, custom_header_html, password_hash, analytics_script, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		sp.Slug, sp.Title, sp.Description, sp.CustomCSS, boolToInt(sp.ShowIncidents),
-		boolToInt(sp.Enabled), boolToInt(sp.APIEnabled), sp.SortOrder, now, now)
+		boolToInt(sp.Enabled), boolToInt(sp.APIEnabled), sp.SortOrder,
+		sp.LogoURL, sp.FaviconURL, sp.CustomHeaderHTML, sp.PasswordHash, sp.AnalyticsScript, now, now)
 	if err != nil {
 		return err
 	}
@@ -72,43 +75,52 @@ func (s *SQLiteStore) CreateStatusPage(ctx context.Context, sp *StatusPage) erro
 	return nil
 }
 
-func (s *SQLiteStore) GetStatusPage(ctx context.Context, id int64) (*StatusPage, error) {
-	var sp StatusPage
+func scanStatusPage(sp *StatusPage, row interface {
+	Scan(...any) error
+}) error {
 	var createdAt, updatedAt string
-	err := s.readDB.QueryRowContext(ctx,
-		`SELECT id, slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order, created_at, updated_at
-		 FROM status_pages WHERE id=?`, id).
-		Scan(&sp.ID, &sp.Slug, &sp.Title, &sp.Description, &sp.CustomCSS, &sp.ShowIncidents,
-			&sp.Enabled, &sp.APIEnabled, &sp.SortOrder, &createdAt, &updatedAt)
+	err := row.Scan(&sp.ID, &sp.Slug, &sp.Title, &sp.Description, &sp.CustomCSS,
+		&sp.ShowIncidents, &sp.Enabled, &sp.APIEnabled, &sp.SortOrder,
+		&sp.LogoURL, &sp.FaviconURL, &sp.CustomHeaderHTML, &sp.PasswordHash, &sp.AnalyticsScript,
+		&createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	sp.CreatedAt = parseTime(createdAt)
 	sp.UpdatedAt = parseTime(updatedAt)
+	sp.PasswordEnabled = sp.PasswordHash != ""
+	return nil
+}
+
+const statusPageColumns = `id, slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order,
+	logo_url, favicon_url, custom_header_html, password_hash, analytics_script, created_at, updated_at`
+
+func (s *SQLiteStore) GetStatusPage(ctx context.Context, id int64) (*StatusPage, error) {
+	var sp StatusPage
+	row := s.readDB.QueryRowContext(ctx,
+		`SELECT `+statusPageColumns+` FROM status_pages WHERE id=?`, id)
+	if err := scanStatusPage(&sp, row); err != nil {
+		return nil, err
+	}
 	return &sp, nil
 }
 
 func (s *SQLiteStore) GetStatusPageBySlug(ctx context.Context, slug string) (*StatusPage, error) {
 	var sp StatusPage
-	var createdAt, updatedAt string
-	err := s.readDB.QueryRowContext(ctx,
-		`SELECT id, slug, title, description, custom_css, show_incidents, enabled, api_enabled, sort_order, created_at, updated_at
-		 FROM status_pages WHERE slug=?`, slug).
-		Scan(&sp.ID, &sp.Slug, &sp.Title, &sp.Description, &sp.CustomCSS, &sp.ShowIncidents,
-			&sp.Enabled, &sp.APIEnabled, &sp.SortOrder, &createdAt, &updatedAt)
-	if err != nil {
+	row := s.readDB.QueryRowContext(ctx,
+		`SELECT `+statusPageColumns+` FROM status_pages WHERE slug=?`, slug)
+	if err := scanStatusPage(&sp, row); err != nil {
 		return nil, err
 	}
-	sp.CreatedAt = parseTime(createdAt)
-	sp.UpdatedAt = parseTime(updatedAt)
 	return &sp, nil
 }
 
 func (s *SQLiteStore) ListStatusPages(ctx context.Context) ([]*StatusPage, error) {
 	rows, err := s.readDB.QueryContext(ctx,
 		`SELECT sp.id, sp.slug, sp.title, sp.description, sp.custom_css, sp.show_incidents,
-		        sp.enabled, sp.api_enabled, sp.sort_order, sp.created_at, sp.updated_at,
-		        COALESCE(cnt.c, 0)
+		        sp.enabled, sp.api_enabled, sp.sort_order,
+		        sp.logo_url, sp.favicon_url, sp.custom_header_html, sp.password_hash, sp.analytics_script,
+		        sp.created_at, sp.updated_at, COALESCE(cnt.c, 0)
 		 FROM status_pages sp
 		 LEFT JOIN (SELECT page_id, COUNT(*) as c FROM status_page_monitors GROUP BY page_id) cnt ON cnt.page_id = sp.id
 		 ORDER BY sp.sort_order, sp.title COLLATE NOCASE`)
@@ -123,11 +135,13 @@ func (s *SQLiteStore) ListStatusPages(ctx context.Context) ([]*StatusPage, error
 		var createdAt, updatedAt string
 		if err := rows.Scan(&sp.ID, &sp.Slug, &sp.Title, &sp.Description, &sp.CustomCSS,
 			&sp.ShowIncidents, &sp.Enabled, &sp.APIEnabled, &sp.SortOrder,
+			&sp.LogoURL, &sp.FaviconURL, &sp.CustomHeaderHTML, &sp.PasswordHash, &sp.AnalyticsScript,
 			&createdAt, &updatedAt, &sp.MonitorCount); err != nil {
 			return nil, err
 		}
 		sp.CreatedAt = parseTime(createdAt)
 		sp.UpdatedAt = parseTime(updatedAt)
+		sp.PasswordEnabled = sp.PasswordHash != ""
 		pages = append(pages, &sp)
 	}
 	if err := rows.Err(); err != nil {
@@ -143,9 +157,13 @@ func (s *SQLiteStore) UpdateStatusPage(ctx context.Context, sp *StatusPage) erro
 	now := formatTime(time.Now())
 	_, err := s.writeDB.ExecContext(ctx,
 		`UPDATE status_pages SET slug=?, title=?, description=?, custom_css=?, show_incidents=?,
-		 enabled=?, api_enabled=?, sort_order=?, updated_at=? WHERE id=?`,
+		 enabled=?, api_enabled=?, sort_order=?,
+		 logo_url=?, favicon_url=?, custom_header_html=?, password_hash=?, analytics_script=?,
+		 updated_at=? WHERE id=?`,
 		sp.Slug, sp.Title, sp.Description, sp.CustomCSS, boolToInt(sp.ShowIncidents),
-		boolToInt(sp.Enabled), boolToInt(sp.APIEnabled), sp.SortOrder, now, sp.ID)
+		boolToInt(sp.Enabled), boolToInt(sp.APIEnabled), sp.SortOrder,
+		sp.LogoURL, sp.FaviconURL, sp.CustomHeaderHTML, sp.PasswordHash, sp.AnalyticsScript,
+		now, sp.ID)
 	return err
 }
 

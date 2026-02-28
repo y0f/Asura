@@ -36,6 +36,13 @@ type PublicStatusPageParams struct {
 	HasIncidents bool
 }
 
+type StatusPageAuthParams struct {
+	Title    string
+	BasePath string
+	Slug     string
+	Error    string
+}
+
 templ PublicStatusPage(p PublicStatusPageParams) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -46,7 +53,11 @@ templ PublicStatusPage(p PublicStatusPageParams) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ p.Title }</title>
-			<link rel="icon" href={ p.BasePath + "/static/favicon.ico" }/>
+			if p.Config != nil && p.Config.FaviconURL != "" {
+				<link rel="icon" href={ p.Config.FaviconURL }/>
+			} else {
+				<link rel="icon" href={ p.BasePath + "/static/favicon.ico" }/>
+			}
 			<link rel="stylesheet" href={ p.BasePath + "/static/tailwind.css" }/>
 			<script defer src={ p.BasePath + "/static/alpine.min.js" }></script>
 			<style>
@@ -82,6 +93,14 @@ templ PublicStatusPage(p PublicStatusPageParams) {
 			<div class="noise-bg"></div>
 			<div class="glow-bg"></div>
 			<div class="relative z-10 max-w-2xl mx-auto px-4 py-14 sm:px-6 sm:py-20">
+				if p.Config != nil && p.Config.LogoURL != "" {
+					<div class="flex justify-center mb-6">
+						<img src={ p.Config.LogoURL } alt={ p.Title } class="h-10 object-contain"/>
+					</div>
+				}
+				if p.Config != nil && p.Config.CustomHeaderHTML != "" {
+					@templ.Raw(p.Config.CustomHeaderHTML)
+				}
 				@statusOverallBanner(p.Overall)
 				if p.HasGroups {
 					for _, g := range p.Groups {
@@ -138,6 +157,44 @@ templ PublicStatusPage(p PublicStatusPageParams) {
 						<img src={ p.BasePath + "/static/logo.gif" } alt="Asura" class="h-2" style="margin-top:2px"/>
 					</a>
 				</div>
+			</div>
+			if p.Config != nil && p.Config.AnalyticsScript != "" {
+				@templ.Raw(p.Config.AnalyticsScript)
+			}
+		</body>
+	</html>
+}
+
+templ StatusPageAuthPage(p StatusPageAuthParams) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<script>
+				(function(){var t=localStorage.getItem('theme');if(t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}})();
+			</script>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ p.Title }</title>
+			<link rel="icon" href={ p.BasePath + "/static/favicon.ico" }/>
+			<link rel="stylesheet" href={ p.BasePath + "/static/tailwind.css" }/>
+		</head>
+		<body class="bg-surface text-muted-light font-sans min-h-screen antialiased flex items-center justify-center">
+			<div class="w-full max-w-xs px-4">
+				<div class="text-center mb-8">
+					<p class="text-[13px] text-white font-medium">{ p.Title }</p>
+					<p class="text-[12px] text-muted mt-1">This status page is password protected</p>
+				</div>
+				<form method="POST" action={ templ.SafeURL(p.BasePath + "/" + p.Slug + "/auth") } class="space-y-4">
+					<div>
+						<input type="password" name="password" autofocus required
+							placeholder="Password"
+							class="form-input w-full"/>
+					</div>
+					if p.Error != "" {
+						<p class="text-[12px] text-red-400">Incorrect password. Try again.</p>
+					}
+					<button type="submit" class="btn-primary w-full">Continue</button>
+				</form>
 			</div>
 		</body>
 	</html>
