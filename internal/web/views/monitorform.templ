@@ -195,14 +195,14 @@ templ MonitorFormPage(p MonitorFormParams) {
 					if len(p.AllTags) > 0 {
 						<div x-data={ tagSelectorData(p) }>
 							<label class="form-label">Tags</label>
-							<div class="flex flex-wrap gap-2">
+							<div class="flex flex-wrap gap-1.5">
 								for i, tag := range p.AllTags {
 									<button type="button"
 										@click={ fmt.Sprintf("toggleTag(%d)", i) }
 										:class={ fmt.Sprintf("tags[%d].on ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'", i) }
-										class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none">
-										<span class="w-2 h-2 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
-										<span class="text-[12px]" :class={ fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i) }>{ tag.Name }</span>
+										class="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] transition-colors cursor-pointer select-none">
+										<span class="w-1.5 h-1.5 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
+										<span :class={ fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i) }>{ tag.Name }</span>
 									</button>
 								}
 							</div>
@@ -211,8 +211,8 @@ templ MonitorFormPage(p MonitorFormParams) {
 									<template x-for="(t, i) in tags" :key="t.id">
 										<div x-show="t.on" class="flex items-center gap-2 rounded border border-line px-3 py-2">
 											<input type="hidden" name="tag_ids[]" :value="t.id"/>
-											<span class="w-2 h-2 rounded-full shrink-0" :style="'background-color:' + t.color"></span>
-											<span class="text-[12px] text-muted-light shrink-0" x-text="t.name"></span>
+											<span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + t.color"></span>
+											<span class="text-[11px] text-muted-light shrink-0" x-text="t.name"></span>
 											<input type="text" name="tag_values[]" :value="t.val" @input="t.val = $event.target.value" placeholder="value (optional)"
 												class="form-input py-1 text-[12px] flex-1 min-w-0"/>
 										</div>
@@ -253,16 +253,16 @@ templ MonitorFormPage(p MonitorFormParams) {
 						<div>
 							<label class="form-label">Notification Channels</label>
 							<p class="text-[10px] text-muted mb-2">Leave all unchecked to use all channels.</p>
-							<div class="flex flex-wrap gap-2">
+							<div class="flex flex-wrap gap-1.5">
 								for _, ch := range p.NotificationChannels {
-									<label class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none has-checked:border-brand/30 has-checked:bg-brand/[0.06] border-line hover:border-line-light">
+									<label class="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] transition-colors cursor-pointer select-none has-checked:border-brand/30 has-checked:bg-brand/[0.06] border-line hover:border-line-light">
 										<input type="checkbox" name="notification_channel_ids[]" value={ fmt.Sprint(ch.ID) }
 											if InSlice(ch.ID, p.SelectedChannelIDs) {
 												checked
 											}
 											class="hidden"/>
-										<span class="text-[12px] text-muted-light">{ ch.Name }</span>
-										<span class="text-[10px] text-muted">{ ch.Type }</span>
+										<span class="text-muted-light">{ ch.Name }</span>
+										<span class="text-muted">({ ch.Type })</span>
 									</label>
 								}
 							</div>

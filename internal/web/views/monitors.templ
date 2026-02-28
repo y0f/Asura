@@ -361,7 +361,7 @@ templ MonitorListPage(p MonitorListParams) {
 												if tags := p.TagMap[m.ID]; len(tags) > 0 {
 													<div class="flex items-center gap-1">
 														for _, tag := range tags {
-															<span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full text-[10px] border border-line" title={ tagTooltip(tag) }>
+															<span class="inline-flex items-center gap-1 px-1.5 py-px rounded text-[11px] border border-line" title={ tagTooltip(tag) }>
 																<span class="w-1.5 h-1.5 rounded-full" style={ "background-color: " + tag.Color }></span>
 																<span class="text-muted-light">{ tag.Name }</span>
 															</span>
