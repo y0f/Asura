@@ -50,6 +50,9 @@ func NewDispatcher(store storage.Store, logger *slog.Logger, allowPrivateTargets
 	d.RegisterSender(&PagerDutySender{})
 	d.RegisterSender(&OpsgenieSender{})
 	d.RegisterSender(&PushoverSender{})
+	d.RegisterSender(&GoogleChatSender{})
+	d.RegisterSender(&MatrixSender{})
+	d.RegisterSender(&GotifySender{})
 	return d
 }
 

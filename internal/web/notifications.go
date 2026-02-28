@@ -206,6 +206,8 @@ func assembleNotificationSettings(r *http.Request, chType string) json.RawMessag
 		return assembleNtfySettings(r)
 	case "teams", "pagerduty", "opsgenie", "pushover":
 		return assembleExtendedSettings(r, chType)
+	case "googlechat", "matrix", "gotify":
+		return assembleExtraSettings(r, chType)
 	default:
 		return json.RawMessage("{}")
 	}
@@ -242,6 +244,33 @@ func assembleNtfySettings(r *http.Request) json.RawMessage {
 		s.Priority, _ = strconv.Atoi(v)
 	}
 	b, _ := json.Marshal(s)
+	return b
+}
+
+func assembleExtraSettings(r *http.Request, chType string) json.RawMessage {
+	var v any
+	switch chType {
+	case "googlechat":
+		v = notifier.GoogleChatSettings{
+			WebhookURL: r.FormValue("notif_googlechat_webhook_url"),
+		}
+	case "matrix":
+		v = notifier.MatrixSettings{
+			Homeserver:  r.FormValue("notif_matrix_homeserver"),
+			AccessToken: r.FormValue("notif_matrix_access_token"),
+			RoomID:      r.FormValue("notif_matrix_room_id"),
+		}
+	case "gotify":
+		s := notifier.GotifySettings{
+			ServerURL: r.FormValue("notif_gotify_server_url"),
+			AppToken:  r.FormValue("notif_gotify_app_token"),
+		}
+		if p := r.FormValue("notif_gotify_priority"); p != "" {
+			s.Priority, _ = strconv.Atoi(p)
+		}
+		v = s
+	}
+	b, _ := json.Marshal(v)
 	return b
 }
 

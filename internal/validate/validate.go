@@ -25,6 +25,7 @@ var _validNotificationTypes = map[string]bool{
 	"webhook": true, "email": true, "telegram": true,
 	"discord": true, "slack": true, "ntfy": true,
 	"teams": true, "pagerduty": true, "opsgenie": true, "pushover": true,
+	"googlechat": true, "matrix": true, "gotify": true,
 }
 
 var _validNotificationEvents = map[string]bool{
@@ -140,7 +141,7 @@ func ValidateNotificationChannel(ch *storage.NotificationChannel) error {
 		return fmt.Errorf("name must be at most 255 characters")
 	}
 	if !_validNotificationTypes[ch.Type] {
-		return fmt.Errorf("type must be one of: webhook, email, telegram, discord, slack, ntfy, teams, pagerduty, opsgenie, pushover")
+		return fmt.Errorf("type must be one of: webhook, email, telegram, discord, slack, ntfy, teams, pagerduty, opsgenie, pushover, googlechat, matrix, gotify")
 	}
 	if len(ch.Settings) == 0 {
 		return fmt.Errorf("settings is required")
