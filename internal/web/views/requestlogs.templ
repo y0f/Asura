@@ -109,10 +109,7 @@ templ RequestLogListPage(p RequestLogParams) {
 						if p.Filter != "" {
 							<input type="hidden" name="group" value={ p.Filter }/>
 						}
-						<select name="ip" onchange="this.form.submit()"
-							class={ "form-select px-2.5 py-1 text-[11px] border rounded transition-colors focus:outline-hidden",
-								templ.KV("text-brand border-brand/30 bg-brand/[0.04]", p.ClientIP != ""),
-								templ.KV("text-muted border-line bg-surface hover:text-muted-light", p.ClientIP == "") }>
+						<select name="ip" onchange="this.form.submit()" class={ "form-select-sm", templ.KV("text-brand border-brand/30", p.ClientIP != "") }>
 							<option value="">All IPs</option>
 							for _, ip := range p.TopIPs {
 								<option value={ ip } selected?={ ip == p.ClientIP }>{ ip }</option>

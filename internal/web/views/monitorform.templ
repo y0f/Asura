@@ -192,37 +192,41 @@ templ MonitorFormPage(p MonitorFormParams) {
 							<input type="number" name="success_threshold" value={ intOrDefault(p.Monitor.SuccessThreshold, 1) } min="1" class="form-input tabular-nums"/>
 						</div>
 					</div>
-					if len(p.AllTags) > 0 {
-						<div x-data={ tagSelectorData(p) }>
-							<label class="form-label">Tags</label>
-							<div class="flex flex-wrap gap-1.5">
-								for i, tag := range p.AllTags {
-									<button type="button"
-										@click={ fmt.Sprintf("toggleTag(%d)", i) }
-										:class={ fmt.Sprintf("tags[%d].on ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'", i) }
-										class="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] transition-colors cursor-pointer select-none">
-										<span class="w-1.5 h-1.5 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
-										<span :class={ fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i) }>{ tag.Name }</span>
-									</button>
-								}
-							</div>
-							<template x-if="tags.some(t => t.on)">
-								<div class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-									<template x-for="(t, i) in tags" :key="t.id">
-										<template x-if="t.on">
-											<div class="flex items-center gap-2 rounded border border-line px-3 py-2">
-												<input type="hidden" name="tag_ids[]" :value="t.id"/>
-												<span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + t.color"></span>
-												<span class="text-[11px] text-muted-light shrink-0" x-text="t.name"></span>
-												<input type="text" name="tag_values[]" :value="t.val" @input="t.val = $event.target.value" placeholder="value (optional)"
-													class="form-input py-1 text-[12px] flex-1 min-w-0"/>
-											</div>
-										</template>
-									</template>
+					<div>
+						<label class="form-label">Tags</label>
+						if len(p.AllTags) > 0 {
+							<div x-data={ tagSelectorData(p) }>
+								<div class="flex flex-wrap gap-1.5">
+									for i, tag := range p.AllTags {
+										<button type="button"
+											@click={ fmt.Sprintf("toggleTag(%d)", i) }
+											:class={ fmt.Sprintf("tags[%d].on ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'", i) }
+											class="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] transition-colors cursor-pointer select-none">
+											<span class="w-1.5 h-1.5 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
+											<span :class={ fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i) }>{ tag.Name }</span>
+										</button>
+									}
 								</div>
-							</template>
-						</div>
-					}
+								<template x-if="tags.some(t => t.on)">
+									<div class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+										<template x-for="(t, i) in tags" :key="t.id">
+											<template x-if="t.on">
+												<div class="flex items-center gap-2 rounded border border-line px-3 py-2">
+													<input type="hidden" name="tag_ids[]" :value="t.id"/>
+													<span class="w-1.5 h-1.5 rounded-full shrink-0" :style="'background-color:' + t.color"></span>
+													<span class="text-[11px] text-muted-light shrink-0" x-text="t.name"></span>
+													<input type="text" name="tag_values[]" :value="t.val" @input="t.val = $event.target.value" placeholder="value (optional)"
+														class="form-input py-1 text-[12px] flex-1 min-w-0"/>
+												</div>
+											</template>
+										</template>
+									</div>
+								</template>
+							</div>
+						} else {
+							<p class="text-[12px] text-muted">No tags yet. <a href={ templ.SafeURL(p.BasePath + "/tags") } class="text-brand hover:text-brand/80 transition-colors">Create tags</a> to label monitors.</p>
+						}
+					</div>
 					if len(p.Groups) > 0 {
 						<div>
 							<label class="form-label">Group</label>
