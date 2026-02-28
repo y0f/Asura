@@ -29,9 +29,11 @@
     <tr><td><code>external_url</code></td><td>auto</td><td>Public URL for notification links</td></tr>
     <tr><td><code>trusted_proxies</code></td><td><code>[]</code></td><td>IPs/CIDRs whose <code>X-Real-IP</code>/<code>X-Forwarded-For</code> headers are trusted</td></tr>
     <tr><td><code>rate_limit_per_sec</code></td><td><code>10</code></td><td>Per-IP request rate limit</td></tr>
-    <tr><td><code>web_ui_enabled</code></td><td><code>true</code></td><td>Set <code>false</code> for API-only mode</td></tr>
+    <tr><td><code>web_ui_enabled</code></td><td><code>true</code></td><td>Serve the web dashboard. Set <code>false</code> to disable it entirely — the REST API remains fully functional</td></tr>
   </tbody>
 </table>
+
+<blockquote>If you prefer to manage everything through the API (e.g. from a CI pipeline or your own tooling), set <code>web_ui_enabled: false</code>. All monitor, incident, notification, and maintenance operations are available via the REST API regardless of this setting. See the <a href="#api">API Reference</a> for the full endpoint list.</blockquote>
 
 <h2>Monitor Settings</h2>
 
