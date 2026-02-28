@@ -116,6 +116,21 @@ func monitorFormXData(monType, httpMethod, authMethod, headersJSON, wsHeadersJSO
 }`
 }
 
+func tagSelectorData(p MonitorFormParams) string {
+	var b strings.Builder
+	b.WriteString("{tags:[")
+	for i, tag := range p.AllTags {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		fmt.Fprintf(&b, "{id:%d,name:'%s',color:'%s',on:%v,val:'%s'}",
+			tag.ID, JSEscapeString(tag.Name), JSEscapeString(tag.Color),
+			p.isTagSelected(tag.ID), JSEscapeString(p.tagValue(tag.ID)))
+	}
+	b.WriteString("],toggleTag(i){this.tags[i].on=!this.tags[i].on;if(!this.tags[i].on)this.tags[i].val=''}}")
+	return b.String()
+}
+
 func intOrDefault(v, def int) string {
 	if v != 0 {
 		return fmt.Sprint(v)
@@ -163,7 +178,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(monitorFormXData(p.monitorTypeOrDefault(), p.httpMethodOrDefault(), p.HTTP.AuthMethod, p.HeadersJSON, p.WsHeadersJSON, p.AssertionsJSON))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 120, Col: 160}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 135, Col: 160}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -176,7 +191,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 121, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 136, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -194,7 +209,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, p.Monitor.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 124, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 139, Col: 84}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -212,7 +227,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 				var templ_7745c5c3_Var6 templ.SafeURL
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 126, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 141, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -230,7 +245,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 133, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 148, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -243,7 +258,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 137, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 152, Col: 130}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -256,7 +271,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Monitor.Target)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 159, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 174, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -269,7 +284,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.Monitor.Interval, 60))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 165, Col: 88}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 180, Col: 88}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -282,7 +297,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.Monitor.Timeout, 10))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 169, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 184, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -295,7 +310,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.Monitor.FailureThreshold, 3))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 173, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 188, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -308,7 +323,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.Monitor.SuccessThreshold, 1))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 177, Col: 104}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 192, Col: 104}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -319,95 +334,95 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if len(p.AllTags) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div><label class=\"form-label\">Tags</label><div class=\"flex flex-wrap gap-2\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div x-data=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				for _, tag := range p.AllTags {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div x-data=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var14 string
-					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("{checked: %v}", p.isTagSelected(tag.ID)))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 185, Col: 76}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none\" :class=\"")
+				var templ_7745c5c3_Var14 string
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(tagSelectorData(p))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 196, Col: 38}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><label class=\"form-label\">Tags</label><div class=\"flex flex-wrap gap-2\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				for i, tag := range p.AllTags {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<button type=\"button\" @click=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var15 string
-					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(`checked ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'`)
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("toggleTag(%d)", i))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 187, Col: 104}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 201, Col: 50}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" @click=\"if ($event.target.tagName !== 'INPUT' || $event.target.type !== 'text') checked = !checked\"><span class=\"w-2 h-2 rounded-full shrink-0\" style=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" :class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var16 string
-					templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
+					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tags[%d].on ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'", i))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 189, Col: 94}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 202, Col: 124}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"></span> <span class=\"text-[12px]\" :class=\"checked ? 'text-white' : 'text-muted-light'\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" class=\"inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none\"><span class=\"w-2 h-2 rounded-full shrink-0\" style=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var17 string
-					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
+					templ_7745c5c3_Var17, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + tag.Color)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 190, Col: 99}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 204, Col: 94}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</span><template x-if=\"checked\"><div class=\"flex items-center gap-1\" @click.stop><input type=\"hidden\" name=\"tag_ids[]\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\"></span> <span class=\"text-[12px]\" :class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var18 string
-					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(tag.ID))
+					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 193, Col: 76}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 205, Col: 110}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"> <input type=\"text\" name=\"tag_values[]\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var19 string
-					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.tagValue(tag.ID))
+					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(tag.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 194, Col: 77}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 205, Col: 123}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" placeholder=\"value\" class=\"bg-transparent border-0 border-b border-line/50 text-[11px] text-muted-light w-16 py-0 px-0.5 focus:outline-hidden focus:border-brand/30 placeholder-muted/40\"></div></template></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</span></button>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div><template x-if=\"tags.some(t => t.on)\"><div class=\"mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2\"><template x-for=\"(t, i) in tags\" :key=\"t.id\"><div x-show=\"t.on\" class=\"flex items-center gap-2 rounded border border-line px-3 py-2\"><input type=\"hidden\" name=\"tag_ids[]\" :value=\"t.id\"> <span class=\"w-2 h-2 rounded-full shrink-0\" :style=\"'background-color:' + t.color\"></span> <span class=\"text-[12px] text-muted-light shrink-0\" x-text=\"t.name\"></span> <input type=\"text\" name=\"tag_values[]\" :value=\"t.val\" @input=\"t.val = $event.target.value\" placeholder=\"value (optional)\" class=\"form-input py-1 text-[12px] flex-1 min-w-0\"></div></template></div></template></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -425,7 +440,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var20 string
 					templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(g.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 209, Col: 41}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 230, Col: 41}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 					if templ_7745c5c3_Err != nil {
@@ -448,7 +463,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var21 string
 					templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(g.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 212, Col: 20}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 233, Col: 20}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 					if templ_7745c5c3_Err != nil {
@@ -477,7 +492,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var22 string
 					templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(px.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 223, Col: 42}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 244, Col: 42}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 					if templ_7745c5c3_Err != nil {
@@ -500,7 +515,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var23 string
 					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s (%s://%s:%d)", px.Name, px.Protocol, px.Host, px.Port))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 226, Col: 84}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 247, Col: 84}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 					if templ_7745c5c3_Err != nil {
@@ -529,7 +544,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var24 string
 					templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(ch.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 238, Col: 92}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 259, Col: 92}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 					if templ_7745c5c3_Err != nil {
@@ -552,7 +567,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var25 string
 					templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 243, Col: 62}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 264, Col: 62}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 					if templ_7745c5c3_Err != nil {
@@ -565,7 +580,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 					var templ_7745c5c3_Var26 string
 					templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(ch.Type)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 244, Col: 56}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 265, Col: 56}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 					if templ_7745c5c3_Err != nil {
@@ -608,7 +623,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var27 string
 			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.Monitor.ResendInterval))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 270, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 291, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
@@ -621,7 +636,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(p.SettingsJSON)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 284, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 305, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -706,7 +721,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 				var templ_7745c5c3_Var29 templ.SafeURL
 				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/monitors/%d", p.BasePath, p.Monitor.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 311, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 332, Col: 84}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 				if templ_7745c5c3_Err != nil {
@@ -724,7 +739,7 @@ func MonitorFormPage(p MonitorFormParams) templ.Component {
 				var templ_7745c5c3_Var30 templ.SafeURL
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.BasePath + "/monitors"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 313, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 334, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
@@ -782,7 +797,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.HTTP.ExpectedStatus))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 341, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 362, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -840,7 +855,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.HTTP.Body)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 358, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 379, Col: 122}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -853,7 +868,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.HTTP.BasicAuthUser)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 386, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 407, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -866,7 +881,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(p.HTTP.BasicAuthPass)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 390, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 411, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -879,7 +894,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(p.HTTP.BearerToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 395, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 416, Col: 82}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -892,7 +907,7 @@ func monitorHTTPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(p.MaxRedirects))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 400, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 421, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -954,7 +969,7 @@ func monitorTCPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var39 string
 		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(p.TCP.SendData)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 428, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 449, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
@@ -967,7 +982,7 @@ func monitorTCPSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var40 string
 		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(p.TCP.ExpectData)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 432, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 453, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
@@ -1079,7 +1094,7 @@ func monitorDNSSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(p.DNS.Server)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 454, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 475, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 		if templ_7745c5c3_Err != nil {
@@ -1121,7 +1136,7 @@ func monitorTLSSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.TLS.WarnDaysBefore, 30))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 464, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 485, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -1163,7 +1178,7 @@ func monitorWSSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var46 string
 		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(p.WS.SendMessage)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 486, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 507, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 		if templ_7745c5c3_Err != nil {
@@ -1176,7 +1191,7 @@ func monitorWSSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(p.WS.ExpectReply)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 490, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 511, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -1218,7 +1233,7 @@ func monitorCommandSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(p.Cmd.Command)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 499, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 520, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -1231,7 +1246,7 @@ func monitorCommandSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(p.cmdArgsStr())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 503, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 524, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 		if templ_7745c5c3_Err != nil {
@@ -1273,7 +1288,7 @@ func monitorDockerSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var52 string
 		templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(p.Docker.ContainerName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 513, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 534, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 		if templ_7745c5c3_Err != nil {
@@ -1286,7 +1301,7 @@ func monitorDockerSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var53 string
 		templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(p.Docker.SocketPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 518, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 539, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 		if templ_7745c5c3_Err != nil {
@@ -1338,7 +1353,7 @@ func monitorDomainSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var55 string
 		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(intOrDefault(p.Domain.WarnDaysBefore, 30))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 538, Col: 106}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 559, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
@@ -1380,7 +1395,7 @@ func monitorGRPCSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var57 string
 		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(p.GRPC.ServiceName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 548, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 569, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
 		if templ_7745c5c3_Err != nil {
@@ -1442,7 +1457,7 @@ func monitorMQTTSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(p.MQTT.ClientID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 577, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 598, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 		if templ_7745c5c3_Err != nil {
@@ -1455,7 +1470,7 @@ func monitorMQTTSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var60 string
 		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(p.MQTT.Topic)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 581, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 602, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 		if templ_7745c5c3_Err != nil {
@@ -1468,7 +1483,7 @@ func monitorMQTTSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var61 string
 		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(p.MQTT.Username)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 587, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 608, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 		if templ_7745c5c3_Err != nil {
@@ -1481,7 +1496,7 @@ func monitorMQTTSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var62 string
 		templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(p.MQTT.Password)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 591, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 612, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
 		if templ_7745c5c3_Err != nil {
@@ -1494,7 +1509,7 @@ func monitorMQTTSettings(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var63 string
 		templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(p.MQTT.ExpectMessage)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 596, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 617, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
 		if templ_7745c5c3_Err != nil {
@@ -1546,7 +1561,7 @@ func monitorAssertions(p MonitorFormParams) templ.Component {
 		var templ_7745c5c3_Var65 string
 		templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinStringErrs(p.AssertionsRaw)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 621, Col: 117}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/monitorform.templ`, Line: 642, Col: 117}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 		if templ_7745c5c3_Err != nil {

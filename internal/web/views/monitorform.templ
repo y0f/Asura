@@ -108,6 +108,21 @@ func monitorFormXData(monType, httpMethod, authMethod, headersJSON, wsHeadersJSO
 }`
 }
 
+func tagSelectorData(p MonitorFormParams) string {
+	var b strings.Builder
+	b.WriteString("{tags:[")
+	for i, tag := range p.AllTags {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		fmt.Fprintf(&b, "{id:%d,name:'%s',color:'%s',on:%v,val:'%s'}",
+			tag.ID, JSEscapeString(tag.Name), JSEscapeString(tag.Color),
+			p.isTagSelected(tag.ID), JSEscapeString(p.tagValue(tag.ID)))
+	}
+	b.WriteString("],toggleTag(i){this.tags[i].on=!this.tags[i].on;if(!this.tags[i].on)this.tags[i].val=''}}")
+	return b.String()
+}
+
 func intOrDefault(v, def int) string {
 	if v != 0 {
 		return fmt.Sprint(v)
@@ -178,26 +193,32 @@ templ MonitorFormPage(p MonitorFormParams) {
 						</div>
 					</div>
 					if len(p.AllTags) > 0 {
-						<div>
+						<div x-data={ tagSelectorData(p) }>
 							<label class="form-label">Tags</label>
 							<div class="flex flex-wrap gap-2">
-								for _, tag := range p.AllTags {
-									<div x-data={ fmt.Sprintf("{checked: %v}", p.isTagSelected(tag.ID)) }
-										class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none"
-										:class={ `checked ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'` }
-										@click="if ($event.target.tagName !== 'INPUT' || $event.target.type !== 'text') checked = !checked">
+								for i, tag := range p.AllTags {
+									<button type="button"
+										@click={ fmt.Sprintf("toggleTag(%d)", i) }
+										:class={ fmt.Sprintf("tags[%d].on ? 'border-brand/30 bg-brand/[0.06]' : 'border-line hover:border-line-light'", i) }
+										class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors cursor-pointer select-none">
 										<span class="w-2 h-2 rounded-full shrink-0" style={ "background-color: " + tag.Color }></span>
-										<span class="text-[12px]" :class="checked ? 'text-white' : 'text-muted-light'">{ tag.Name }</span>
-										<template x-if="checked">
-											<div class="flex items-center gap-1" @click.stop>
-												<input type="hidden" name="tag_ids[]" value={ fmt.Sprint(tag.ID) }/>
-												<input type="text" name="tag_values[]" value={ p.tagValue(tag.ID) } placeholder="value"
-													class="bg-transparent border-0 border-b border-line/50 text-[11px] text-muted-light w-16 py-0 px-0.5 focus:outline-hidden focus:border-brand/30 placeholder-muted/40"/>
-											</div>
-										</template>
-									</div>
+										<span class="text-[12px]" :class={ fmt.Sprintf("tags[%d].on ? 'text-white' : 'text-muted-light'", i) }>{ tag.Name }</span>
+									</button>
 								}
 							</div>
+							<template x-if="tags.some(t => t.on)">
+								<div class="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+									<template x-for="(t, i) in tags" :key="t.id">
+										<div x-show="t.on" class="flex items-center gap-2 rounded border border-line px-3 py-2">
+											<input type="hidden" name="tag_ids[]" :value="t.id"/>
+											<span class="w-2 h-2 rounded-full shrink-0" :style="'background-color:' + t.color"></span>
+											<span class="text-[12px] text-muted-light shrink-0" x-text="t.name"></span>
+											<input type="text" name="tag_values[]" :value="t.val" @input="t.val = $event.target.value" placeholder="value (optional)"
+												class="form-input py-1 text-[12px] flex-1 min-w-0"/>
+										</div>
+									</template>
+								</div>
+							</template>
 						</div>
 					}
 					if len(p.Groups) > 0 {
