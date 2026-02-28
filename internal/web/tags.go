@@ -76,6 +76,7 @@ func (h *Handler) TagUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.audit(r, "update", "tag", t.ID, "")
 	h.setFlash(w, "Tag updated")
 	h.redirect(w, r, "/tags")
 }
@@ -88,7 +89,11 @@ func (h *Handler) TagDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.store.DeleteTag(r.Context(), id); err != nil {
 		h.logger.Error("web: delete tag", "error", err)
+		h.setFlash(w, "Failed to delete tag")
+		h.redirect(w, r, "/tags")
+		return
 	}
+	h.audit(r, "delete", "tag", id, "")
 	h.setFlash(w, "Tag deleted")
 	h.redirect(w, r, "/tags")
 }
