@@ -11,6 +11,7 @@ import (
 	"github.com/y0f/asura/internal/storage"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
+	"golang.org/x/net/ipv6"
 )
 
 type ICMPChecker struct {
@@ -23,15 +24,15 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 	timeout := time.Duration(monitor.Timeout) * time.Second
 	start := time.Now()
 
-	addrs, err := net.DefaultResolver.LookupIP(ctx, "ip4", monitor.Target)
-	if err != nil || len(addrs) == 0 {
+	// Try IPv4 first, then IPv6.
+	dst, isIPv6 := resolveICMPTarget(ctx, monitor.Target)
+	if dst == nil {
 		return &Result{
 			Status:       "down",
 			ResponseTime: time.Since(start).Milliseconds(),
-			Message:      fmt.Sprintf("DNS resolution failed: %v", err),
+			Message:      "DNS resolution failed: no IPv4 or IPv6 address found",
 		}, nil
 	}
-	dst := addrs[0]
 
 	if !c.AllowPrivate && safenet.IsPrivateIP(dst) {
 		return &Result{
@@ -40,13 +41,13 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 
-	conn, err := listenICMP()
+	conn, err := listenICMP(isIPv6)
 	if err != nil {
 		return &Result{Status: "down", Message: fmt.Sprintf("ICMP listen failed: %v", err)}, nil
 	}
 	defer conn.Close()
 
-	if err := sendEchoRequest(conn, dst); err != nil {
+	if err := sendEchoRequest(conn, dst, isIPv6); err != nil {
 		return &Result{
 			Status:       "down",
 			ResponseTime: time.Since(start).Milliseconds(),
@@ -54,10 +55,27 @@ func (c *ICMPChecker) Check(ctx context.Context, monitor *storage.Monitor) (*Res
 		}, nil
 	}
 
-	return readEchoReply(conn, dst, start, timeout)
+	return readEchoReply(conn, dst, start, timeout, isIPv6)
 }
 
-func listenICMP() (*icmp.PacketConn, error) {
+func resolveICMPTarget(ctx context.Context, target string) (net.IP, bool) {
+	if addrs, err := net.DefaultResolver.LookupIP(ctx, "ip4", target); err == nil && len(addrs) > 0 {
+		return addrs[0], false
+	}
+	if addrs, err := net.DefaultResolver.LookupIP(ctx, "ip6", target); err == nil && len(addrs) > 0 {
+		return addrs[0], true
+	}
+	return nil, false
+}
+
+func listenICMP(isIPv6 bool) (*icmp.PacketConn, error) {
+	if isIPv6 {
+		conn, err := icmp.ListenPacket("ip6:ipv6-icmp", "::")
+		if err != nil {
+			conn, err = icmp.ListenPacket("udp6", "::")
+		}
+		return conn, err
+	}
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
 		conn, err = icmp.ListenPacket("udp4", "0.0.0.0")
@@ -65,9 +83,16 @@ func listenICMP() (*icmp.PacketConn, error) {
 	return conn, err
 }
 
-func sendEchoRequest(conn *icmp.PacketConn, dst net.IP) error {
+func sendEchoRequest(conn *icmp.PacketConn, dst net.IP, isIPv6 bool) error {
+	var msgType icmp.Type
+	if isIPv6 {
+		msgType = ipv6.ICMPTypeEchoRequest
+	} else {
+		msgType = ipv4.ICMPTypeEcho
+	}
+
 	msg := icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
+		Type: msgType,
 		Code: 0,
 		Body: &icmp.Echo{
 			ID:   os.Getpid() & 0xffff,
@@ -80,17 +105,21 @@ func sendEchoRequest(conn *icmp.PacketConn, dst net.IP) error {
 		return err
 	}
 
+	network := conn.LocalAddr().Network()
 	var dstAddr net.Addr
-	if conn.LocalAddr().Network() == "udp4" {
+	switch network {
+	case "udp4":
 		dstAddr = &net.UDPAddr{IP: dst}
-	} else {
+	case "udp6":
+		dstAddr = &net.UDPAddr{IP: dst}
+	default:
 		dstAddr = &net.IPAddr{IP: dst}
 	}
 	_, err = conn.WriteTo(wb, dstAddr)
 	return err
 }
 
-func readEchoReply(conn *icmp.PacketConn, dst net.IP, start time.Time, timeout time.Duration) (*Result, error) {
+func readEchoReply(conn *icmp.PacketConn, dst net.IP, start time.Time, timeout time.Duration, isIPv6 bool) (*Result, error) {
 	conn.SetReadDeadline(time.Now().Add(timeout))
 	rb := make([]byte, 1500)
 	n, _, err := conn.ReadFrom(rb)
@@ -104,23 +133,31 @@ func readEchoReply(conn *icmp.PacketConn, dst net.IP, start time.Time, timeout t
 		}, nil
 	}
 
-	proto := 1
-	if conn.LocalAddr().Network() == "udp4" {
+	var proto int
+	network := conn.LocalAddr().Network()
+	switch network {
+	case "udp4":
+		proto = 1
+	case "udp6":
 		proto = 58
-	}
-	rm, err := icmp.ParseMessage(proto, rb[:n])
-	if err != nil {
-		rm, err = icmp.ParseMessage(1, rb[:n])
-		if err != nil {
-			return &Result{
-				Status:       "down",
-				ResponseTime: elapsed,
-				Message:      fmt.Sprintf("parse reply failed: %v", err),
-			}, nil
+	default:
+		if isIPv6 {
+			proto = 58
+		} else {
+			proto = 1
 		}
 	}
 
-	if rm.Type == ipv4.ICMPTypeEchoReply {
+	rm, err := icmp.ParseMessage(proto, rb[:n])
+	if err != nil {
+		return &Result{
+			Status:       "down",
+			ResponseTime: elapsed,
+			Message:      fmt.Sprintf("parse reply failed: %v", err),
+		}, nil
+	}
+
+	if rm.Type == ipv4.ICMPTypeEchoReply || rm.Type == ipv6.ICMPTypeEchoReply {
 		return &Result{
 			Status:       "up",
 			ResponseTime: elapsed,
