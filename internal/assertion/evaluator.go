@@ -9,36 +9,94 @@ import (
 	"time"
 )
 
-// Evaluate runs all assertions against check results.
 func Evaluate(assertionsJSON json.RawMessage, statusCode int, body string,
 	headers map[string]string, responseTimeMs int64, certExpiry *int64, dnsRecords []string) AssertionResult {
 
-	var assertions []Assertion
-	if err := json.Unmarshal(assertionsJSON, &assertions); err != nil {
-		return AssertionResult{Pass: true}
-	}
-	if len(assertions) == 0 {
+	var cs ConditionSet
+	if err := json.Unmarshal(assertionsJSON, &cs); err != nil || len(cs.Groups) == 0 {
 		return AssertionResult{Pass: true}
 	}
 
-	result := AssertionResult{Pass: true}
-	for _, a := range assertions {
+	var allDetails []AssertionDetail
+	var groupPasses []bool
+	var messages []string
+	degraded := false
+
+	for _, g := range cs.Groups {
+		gr := evalGroup(g, statusCode, body, headers, responseTimeMs, certExpiry, dnsRecords)
+		allDetails = append(allDetails, gr.Details...)
+		groupPasses = append(groupPasses, gr.Pass)
+		if !gr.Pass && gr.Message != "" {
+			messages = append(messages, gr.Message)
+		}
+		if gr.Degraded {
+			degraded = true
+		}
+	}
+
+	pass := combinePasses(groupPasses, cs.Operator)
+	return AssertionResult{
+		Pass:     pass,
+		Degraded: !pass && degraded,
+		Message:  strings.Join(messages, "; "),
+		Details:  allDetails,
+	}
+}
+
+
+func evalGroup(g ConditionGroup, statusCode int, body string,
+	headers map[string]string, responseTimeMs int64, certExpiry *int64, dnsRecords []string) AssertionResult {
+
+	if len(g.Conditions) == 0 {
+		return AssertionResult{Pass: true}
+	}
+
+	var details []AssertionDetail
+	var condPasses []bool
+	var messages []string
+	degraded := false
+
+	for _, a := range g.Conditions {
 		detail := evaluateSingle(a, statusCode, body, headers, responseTimeMs, certExpiry, dnsRecords)
-		result.Details = append(result.Details, detail)
+		details = append(details, detail)
+		condPasses = append(condPasses, detail.Pass)
 		if !detail.Pass {
-			result.Pass = false
 			if a.Degraded {
-				result.Degraded = true
+				degraded = true
 			}
-			if result.Message == "" {
-				result.Message = detail.Message
-			} else {
-				result.Message += "; " + detail.Message
+			if detail.Message != "" {
+				messages = append(messages, detail.Message)
 			}
 		}
 	}
 
-	return result
+	pass := combinePasses(condPasses, g.Operator)
+	return AssertionResult{
+		Pass:     pass,
+		Degraded: !pass && degraded,
+		Message:  strings.Join(messages, "; "),
+		Details:  details,
+	}
+}
+
+func combinePasses(passes []bool, operator string) bool {
+	if len(passes) == 0 {
+		return true
+	}
+	if operator == "or" {
+		for _, p := range passes {
+			if p {
+				return true
+			}
+		}
+		return false
+	}
+	for _, p := range passes {
+		if !p {
+			return false
+		}
+	}
+	return true
 }
 
 func evaluateSingle(a Assertion, statusCode int, body string,

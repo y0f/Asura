@@ -1,6 +1,6 @@
 package storage
 
-const schemaVersion = 20
+const schemaVersion = 21
 
 const schema = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -344,5 +344,19 @@ ALTER TABLE monitor_status ADD COLUMN last_cert_fingerprint TEXT NOT NULL DEFAUL
 );
 CREATE INDEX IF NOT EXISTS idx_notif_history_channel ON notification_history(channel_id, sent_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notif_history_sent_at ON notification_history(sent_at DESC);`,
+	},
+	{
+		version: 21,
+		sql: `UPDATE monitors
+SET assertions = json_object(
+	'operator', 'and',
+	'groups', json_array(
+		json_object('operator', 'and', 'conditions', json(assertions))
+	)
+)
+WHERE assertions IS NOT NULL
+  AND assertions != ''
+  AND assertions != '[]'
+  AND json_type(assertions) = 'array';`,
 	},
 }

@@ -5,11 +5,17 @@ import (
 	"testing"
 )
 
+func cs(operator string, groups ...ConditionGroup) json.RawMessage {
+	raw, _ := json.Marshal(ConditionSet{Operator: operator, Groups: groups})
+	return raw
+}
+
+func group(operator string, assertions ...Assertion) ConditionGroup {
+	return ConditionGroup{Operator: operator, Conditions: assertions}
+}
+
 func TestStatusCodeAssertion(t *testing.T) {
-	assertions := []Assertion{
-		{Type: "status_code", Operator: "eq", Value: "200"},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "status_code", Operator: "eq", Value: "200"}))
 
 	result := Evaluate(raw, 200, "", nil, 100, nil, nil)
 	if !result.Pass {
@@ -23,10 +29,7 @@ func TestStatusCodeAssertion(t *testing.T) {
 }
 
 func TestBodyContainsAssertion(t *testing.T) {
-	assertions := []Assertion{
-		{Type: "body_contains", Operator: "contains", Value: "hello"},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "body_contains", Operator: "contains", Value: "hello"}))
 
 	result := Evaluate(raw, 200, "hello world", nil, 100, nil, nil)
 	if !result.Pass {
@@ -40,10 +43,7 @@ func TestBodyContainsAssertion(t *testing.T) {
 }
 
 func TestBodyRegexAssertion(t *testing.T) {
-	assertions := []Assertion{
-		{Type: "body_regex", Operator: "matches", Value: `\d{3}`},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "body_regex", Operator: "matches", Value: `\d{3}`}))
 
 	result := Evaluate(raw, 200, "code 200 ok", nil, 100, nil, nil)
 	if !result.Pass {
@@ -74,10 +74,7 @@ func TestJSONPathAssertion(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assertions := []Assertion{
-			{Type: "json_path", Target: tt.target, Operator: tt.operator, Value: tt.value},
-		}
-		raw, _ := json.Marshal(assertions)
+		raw := cs("and", group("and", Assertion{Type: "json_path", Target: tt.target, Operator: tt.operator, Value: tt.value}))
 		result := Evaluate(raw, 200, body, nil, 100, nil, nil)
 		if result.Pass != tt.pass {
 			t.Fatalf("json_path %s %s %s: expected pass=%v, got %v (msg: %s)",
@@ -87,14 +84,8 @@ func TestJSONPathAssertion(t *testing.T) {
 }
 
 func TestHeaderAssertion(t *testing.T) {
-	headers := map[string]string{
-		"Content-Type": "application/json",
-	}
-
-	assertions := []Assertion{
-		{Type: "header", Target: "Content-Type", Operator: "contains", Value: "json"},
-	}
-	raw, _ := json.Marshal(assertions)
+	headers := map[string]string{"Content-Type": "application/json"}
+	raw := cs("and", group("and", Assertion{Type: "header", Target: "Content-Type", Operator: "contains", Value: "json"}))
 
 	result := Evaluate(raw, 200, "", headers, 100, nil, nil)
 	if !result.Pass {
@@ -103,10 +94,7 @@ func TestHeaderAssertion(t *testing.T) {
 }
 
 func TestResponseTimeAssertion(t *testing.T) {
-	assertions := []Assertion{
-		{Type: "response_time", Operator: "lt", Value: "500"},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "response_time", Operator: "lt", Value: "500"}))
 
 	result := Evaluate(raw, 200, "", nil, 200, nil, nil)
 	if !result.Pass {
@@ -120,10 +108,7 @@ func TestResponseTimeAssertion(t *testing.T) {
 }
 
 func TestDegradedAssertion(t *testing.T) {
-	assertions := []Assertion{
-		{Type: "response_time", Operator: "lt", Value: "100", Degraded: true},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "response_time", Operator: "lt", Value: "100", Degraded: true}))
 
 	result := Evaluate(raw, 200, "", nil, 200, nil, nil)
 	if result.Pass {
@@ -136,11 +121,7 @@ func TestDegradedAssertion(t *testing.T) {
 
 func TestDNSRecordAssertion(t *testing.T) {
 	records := []string{"1.2.3.4", "5.6.7.8"}
-
-	assertions := []Assertion{
-		{Type: "dns_record", Operator: "contains", Value: "1.2.3.4"},
-	}
-	raw, _ := json.Marshal(assertions)
+	raw := cs("and", group("and", Assertion{Type: "dns_record", Operator: "contains", Value: "1.2.3.4"}))
 
 	result := Evaluate(raw, 0, "", nil, 0, nil, records)
 	if !result.Pass {
@@ -157,5 +138,78 @@ func TestWalkJSONPath(t *testing.T) {
 	}
 	if val.(float64) != 2 {
 		t.Fatalf("expected 2, got %v", val)
+	}
+}
+
+func TestConditionSetAND(t *testing.T) {
+	raw := cs("and",
+		group("and", Assertion{Type: "status_code", Operator: "eq", Value: "200"}),
+		group("and", Assertion{Type: "body_contains", Operator: "contains", Value: "ok"}),
+	)
+
+	result := Evaluate(raw, 200, "ok", nil, 100, nil, nil)
+	if !result.Pass {
+		t.Fatal("expected pass when both groups pass")
+	}
+
+	result = Evaluate(raw, 200, "nope", nil, 100, nil, nil)
+	if result.Pass {
+		t.Fatal("expected fail when one group fails (AND)")
+	}
+}
+
+func TestConditionSetOR(t *testing.T) {
+	raw := cs("or",
+		group("and", Assertion{Type: "status_code", Operator: "eq", Value: "200"}),
+		group("and", Assertion{Type: "status_code", Operator: "eq", Value: "201"}),
+	)
+
+	result := Evaluate(raw, 200, "", nil, 100, nil, nil)
+	if !result.Pass {
+		t.Fatal("expected pass for 200 (OR)")
+	}
+
+	result = Evaluate(raw, 201, "", nil, 100, nil, nil)
+	if !result.Pass {
+		t.Fatal("expected pass for 201 (OR)")
+	}
+
+	result = Evaluate(raw, 500, "", nil, 100, nil, nil)
+	if result.Pass {
+		t.Fatal("expected fail for 500 (OR, neither group passes)")
+	}
+}
+
+func TestConditionGroupOR(t *testing.T) {
+	raw := cs("and", group("or",
+		Assertion{Type: "status_code", Operator: "eq", Value: "200"},
+		Assertion{Type: "status_code", Operator: "eq", Value: "201"},
+	))
+
+	result := Evaluate(raw, 200, "", nil, 100, nil, nil)
+	if !result.Pass {
+		t.Fatal("expected pass for 200 (inner OR)")
+	}
+
+	result = Evaluate(raw, 201, "", nil, 100, nil, nil)
+	if !result.Pass {
+		t.Fatal("expected pass for 201 (inner OR)")
+	}
+
+	result = Evaluate(raw, 500, "", nil, 100, nil, nil)
+	if result.Pass {
+		t.Fatal("expected fail for 500 (inner OR)")
+	}
+}
+
+func TestConditionSetDegradedPropagation(t *testing.T) {
+	raw := cs("and", group("and", Assertion{Type: "response_time", Operator: "lt", Value: "100", Degraded: true}))
+
+	result := Evaluate(raw, 200, "", nil, 500, nil, nil)
+	if result.Pass {
+		t.Fatal("expected fail")
+	}
+	if !result.Degraded {
+		t.Fatal("expected degraded=true")
 	}
 }

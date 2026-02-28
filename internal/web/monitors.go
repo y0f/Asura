@@ -110,13 +110,13 @@ func headersToJSON(headers map[string]string) string {
 
 func assertionsToJSON(raw json.RawMessage) string {
 	if len(raw) == 0 {
-		return "[]"
+		return "{}"
 	}
-	var assertions []assertion.Assertion
-	if err := json.Unmarshal(raw, &assertions); err != nil {
-		return "[]"
+	var cs assertion.ConditionSet
+	if err := json.Unmarshal(raw, &cs); err != nil {
+		return "{}"
 	}
-	return views.ToJSON(assertions)
+	return views.ToJSON(cs)
 }
 
 var _settingsAssemblers = map[string]func(*http.Request) json.RawMessage{
@@ -264,36 +264,66 @@ func assembleHeaders(r *http.Request, keyField, valueField string) map[string]st
 }
 
 func assembleAssertions(r *http.Request) json.RawMessage {
-	countStr := r.FormValue("assertion_count")
-	count, _ := strconv.Atoi(countStr)
-	if count == 0 {
+	return assembleConditionSet(r)
+}
+
+func assembleConditionSet(r *http.Request) json.RawMessage {
+	groupCount, _ := strconv.Atoi(r.FormValue("group_count"))
+	if groupCount == 0 {
 		return nil
 	}
-	if count > 50 {
-		count = 50
+	if groupCount > 20 {
+		groupCount = 20
 	}
 
-	var assertions []assertion.Assertion
-	for i := 0; i < count; i++ {
-		idx := strconv.Itoa(i)
-		aType := r.FormValue("assertion_type_" + idx)
-		if aType == "" {
+	cs := assertion.ConditionSet{
+		Operator: r.FormValue("condition_set_operator"),
+	}
+	if cs.Operator != "or" {
+		cs.Operator = "and"
+	}
+
+	for g := 0; g < groupCount; g++ {
+		gi := strconv.Itoa(g)
+		condCount, _ := strconv.Atoi(r.FormValue("group_" + gi + "_count"))
+		if condCount == 0 {
 			continue
 		}
-		a := assertion.Assertion{
-			Type:     aType,
-			Operator: r.FormValue("assertion_operator_" + idx),
-			Target:   r.FormValue("assertion_target_" + idx),
-			Value:    r.FormValue("assertion_value_" + idx),
-			Degraded: r.FormValue("assertion_degraded_"+idx) == "on",
+		if condCount > 20 {
+			condCount = 20
 		}
-		assertions = append(assertions, a)
+
+		grp := assertion.ConditionGroup{
+			Operator: r.FormValue("group_" + gi + "_operator"),
+		}
+		if grp.Operator != "or" {
+			grp.Operator = "and"
+		}
+
+		for c := 0; c < condCount; c++ {
+			ci := strconv.Itoa(c)
+			aType := r.FormValue("group_" + gi + "_type_" + ci)
+			if aType == "" {
+				continue
+			}
+			grp.Conditions = append(grp.Conditions, assertion.Assertion{
+				Type:     aType,
+				Operator: r.FormValue("group_" + gi + "_operator_" + ci),
+				Target:   r.FormValue("group_" + gi + "_target_" + ci),
+				Value:    r.FormValue("group_" + gi + "_value_" + ci),
+				Degraded: r.FormValue("group_"+gi+"_degraded_"+ci) == "on",
+			})
+		}
+
+		if len(grp.Conditions) > 0 {
+			cs.Groups = append(cs.Groups, grp)
+		}
 	}
 
-	if len(assertions) == 0 {
+	if len(cs.Groups) == 0 {
 		return nil
 	}
-	b, _ := json.Marshal(assertions)
+	b, _ := json.Marshal(cs)
 	return b
 }
 
