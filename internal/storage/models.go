@@ -116,6 +116,12 @@ type MQTTSettings struct {
 	UseTLS        bool   `json:"use_tls,omitempty"`
 }
 
+// SparklinePoint holds a single data point for sparkline rendering.
+type SparklinePoint struct {
+	Status       string
+	ResponseTime int64
+}
+
 // CheckResult stores the outcome of a single check execution.
 type CheckResult struct {
 	ID           int64      `json:"id"`

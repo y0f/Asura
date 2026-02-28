@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/y0f/asura/internal/storage"
 )
@@ -11,6 +12,7 @@ type DashboardParams struct {
 	Monitors      []*storage.Monitor
 	Incidents     []*storage.Incident
 	ResponseTimes map[int64]int64
+	Sparklines    map[int64][]*storage.SparklinePoint
 	Total         int
 	Up            int
 	Down          int
@@ -22,6 +24,41 @@ type DashboardParams struct {
 	Page          int
 	TotalPages    int
 	Filter        string
+}
+
+func sparklineSVG(points []*storage.SparklinePoint) string {
+	const (
+		n      = 20
+		barW   = 3
+		barH   = 16
+		gap    = 1
+		totalW = n*(barW+gap) - gap
+	)
+	padded := make([]*storage.SparklinePoint, n)
+	if len(points) >= n {
+		copy(padded, points[len(points)-n:])
+	} else {
+		copy(padded[n-len(points):], points)
+	}
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(`<svg width="%d" height="%d" viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg">`, totalW, barH, totalW, barH))
+	for i, p := range padded {
+		x := i * (barW + gap)
+		color := "#1f2937"
+		if p != nil {
+			switch p.Status {
+			case "up":
+				color = "#34d399"
+			case "down":
+				color = "#f87171"
+			case "degraded":
+				color = "#fbbf24"
+			}
+		}
+		sb.WriteString(fmt.Sprintf(`<rect x="%d" y="0" width="%d" height="%d" rx="1" fill="%s"/>`, x, barW, barH, color))
+	}
+	sb.WriteString(`</svg>`)
+	return sb.String()
 }
 
 type dashFilterType struct {
@@ -106,6 +143,9 @@ templ DashboardPage(p DashboardParams) {
 											<div class="flex items-center gap-3 shrink-0 ml-3">
 												if rt := p.ResponseTimes[m.ID]; rt > 0 {
 													<span class="text-[11px] text-muted tabular-nums font-mono">{ FormatMs(rt) }</span>
+												}
+												if pts := p.Sparklines[m.ID]; len(pts) > 0 {
+													@templ.Raw(sparklineSVG(pts))
 												}
 												<span class={ "text-[10px] font-medium tracking-wide px-1.5 py-px rounded border", StatusBg(m.Status) }>{ m.Status }</span>
 											</div>

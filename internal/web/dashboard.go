@@ -39,6 +39,15 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		responseTimes = make(map[int64]int64)
 	}
 
+	monitorIDs := make([]int64, len(displayMonitors))
+	for i, m := range displayMonitors {
+		monitorIDs[i] = m.ID
+	}
+	sparklines, _ := h.store.GetMonitorSparklines(ctx, monitorIDs, 20)
+	if sparklines == nil {
+		sparklines = make(map[int64][]*storage.SparklinePoint)
+	}
+
 	now := time.Now().UTC()
 	requests24h, visitors24h := h.loadRequestStats(ctx, now)
 
@@ -48,6 +57,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		Monitors:      displayMonitors,
 		Incidents:     incidentList,
 		ResponseTimes: responseTimes,
+		Sparklines:    sparklines,
 		Total:         len(allMonitors),
 		Up:            up,
 		Down:          down,

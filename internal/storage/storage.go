@@ -27,6 +27,7 @@ type Store interface {
 	InsertCheckResult(ctx context.Context, r *CheckResult) error
 	ListCheckResults(ctx context.Context, monitorID int64, p Pagination) (*PaginatedResult, error)
 	GetLatestCheckResult(ctx context.Context, monitorID int64) (*CheckResult, error)
+	GetMonitorSparklines(ctx context.Context, monitorIDs []int64, n int) (map[int64][]*SparklinePoint, error)
 
 	// Incidents
 	CreateIncident(ctx context.Context, inc *Incident) error

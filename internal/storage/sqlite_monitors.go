@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -386,6 +387,44 @@ func (s *SQLiteStore) GetLatestCheckResult(ctx context.Context, monitorID int64)
 	r.CreatedAt = parseTime(createdAt)
 	r.CertExpiry = parseTimePtr(certExp)
 	return &r, nil
+}
+
+func (s *SQLiteStore) GetMonitorSparklines(ctx context.Context, monitorIDs []int64, n int) (map[int64][]*SparklinePoint, error) {
+	result := make(map[int64][]*SparklinePoint, len(monitorIDs))
+	if len(monitorIDs) == 0 {
+		return result, nil
+	}
+	placeholders := make([]string, len(monitorIDs))
+	args := make([]any, len(monitorIDs)+1)
+	for i, id := range monitorIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+	args[len(monitorIDs)] = n
+
+	query := fmt.Sprintf(`
+		SELECT monitor_id, status, response_time FROM (
+			SELECT monitor_id, status, response_time,
+				ROW_NUMBER() OVER (PARTITION BY monitor_id ORDER BY created_at DESC) AS rn
+			FROM check_results WHERE monitor_id IN (%s)
+		) t WHERE rn <= ? ORDER BY monitor_id, rn DESC`,
+		strings.Join(placeholders, ","))
+
+	rows, err := s.readDB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p SparklinePoint
+		var mid int64
+		if err := rows.Scan(&mid, &p.Status, &p.ResponseTime); err != nil {
+			return nil, err
+		}
+		result[mid] = append(result[mid], &p)
+	}
+	return result, rows.Err()
 }
 
 func (s *SQLiteStore) GetMonitorNotificationChannelIDs(ctx context.Context, monitorID int64) ([]int64, error) {
